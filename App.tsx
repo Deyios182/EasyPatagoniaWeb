@@ -1,4 +1,4 @@
-
+"use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import WelcomeScreen from './screens/WelcomeScreen';
