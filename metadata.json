@@ -1,0 +1,9 @@
+{
+  "name": "EasyPatagonia",
+  "description": "A centralized digital ecosystem for tourism in the Aysén Region, Patagonia. Features offline-first navigation, itinerary planning, AI-powered guides, and a management portal for local business owners.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
