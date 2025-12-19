@@ -37,7 +37,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     const isMapsRequested = !!(userLat && userLng);
     
     // Intentamos usar el modelo que quieres
-    const preferredModel = isMapsRequested ? 'gemini-2.0-flash' : 'gemini-2.0-flash-exp';
+    const preferredModel = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-2.5-flash';
 
     if (isMapsRequested) {
       tools.push({ googleMaps: {} });
@@ -64,7 +64,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     };
 
     // Usamos la función segura
-    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-2.5-flash');
 
     const text = response.text || "";
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -92,7 +92,7 @@ export async function generateActivityPreview(activityTitle: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp', // Modelo capaz de imágenes
+      model: 'gemini-2.5-flash', // Modelo capaz de imágenes
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
       config: { 
          // @ts-ignore
@@ -124,7 +124,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
     Genera JSON válido (Array de objetos).`;
 
     const config = {
-      model: 'gemini-2.0-flash-exp', // Intentamos el modelo potente
+      model: 'gemini-2.5-flash', // Intentamos el modelo potente
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -155,7 +155,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
       }
     };
 
-    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-2.5-flash');
     return JSON.parse(response.text || "[]");
 
   } catch (error: any) {
@@ -172,7 +172,7 @@ export async function textToSpeechPatagonia(text: string) {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     // Intentamos Gemini TTS
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp", 
+      model: "gemini-2.5-flash", 
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
