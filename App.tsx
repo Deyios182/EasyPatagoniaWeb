@@ -7,7 +7,7 @@ import { supabase } from './supabaseClient';
 // Importación de pantallas
 import WelcomeScreen from './screens/WelcomeScreen'; // Ahora será la pantalla de Login
 import LandingPage from './screens/LandingPage';     // Nueva pantalla principal
-import SplashScreen from './components/SplashScreen'; // Nuevo Splash
+import SplashScreen from './Screens/SplashScreen'; // Nuevo Splash
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
 import PlannerScreen from './screens/PlannerScreen';
