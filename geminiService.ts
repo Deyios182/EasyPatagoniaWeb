@@ -2,13 +2,13 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { supabase } from "./supabaseClient";
 import { Business, Category } from "./types";
 
-// 1. CLAVE API PARA VITE (Corrección obligatoria: process.env no funciona en Vite)
+// 1. CLAVE API PARA VITE
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 /**
  * Función auxiliar para manejar reintentos cuando se acaba la cuota (Error 429)
  */
-async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-2.5-flash') {
+async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-1.5-flash') {
   try {
     return await ai.models.generateContent(params);
   } catch (error: any) {
@@ -64,7 +64,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     };
 
     // Usamos la función segura
-    const response = await safeGenerate(ai, config, 'gemini-2.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
 
     const text = response.text || "";
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -78,7 +78,6 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
 
   } catch (error: any) {
     console.error("Chat Error:", error);
-    // Devolvemos el mensaje de error exacto para que sepas qué pasa
     const msg = error.message || JSON.stringify(error);
     if(msg.includes('429')) return { text: "⚠️ Mi cuota de energía IA se agotó por hoy. Intenta más tarde o actualiza el plan.", sources: [] };
     return { text: `Error del sistema: ${msg}`, sources: [] };
@@ -92,7 +91,7 @@ export async function generateActivityPreview(activityTitle: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', // Modelo capaz de imágenes
+      model: 'gemini-2.5-flash', 
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
       config: { 
          // @ts-ignore
@@ -107,24 +106,33 @@ export async function generateActivityPreview(activityTitle: string) {
 }
 
 /**
- * Planificador (Intenta 3.0 -> Fallback a 1.5)
+ * 🚀 MODIFICADO: Planificador conectado a Supabase
+ * Ya no recibe 'businesses' como argumento, los busca él mismo en la BD.
  */
-export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
+export async function generateItineraryAI(days: number, budget: string, categories: Category[], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria));
-    const catalogContext = filteredBusinesses.map(b => ({
+
+    // 1. BUSCAR EN SUPABASE (Filtrado por categorías)
+    const { data: dbBusinesses } = await supabase
+      .from('businesses')
+      .select('nombre, categoria, info')
+      .in('categoria', categories)
+      .limit(50);
+    
+    // 2. Crear contexto del catálogo
+    const catalogContext = dbBusinesses?.map((b: any) => ({
       name: b.nombre,
       cat: b.categoria,
-      loc: b.info.direccion
-    }));
+      loc: b.info?.direccion || "Región de Aysén"
+    })) || [];
 
     const prompt = `Planificador Aysén. Idioma: ${language}. Días: ${days}. Presupuesto: ${budget}.
-    CATÁLOGO LOCAL: ${JSON.stringify(catalogContext)}
+    CATÁLOGO LOCAL (Prioridad): ${JSON.stringify(catalogContext)}
     Genera JSON válido (Array de objetos).`;
 
     const config = {
-      model: 'gemini-2.5-flash', // Intentamos el modelo potente
+      model: 'gemini-2.5-flash', // Tu modelo solicitado
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -155,7 +163,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
       }
     };
 
-    const response = await safeGenerate(ai, config, 'gemini-2.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
     return JSON.parse(response.text || "[]");
 
   } catch (error: any) {
@@ -170,7 +178,6 @@ export async function generateItineraryAI(days: number, budget: string, categori
 export async function textToSpeechPatagonia(text: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    // Intentamos Gemini TTS
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash", 
       contents: [{ parts: [{ text }] }],
@@ -182,14 +189,12 @@ export async function textToSpeechPatagonia(text: string) {
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
 
   } catch (error: any) {
-    // Si Gemini falla por cuota (429), usamos el navegador (Gratis e ilimitado)
     console.warn("TTS Quota exceeded or error. Using browser fallback.");
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
         window.speechSynthesis.speak(utterance);
-        // Retornamos null para indicar que el navegador se encarga
         return null; 
     }
     return null;
