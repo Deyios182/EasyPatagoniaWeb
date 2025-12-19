@@ -1,51 +1,63 @@
-import { supabase } from '../supabaseClient';
-import { MOCK_BUSINESSES } from '../constants';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient'; // Conexión a DB
+import { MOCK_BUSINESSES } from '../constants'; // Datos locales
 import { useAppAuth } from '../App';
 import { Role, User } from '../types';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { usersRegistry, allBusinesses, registerUser } = useAppAuth();
+  const { usersRegistry, allBusinesses, registerUser, user } = useAppAuth(); // Traemos 'user' para saber quién migra
   const [activeTab, setActiveTab] = useState<'users' | 'businesses' | 'stats'>('stats');
   const [showUserModal, setShowUserModal] = useState(false);
+  
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  // --- FUNCIÓN DE MIGRACIÓN ---
   const handleMigration = async () => {
-  if (!confirm("¿Subir todos los negocios locales a Supabase? Esto puede duplicar si ya existen.")) return;
+    if (!confirm("¿Subir todos los negocios locales a Supabase? Esto puede duplicar si ya existen.")) return;
+    
+    setIsMigrating(true);
+    try {
+        const { error } = await supabase
+            .from('businesses')
+            .upsert(MOCK_BUSINESSES.map(b => ({
+            id: b.id,
+            nombre: b.nombre,
+            categoria: b.categoria,
+            priority: b.priority,
+            gps: b.gps,
+            contacto: b.contacto,
+            info: b.info,
+            media: b.media,
+            servicios: b.servicios,
+            rating: b.rating,
+            review_count: b.reviewCount,
+            is_open: b.isOpen,
+            owner_id: user?.uid // Te asigna a ti como dueño inicial (opcional)
+            })));
 
-  const { error } = await supabase
-    .from('businesses')
-    .upsert(MOCK_BUSINESSES.map(b => ({
-       id: b.id,
-       nombre: b.nombre,
-       categoria: b.categoria,
-       priority: b.priority,
-       gps: b.gps,
-       contacto: b.contacto,
-       info: b.info,
-       media: b.media,
-       servicios: b.servicios,
-       rating: b.rating,
-       review_count: b.reviewCount,
-       is_open: b.isOpen
-    })));
+        if (error) throw error;
+        alert("¡Migración Exitosa! Ahora tus datos están en la nube ☁️");
+    } catch (e: any) {
+        alert("Error en migración: " + e.message);
+    } finally {
+        setIsMigrating(false);
+    }
+  };
 
-  if (error) alert("Error en migración: " + error.message);
-  else alert("¡Migración Exitosa! Ahora tus datos están en la nube ☁️");
-};
-  <button onClick={handleMigration} className="w-full py-4 bg-purple-600 text-white font-black rounded-2xl mb-6 shadow-xl">
-   🚀 MIGRAR DATOS A LA NUBE
-</button>
   // Formulario nuevo usuario
   const [newUser, setNewUser] = useState({ name: '', email: '', rol: 'Turista' as Role });
 
   const handleCreateUser = () => {
     if (!newUser.name || !newUser.email) return;
+    // Creamos usuario visualmente
     registerUser({
       uid: `u-${Date.now()}`,
       ...newUser,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUser.name}`
     });
+    // Opcional: Aquí podrías agregar lógica para crear en Supabase también
     setShowUserModal(false);
     setNewUser({ name: '', email: '', rol: 'Turista' });
   };
@@ -60,7 +72,7 @@ const AdminDashboardScreen: React.FC = () => {
               </div>
               <h1 className="text-xl font-bold dark:text-white">Super Admin</h1>
            </div>
-           <button onClick={() => navigate('/profile')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark">
+           <button onClick={() => navigate('/profile')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10">
               <span className="material-symbols-outlined">close</span>
            </button>
         </div>
@@ -77,6 +89,7 @@ const AdminDashboardScreen: React.FC = () => {
            ))}
         </div>
 
+        {/* --- PESTAÑA MÉTRICAS --- */}
         {activeTab === 'stats' && (
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="grid grid-cols-2 gap-4">
@@ -107,6 +120,7 @@ const AdminDashboardScreen: React.FC = () => {
           </div>
         )}
 
+        {/* --- PESTAÑA USUARIOS --- */}
         {activeTab === 'users' && (
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
             <button 
@@ -123,8 +137,8 @@ const AdminDashboardScreen: React.FC = () => {
                    <div className="flex items-center gap-4">
                       <img src={u.avatar} className="w-10 h-10 rounded-full" />
                       <div>
-                         <p className="text-sm font-bold dark:text-white">{u.name}</p>
-                         <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{u.email}</p>
+                          <p className="text-sm font-bold dark:text-white">{u.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{u.email}</p>
                       </div>
                    </div>
                    <span className="px-3 py-1 bg-slate-100 dark:bg-background-dark text-[9px] font-black text-slate-400 rounded-full uppercase">
@@ -136,8 +150,24 @@ const AdminDashboardScreen: React.FC = () => {
           </div>
         )}
 
+        {/* --- PESTAÑA EMPRESAS (Aquí pusimos el botón de Migrar) --- */}
         {activeTab === 'businesses' && (
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
+            
+            {/* BOTÓN MÁGICO DE MIGRACIÓN */}
+            <button 
+                onClick={handleMigration} 
+                disabled={isMigrating}
+                className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-3xl shadow-xl flex items-center justify-center gap-2 transition-all"
+            >
+                {isMigrating ? (
+                    <span className="animate-spin material-symbols-outlined">progress_activity</span>
+                ) : (
+                    <span className="material-symbols-outlined">cloud_upload</span>
+                )}
+                {isMigrating ? "SUBIENDO..." : "MIGRAR DATOS A LA NUBE"}
+            </button>
+
             <button 
               onClick={() => navigate('/portal')}
               className="w-full py-4 bg-accent text-white font-black rounded-3xl shadow-lg flex items-center justify-center gap-2"
@@ -162,6 +192,7 @@ const AdminDashboardScreen: React.FC = () => {
         )}
       </div>
 
+      {/* MODAL NUEVO USUARIO */}
       {showUserModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-surface-dark w-full max-w-[360px] rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-white/10">
