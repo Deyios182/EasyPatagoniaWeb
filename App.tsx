@@ -242,7 +242,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
             // No existe -> Lo creamos
             // 🔥 PON AQUÍ TU CORREO DE SUPER ADMIN
-            const isSuperAdminEmail = email === 'thejox.182@gmail.com'; 
+            const isSuperAdminEmail = email === 'thejozx.182@gmail.com'; 
             const newRoleDB = isSuperAdminEmail ? 'super_admin' : 'turista';
             assignedRole = isSuperAdminEmail ? 'SuperAdmin' : 'Turista';
 
@@ -401,4 +401,43 @@ const AuthenticatedApp: React.FC = () => {
   }
 
   return (
-    <div className="
+    <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden">
+      {user && <NavigationSidebar />}
+      <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar">
+        <Routes>
+          {/* Ruta Pública */}
+          <Route path="/" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
+          
+          {/* Rutas Protegidas (Turista y todos) */}
+          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/" />} />
+          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/" />} />
+          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/" />} />
+          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/" />} />
+          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/" />} />
+          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/" />} />
+          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/" />} />
+          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/" />} />
+          
+          {/* Rutas de Admin/Dueño */}
+          <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
+          <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
+          <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
+          
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <HashRouter>
+        <AuthenticatedApp />
+      </HashRouter>
+    </AuthProvider>
+  );
+};
+
+export default App;
