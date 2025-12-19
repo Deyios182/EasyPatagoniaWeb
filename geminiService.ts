@@ -48,9 +48,13 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       sources: [] 
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error AI:", error);
-    return { text: "Lo siento, la señal satelital es débil. Intenta de nuevo.", sources: [] };
+    // CAMBIO: Ahora el chat te dirá cuál es el error técnico
+    return { 
+      text: `Error técnico: ${error.message || error.toString()}. Revisa tu API Key.`, 
+      sources: [] 
+    };
   }
 }
 
@@ -88,8 +92,11 @@ export async function generateItineraryAI(days: number, budget: string, categori
     
     return JSON.parse(cleanJson);
 
-  } catch (error) {
+  // ... dentro de generateItineraryAI ...
+  } catch (error: any) {
     console.error("Error Planner:", error);
+    // Para ver el error en consola o alerta
+    alert(`Error al generar itinerario: ${error.message}`);
     return null;
   }
 }
