@@ -12,7 +12,9 @@ const MAP_TILES: Record<MapTheme, string> = {
 
 const TouristMapScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { allBusinesses, t, mapTheme } = useAppAuth();
+  // AGREGAMOS 'user' AQUÍ PARA LA FOTO DE PERFIL
+  const { allBusinesses, t, mapTheme, user } = useAppAuth();
+  
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,7 @@ const TouristMapScreen: React.FC = () => {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [showRouteAssistant, setShowRouteAssistant] = useState(false);
 
-  // Detectar si es móvil para lógica condicional
+  // Detectar móvil
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -40,7 +42,6 @@ const TouristMapScreen: React.FC = () => {
 
   useEffect(() => {
     if (allBusinesses.length > 0 && !selectedBusiness) {
-      // En móvil NO autoseleccionamos para dejar ver el mapa
       if (!isMobile) setSelectedBusiness(allBusinesses[0]);
     }
   }, [allBusinesses, isMobile]);
@@ -150,7 +151,6 @@ const TouristMapScreen: React.FC = () => {
     <div className="relative h-screen w-full bg-background-light dark:bg-background-dark overflow-hidden flex flex-col transition-colors duration-300">
       <div ref={containerRef} className="absolute inset-0 z-0 h-full w-full"></div>
 
-      {/* MODAL DE RUTA (Sin cambios, solo z-index asegurado) */}
       {showRouteAssistant && (
         <div className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-xl flex items-end md:items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
           <div className="bg-white dark:bg-surface-dark w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom duration-500 my-auto">
@@ -179,7 +179,6 @@ const TouristMapScreen: React.FC = () => {
                     Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
                   </a>
                 </div>
-                {/* ... resto del modal ... */}
                  <div className="bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] space-y-4">
                   <div className="flex justify-between items-center text-slate-400">
                     <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">flight</span>
@@ -199,10 +198,12 @@ const TouristMapScreen: React.FC = () => {
         </div>
       )}
 
-      {/* BARRA SUPERIOR (Búsqueda + Filtros) - Optimizado Móvil */}
+      {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
       <div className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-8 flex flex-col md:flex-row gap-3 md:gap-4 pointer-events-none">
-        <div className="w-full md:max-w-md pointer-events-auto">
-          <div className="bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-5 py-3 md:px-8 md:py-5 flex items-center gap-3 md:gap-4 shadow-2xl group focus-within:border-primary/50 transition-all">
+        
+        {/* Contenedor Superior: Buscador + Botón Perfil */}
+        <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
+          <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-4 py-3 md:px-8 md:py-5 flex items-center gap-3 shadow-2xl group focus-within:border-primary/50 transition-all">
             <span className="material-symbols-outlined text-primary group-focus-within:scale-110 transition-transform leading-none text-xl md:text-2xl">search</span>
             <input 
               type="text" 
@@ -212,8 +213,21 @@ const TouristMapScreen: React.FC = () => {
               className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white placeholder-slate-400 w-full text-sm md:text-base font-bold py-1 leading-none" 
             />
           </div>
+
+          {/* BOTÓN PERFIL (SOLO MÓVIL) */}
+          <div 
+            onClick={() => navigate('/profile')}
+            className="md:hidden w-12 h-auto rounded-2xl bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-2xl cursor-pointer active:scale-95 transition-transform"
+          >
+             <img 
+               src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"} 
+               alt="Perfil" 
+               className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
+             />
+          </div>
         </div>
 
+        {/* Filtros */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
           {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
             <button 
@@ -228,16 +242,14 @@ const TouristMapScreen: React.FC = () => {
       </div>
 
       {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
-      {/* Usamos 'mb-[80px]' en móvil para evitar que la navbar tape el contenido */}
       <div className="mt-auto relative z-[100] p-4 md:p-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 pointer-events-none mb-[70px] md:mb-0">
         
-        {/* TARJETA DE NEGOCIO (Solo si hay selección) */}
+        {/* TARJETA DE NEGOCIO */}
         {selectedBusiness && (
           <div 
             className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group" 
             onClick={() => navigate(`/details/${selectedBusiness.id}`)}
           >
-            {/* Botón cerrar para móvil (pequeño truco UX) */}
             <div 
                 className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
                 onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
@@ -263,7 +275,7 @@ const TouristMapScreen: React.FC = () => {
           </div>
         )}
 
-        {/* BOTÓN "CÓMO LLEGAR" - LÓGICA MÓVIL: Se oculta si hay una tarjeta seleccionada para ahorrar espacio */}
+        {/* BOTÓN CÓMO LLEGAR (Se oculta en móvil si hay selección) */}
         {(!selectedBusiness || !isMobile) && (
             <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
             <button 
@@ -288,7 +300,6 @@ const TouristMapScreen: React.FC = () => {
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">{t('list')}</span>
         </Link>
         
-        {/* Botón central flotante (opcional, para IA) */}
         <div className="-mt-8">
             <Link to="/chat" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-transform">
                 <span className="material-symbols-outlined text-2xl">smart_toy</span>
