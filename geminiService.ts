@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient";
 // CLAVE API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-// Inicializamos la librería ESTABLE para web
+// Inicializamos la librería
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 /**
@@ -12,11 +12,11 @@ const genAI = new GoogleGenerativeAI(API_KEY);
  */
 export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
-    // 1. Obtener contexto de Supabase (Tus negocios reales)
+    // 1. Obtener contexto de Supabase
     const { data: businesses } = await supabase
       .from('businesses')
       .select('nombre, categoria, info, gps')
-      .limit(20); // Limitamos para no saturar el prompt
+      .limit(20);
 
     // 2. Formatear contexto
     const contextText = businesses?.map((b: any) => 
@@ -37,7 +37,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       - Si no hay opciones en la lista, da recomendaciones generales de la zona.
     `;
 
-    // 4. Llamar a Gemini Pro (Texto)
+    // 4. Llamar a Gemini Pro
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const result = await model.generateContent([systemPrompt, prompt]);
     const response = result.response;
@@ -45,7 +45,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
 
     return { 
       text: text, 
-      sources: [] // La versión Pro estándar no devuelve sources estructurados fácilmente en web
+      sources: [] 
     };
 
   } catch (error) {
@@ -61,12 +61,14 @@ export async function generateItineraryAI(days: number, budget: string, categori
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
+    // HE CORREGIDO ESTA PARTE PARA EVITAR EL ERROR DE BUILD
+    // Quitamos los backticks conflictivos del texto del prompt
     const prompt = `
       Crea un itinerario de viaje para Aysén, Chile.
       Días: ${days}. Presupuesto: ${budget}. Intereses: ${categories.join(', ')}.
       Idioma: ${language}.
 
-      IMPORTANTE: Responde SOLO con un JSON válido (sin markdown ```json).
+      IMPORTANTE: Responde SOLO con un JSON válido. NO uses bloques de código markdown.
       Formato Array:
       [
         {
@@ -83,8 +85,10 @@ export async function generateItineraryAI(days: number, budget: string, categori
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Limpieza de JSON
-    const cleanJson = text.replace(/```json|```/g, '').trim();
+    // Limpieza de JSON más segura
+    // Eliminamos bloques de código si la IA los incluye
+    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
     return JSON.parse(cleanJson);
 
   } catch (error) {
@@ -94,23 +98,20 @@ export async function generateItineraryAI(days: number, budget: string, categori
 }
 
 /**
- * Texto a Voz (Simulado o Nativo del Navegador)
- * Nota: La API de audio de Gemini requiere configuraciones complejas de backend.
- * Para que funcione YA en tu web, usaremos la síntesis nativa del navegador que es GRATIS y rápida.
+ * Texto a Voz (Nativo del Navegador - Gratis y sin errores)
  */
 export async function textToSpeechPatagonia(text: string): Promise<string | null> {
-  // Opción A: Usar la API del navegador (SpeechSynthesis)
-  // Como tu componente espera un base64 (PCM), esto es un truco:
-  // Devolvemos NULL para que el componente sepa que no hay audio binario,
-  // pero ejecutamos el audio aquí mismo.
-  
   if ('speechSynthesis' in window) {
+    // Cancelamos cualquier audio anterior para evitar superposiciones
+    window.speechSynthesis.cancel();
+    
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-CL'; // Español de Chile
+    // Intentamos forzar voz en español, aunque depende del navegador del usuario
+    utterance.lang = 'es-ES'; 
     utterance.rate = 1.0;
+    
     window.speechSynthesis.speak(utterance);
-    return null; // El audio ya se está reproduciendo
+    return null; 
   }
-  
   return null;
 }
