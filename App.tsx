@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { useUser, useClerk, SignInButton, UserButton } from '@clerk/clerk-react';
 import WelcomeScreen from './screens/WelcomeScreen';
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
@@ -16,26 +17,8 @@ import BusinessDirectoryScreen from './screens/BusinessDirectoryScreen';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary } from './types';
 import { getLocalizedBusinesses } from './constants';
 
+// --- CONFIGURACIÓN DE IDIOMAS ---
 type Language = 'ES' | 'EN' | 'PT';
-
-interface AuthContextType {
-  user: User | null;
-  login: (userData: Partial<User>) => void;
-  logout: () => void;
-  allBusinesses: Business[];
-  updateBusiness: (biz: Business) => void;
-  usersRegistry: User[];
-  registerUser: (user: User) => void;
-  language: Language;
-  setLanguage: (l: Language) => void;
-  mapTheme: MapTheme;
-  setMapTheme: (t: MapTheme) => void;
-  currency: Currency;
-  setCurrency: (c: Currency) => void;
-  saveItinerary: (itinerary: SavedItinerary) => void;
-  deleteItinerary: (id: string) => void;
-  t: (key: string) => string;
-}
 
 const translations: Record<Language, Record<string, string>> = {
   ES: {
@@ -69,14 +52,11 @@ const translations: Record<Language, Record<string, string>> = {
     ai_status: "Sincronizado",
     itinerary_title: "PLANIFICADOR AI",
     back: "Volver",
-    offline_zones: "Zonas Offline",
-    tools: "Herramientas",
     verified_ops: "Operadores Verificados",
     view_profile: "Ver Perfil",
     explore_place: "Explorar Lugar",
     discovery_title: "DESCUBRE AYSÉN",
     discovery_subtitle: "Guía de Imperdibles",
-    business_verified: "Verificado",
     business_status_open: "Abierto",
     business_status_closed: "Cerrado",
     business_description_label: "Descripción del local",
@@ -88,7 +68,6 @@ const translations: Record<Language, Record<string, string>> = {
     save_trip: "Guardar en Perfil",
     my_trips: "Mis Viajes",
     no_trips: "Aún no tienes rutas guardadas",
-    delete_trip: "Eliminar"
   },
   EN: {
     welcome: "Welcome",
@@ -121,14 +100,11 @@ const translations: Record<Language, Record<string, string>> = {
     ai_status: "Synced",
     itinerary_title: "AI PLANNER",
     back: "Back",
-    offline_zones: "Offline Areas",
-    tools: "Tools",
     verified_ops: "Verified Operators",
     view_profile: "View Profile",
     explore_place: "Explore Place",
     discovery_title: "DISCOVER AYSÉN",
     discovery_subtitle: "Unmissable Guide",
-    business_verified: "Verified",
     business_status_open: "Open",
     business_status_closed: "Closed",
     business_description_label: "Business description",
@@ -140,7 +116,6 @@ const translations: Record<Language, Record<string, string>> = {
     save_trip: "Save to Profile",
     my_trips: "My Trips",
     no_trips: "No saved trips yet",
-    delete_trip: "Delete"
   },
   PT: {
     welcome: "Bem-vindo",
@@ -173,14 +148,11 @@ const translations: Record<Language, Record<string, string>> = {
     ai_status: "Sincronizado",
     itinerary_title: "PLANEJADOR AI",
     back: "Voltar",
-    offline_zones: "Zonas Offline",
-    tools: "Ferramentas",
     verified_ops: "Operadores Verificados",
     view_profile: "Ver Perfil",
     explore_place: "Explorar Lugar",
     discovery_title: "DESCUBRA AYSÉN",
     discovery_subtitle: "Guia Imperdível",
-    business_verified: "Verificado",
     business_status_open: "Aberto",
     business_status_closed: "Fechado",
     business_description_label: "Descrição do local",
@@ -192,49 +164,102 @@ const translations: Record<Language, Record<string, string>> = {
     save_trip: "Salvar no Perfil",
     my_trips: "Minhas Viagens",
     no_trips: "Nenhuma viagem salva ainda",
-    delete_trip: "Excluir"
   }
 };
+
+// --- CONTEXTO DE AUTENTICACIÓN ---
+interface AuthContextType {
+  user: User | null;
+  login: (userData: Partial<User>) => void; // Deprecado con Clerk, pero mantenido por compatibilidad
+  logout: () => void;
+  allBusinesses: Business[];
+  updateBusiness: (biz: Business) => void;
+  usersRegistry: User[];
+  registerUser: (user: User) => void;
+  language: Language;
+  setLanguage: (l: Language) => void;
+  mapTheme: MapTheme;
+  setMapTheme: (t: MapTheme) => void;
+  currency: Currency;
+  setCurrency: (c: Currency) => void;
+  saveItinerary: (itinerary: SavedItinerary) => void;
+  deleteItinerary: (id: string) => void;
+  t: (key: string) => string;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('ep_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  // CLERK HOOKS
+  const { user: clerkUser, isLoaded } = useUser();
+  const { signOut } = useClerk();
+
+  const [appUser, setAppUser] = useState<User | null>(null);
 
   const [language, setLanguage] = useState<Language>(() => 
     (localStorage.getItem('ep_language') as Language) || 'ES'
   );
-
   const [mapTheme, setMapTheme] = useState<MapTheme>(() => 
     (localStorage.getItem('ep_map_theme') as MapTheme) || 'dark'
   );
-
   const [currency, setCurrency] = useState<Currency>(() => 
     (localStorage.getItem('ep_currency') as Currency) || 'CLP'
   );
 
-  const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => 
-    getLocalizedBusinesses(language)
-  );
+  // Carga de negocios con persistencia simulada
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => {
+    const saved = localStorage.getItem('ep_businesses_custom');
+    return saved ? JSON.parse(saved) : getLocalizedBusinesses(language);
+  });
 
   const [usersRegistry, setUsersRegistry] = useState<User[]>(() => {
     const saved = localStorage.getItem('ep_users_registry');
     return saved ? JSON.parse(saved) : [];
   });
 
+  // SINCRONIZACIÓN CLERK -> APP USER
   useEffect(() => {
-    setAllBusinesses(getLocalizedBusinesses(language));
+    if (isLoaded && clerkUser) {
+      const email = clerkUser.primaryEmailAddress?.emailAddress || '';
+      
+      // LÓGICA DE ROLES SIMPLE
+      let role: Role = 'Turista';
+      // Pon aquí tu email real para ser Admin automáticamente
+      if (email.includes('admin') || email === 'deyios182@gmail.com') role = 'SuperAdmin'; 
+      
+      // Chequeamos si es dueño de algún negocio
+      const isOwner = allBusinesses.some(b => b.contacto.email === email);
+      if (isOwner) role = 'DueñoEmpresa';
+
+      const newUser: User = {
+        uid: clerkUser.id,
+        name: clerkUser.fullName || 'Viajero',
+        email: email,
+        rol: role,
+        avatar: clerkUser.imageUrl,
+        savedItineraries: [] // Aquí podrías cargar itinerarios guardados de LS usando el ID
+      };
+      setAppUser(newUser);
+    } else if (isLoaded && !clerkUser) {
+      setAppUser(null);
+    }
+  }, [isLoaded, clerkUser, allBusinesses]);
+
+  // Persistencia de configuraciones
+  useEffect(() => {
     localStorage.setItem('ep_language', language);
     localStorage.setItem('ep_map_theme', mapTheme);
     localStorage.setItem('ep_currency', currency);
     localStorage.setItem('ep_users_registry', JSON.stringify(usersRegistry));
-    if (user) {
-      localStorage.setItem('ep_current_user', JSON.stringify(user));
+    localStorage.setItem('ep_businesses_custom', JSON.stringify(allBusinesses));
+  }, [language, mapTheme, currency, usersRegistry, allBusinesses]);
+
+  // Actualizar lista de negocios al cambiar idioma (si no hay edits custom)
+  useEffect(() => {
+    if (!localStorage.getItem('ep_businesses_custom')) {
+       setAllBusinesses(getLocalizedBusinesses(language));
     }
-  }, [language, mapTheme, currency, usersRegistry, user]);
+  }, [language]);
 
   const t = (key: string) => translations[language][key] || key;
 
@@ -244,53 +269,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateBusiness = (updatedBiz: Business) => {
     setAllBusinesses(prev => {
-      const exists = prev.find(b => b.id === updatedBiz.id);
-      if (exists) {
-        return prev.map(b => b.id === updatedBiz.id ? updatedBiz : b);
-      }
-      return [...prev, updatedBiz];
+      const newList = prev.map(b => b.id === updatedBiz.id ? updatedBiz : b);
+      // Si es nuevo, lo agregamos
+      if (!prev.find(b => b.id === updatedBiz.id)) newList.push(updatedBiz);
+      return newList;
     });
   };
 
-  const login = (userData: Partial<User>) => {
-    const newUser: User = {
-      uid: userData.uid || Date.now().toString(),
-      name: userData.name || 'Viajero',
-      email: userData.email || 'anon@easypatagonia.cl',
-      rol: userData.rol || 'Turista',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.name || 'Viajero'}`,
-      savedItineraries: []
-    };
-    setUser(newUser);
-    localStorage.setItem('ep_current_user', JSON.stringify(newUser));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('ep_current_user');
+  const logout = async () => {
+    await signOut();
+    setAppUser(null);
   };
 
   const saveItinerary = (itinerary: SavedItinerary) => {
-    if (!user) return;
-    const updatedUser = {
-      ...user,
-      savedItineraries: [...(user.savedItineraries || []), itinerary]
-    };
-    setUser(updatedUser);
+    if (!appUser) return;
+    setAppUser(prev => prev ? ({
+      ...prev,
+      savedItineraries: [...(prev.savedItineraries || []), itinerary]
+    }) : null);
   };
 
   const deleteItinerary = (id: string) => {
-    if (!user) return;
-    const updatedUser = {
-      ...user,
-      savedItineraries: (user.savedItineraries || []).filter(i => i.id !== id)
-    };
-    setUser(updatedUser);
+    if (!appUser) return;
+    setAppUser(prev => prev ? ({
+      ...prev,
+      savedItineraries: (prev.savedItineraries || []).filter(i => i.id !== id)
+    }) : null);
   };
 
   return (
     <AuthContext.Provider value={{ 
-      user, login, logout, allBusinesses, updateBusiness, usersRegistry, registerUser,
+      user: appUser, 
+      login: () => {}, // Clerk maneja el login
+      logout, 
+      allBusinesses, updateBusiness, usersRegistry, registerUser,
       language, setLanguage, mapTheme, setMapTheme, currency, setCurrency,
       saveItinerary, deleteItinerary, t 
     }}>
@@ -305,6 +317,7 @@ export const useAppAuth = () => {
   return context;
 };
 
+// --- SIDEBAR ---
 const NavigationSidebar: React.FC = () => {
   const location = useLocation();
   const { user, t } = useAppAuth();
@@ -328,12 +341,12 @@ const NavigationSidebar: React.FC = () => {
       </div>
       
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-1">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none">Navigation</p>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none">Navegación</p>
         <NavItem to="/map" icon="map" label={t('map')} />
         <NavItem to="/discover" icon="explore" label={t('discover')} />
         <NavItem to="/directory" icon="list_alt" label={t('list')} />
         
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6 mt-6 mb-2 leading-none">Intelligence</p>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6 mt-6 mb-2 leading-none">Inteligencia</p>
         <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
         <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
       </div>
@@ -345,35 +358,50 @@ const NavigationSidebar: React.FC = () => {
             <p className="text-sm font-black text-white truncate uppercase italic leading-none">{user.name}</p>
             <p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-70 leading-none">{user.rol}</p>
           </div>
-          <span className="material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors">chevron_right</span>
         </Link>
       </div>
     </div>
   );
 };
 
+// --- APP PRINCIPAL CON RUTAS PROTEGIDAS ---
 const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
-  const isSignedIn = !!user;
+  const { isLoaded } = useUser(); // Hook de Clerk para saber si cargó
   const role = user?.rol || 'Turista';
+
+  // Pantalla de carga mientras Clerk verifica sesión
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background-dark flex items-center justify-center">
+         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden">
-      <NavigationSidebar />
+      {user && <NavigationSidebar />}
       <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar">
         <Routes>
-          <Route path="/" element={!isSignedIn ? <WelcomeScreen /> : <Navigate to="/map" />} />
-          <Route path="/map" element={isSignedIn ? <TouristMapScreen /> : <Navigate to="/" />} />
-          <Route path="/discover" element={isSignedIn ? <DiscoveryScreen /> : <Navigate to="/" />} />
-          <Route path="/directory" element={isSignedIn ? <BusinessDirectoryScreen /> : <Navigate to="/" />} />
-          <Route path="/details/:id" element={isSignedIn ? <BusinessDetailsScreen /> : <Navigate to="/" />} />
-          <Route path="/planner" element={isSignedIn ? <PlannerScreen /> : <Navigate to="/" />} />
-          <Route path="/itinerary" element={isSignedIn ? <ItineraryScreen /> : <Navigate to="/" />} />
-          <Route path="/profile" element={isSignedIn ? <ProfileScreen role={role} /> : <Navigate to="/" />} />
-          <Route path="/chat" element={isSignedIn ? <ChatBotScreen /> : <Navigate to="/" />} />
-          <Route path="/portal" element={isSignedIn && role === 'DueñoEmpresa' ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
-          <Route path="/admin" element={isSignedIn && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
-          <Route path="/field" element={isSignedIn && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
+          {/* Ruta Pública: Welcome Screen (Si no hay usuario) */}
+          <Route path="/" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
+          
+          {/* Rutas Protegidas */}
+          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/" />} />
+          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/" />} />
+          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/" />} />
+          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/" />} />
+          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/" />} />
+          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/" />} />
+          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/" />} />
+          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/" />} />
+          
+          {/* Rutas de Admin/Dueño */}
+          <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
+          <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
+          <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
+          
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
