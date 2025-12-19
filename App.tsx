@@ -4,8 +4,10 @@ import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-ro
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from './supabaseClient';
 
-// Importación de pantallas (Sin cambios)
-import WelcomeScreen from './screens/WelcomeScreen';
+// Importación de pantallas
+import WelcomeScreen from './screens/WelcomeScreen'; // Ahora será la pantalla de Login
+import LandingPage from './screens/LandingPage';     // Nueva pantalla principal
+import SplashScreen from './components/SplashScreen'; // Nuevo Splash
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
 import PlannerScreen from './screens/PlannerScreen';
@@ -426,15 +428,22 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   );
 };
 
-// --- APP PRINCIPAL ---
+// --- APP PRINCIPAL (CON FLUJO SPLASH -> LANDING -> APP) ---
 const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
   const { isLoaded } = useUser();
   const role = user?.rol || 'Turista';
   
-  // ESTADO PARA EL MENÚ LATERAL
+  // ESTADOS NUEVOS: CONTROL DEL SPLASH
+  const [showSplash, setShowSplash] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // 1. Mostrar Splash Screen al inicio
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
+  // 2. Esperar carga de Auth
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
@@ -445,7 +454,7 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
-      {/* Pasamos el estado al sidebar */}
+      {/* Sidebar solo visible si el usuario está logueado */}
       {user && (
         <NavigationSidebar 
           isCollapsed={sidebarCollapsed} 
@@ -455,18 +464,25 @@ const AuthenticatedApp: React.FC = () => {
       
       <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar transition-all duration-300">
         <Routes>
-          <Route path="/" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
-          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/" />} />
-          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/" />} />
-          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/" />} />
-          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/" />} />
-          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/" />} />
-          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/" />} />
-          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/" />} />
-          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/" />} />
+          {/* RUTA RAÍZ: Landing Page Pública */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* RUTA LOGIN: La antigua WelcomeScreen */}
+          <Route path="/login" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
+
+          {/* RUTAS PROTEGIDAS (APP REAL) */}
+          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/login" />} />
+          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/login" />} />
+          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/login" />} />
+          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/login" />} />
+          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/login" />} />
+          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/login" />} />
+          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/login" />} />
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
+          
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
