@@ -22,7 +22,8 @@
     "tailwind-merge": "^2.2.0",
     "@clerk/clerk-react": "^5.2.0",
     "@clerk/localizations": "^2.4.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "@google/generative-ai": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
