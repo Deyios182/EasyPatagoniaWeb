@@ -36,26 +36,7 @@ const SplashScreen: React.FC<SplashProps> = ({ onFinish }) => {
           />
         </div>
         
-        {/* Título Principal */}
-        <motion.h1 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-          // CAMBIO 2: Texto en blanco (text-white) para que contraste con el fondo oscuro
-          // Antes era: text-[#4f6d7a]
-          className="mt-4 md:mt-8 text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic text-center"
-        >
-          Easy Patagonia
-        </motion.h1>
         
-        {/* Subtítulo (El naranja se ve muy bien sobre fondo oscuro) */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 1 }}
-          className="mt-3 text-[#dd6e42] font-black tracking-[0.4em] uppercase text-xs md:text-base text-center"
-        >
-          Austral Experience
         </motion.p>
       </motion.div>
     </div>
