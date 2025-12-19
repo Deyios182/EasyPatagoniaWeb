@@ -87,7 +87,7 @@ const LandingPage: React.FC = () => {
           <div className="relative group">
              <img 
                src="/logo_easy.png" 
-               className="h-20 md:h-32 w-auto object-contain transition-transform duration-500 hover:scale-105" 
+               className="h-100 md:h-100 w-auto object-contain transition-transform duration-500 hover:scale-105" 
                alt="Easy Patagonia Logo"
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
