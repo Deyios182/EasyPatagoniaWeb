@@ -19,6 +19,8 @@ import BusinessPortalScreen from './screens/BusinessPortalScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import EasyAdminFieldScreen from './screens/EasyAdminFieldScreen';
 import BusinessDirectoryScreen from './screens/BusinessDirectoryScreen';
+import UserAdminScreen from './screens/UserAdminScreen';
+import LandingAdminScreen from './screens/LandingAdminScreen';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary } from './types';
 import { getLocalizedBusinesses } from './constants';
 
@@ -278,6 +280,8 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
           <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
+<Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
         </Routes>
       </main>
     </div>
