@@ -1,6 +1,12 @@
-
-import { GoogleGenAI, Type, GenerateContentResponse, Modality } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Business, Category } from "./types";
+
+// CLAVE API SEGURA PARA VITE
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
+
+if (!API_KEY) {
+  console.warn("ADVERTENCIA: No se encontró la API KEY de Gemini. La IA no funcionará.");
+}
 
 /**
  * Basic AI Chat for questions about Patagonia
@@ -8,19 +14,10 @@ import { Business, Category } from "./types";
 export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES', userLat?: number, userLng?: number) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    // ... (el resto del código sigue igual, pero con la variable API_KEY corregida)
-    
-    // Si quieres copiar el resto del archivo para asegurarte, avísame. 
-    // Lo más importante es que las líneas donde dice "new GoogleGenAI({ apiKey: ... })" 
-    // ahora usen la variable const API_KEY que definimos arriba.
-    
-    // ... resto de tu código de funciones (askPatagoniaAI, generateActivityPreview, etc.)
-    // ... asegúrate de reemplazar process.env.API_KEY por API_KEY en todas las funciones.
-    
     const tools: any[] = [{ googleSearch: {} }];
     const toolConfig: any = {};
     const isMapsRequested = !!(userLat && userLng);
-    const model = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-2.0-flash'; // Actualizado a modelo estable
+    const model = isMapsRequested ? 'gemini-2.0-flash' : 'gemini-2.0-flash'; // Usamos modelo rápido 2.0
 
     if (isMapsRequested) {
       tools.push({ googleMaps: {} });
@@ -62,9 +59,9 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
  */
 export async function generateActivityPreview(activityTitle: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-2.0-flash',
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
       config: { imageConfig: { aspectRatio: "16:9" } }
     });
@@ -80,7 +77,7 @@ export async function generateActivityPreview(activityTitle: string) {
  */
 export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     
     // Filtramos el catálogo por las categorías seleccionadas
     const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria));
@@ -111,7 +108,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
     Devuelve un JSON estructurado.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -153,9 +150,9 @@ export async function generateItineraryAI(days: number, budget: string, categori
  */
 export async function textToSpeechPatagonia(text: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-2.0-flash", // Modelo con TTS
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
