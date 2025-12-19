@@ -61,8 +61,6 @@ export async function generateItineraryAI(days: number, budget: string, categori
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    // HE CORREGIDO ESTA PARTE PARA EVITAR EL ERROR DE BUILD
-    // Quitamos los backticks conflictivos del texto del prompt
     const prompt = `
       Crea un itinerario de viaje para Aysén, Chile.
       Días: ${days}. Presupuesto: ${budget}. Intereses: ${categories.join(', ')}.
@@ -86,7 +84,6 @@ export async function generateItineraryAI(days: number, budget: string, categori
     const text = result.response.text();
     
     // Limpieza de JSON más segura
-    // Eliminamos bloques de código si la IA los incluye
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     return JSON.parse(cleanJson);
@@ -98,20 +95,27 @@ export async function generateItineraryAI(days: number, budget: string, categori
 }
 
 /**
- * Texto a Voz (Nativo del Navegador - Gratis y sin errores)
+ * Texto a Voz (Nativo del Navegador)
  */
 export async function textToSpeechPatagonia(text: string): Promise<string | null> {
   if ('speechSynthesis' in window) {
-    // Cancelamos cualquier audio anterior para evitar superposiciones
     window.speechSynthesis.cancel();
-    
     const utterance = new SpeechSynthesisUtterance(text);
-    // Intentamos forzar voz en español, aunque depende del navegador del usuario
     utterance.lang = 'es-ES'; 
     utterance.rate = 1.0;
-    
     window.speechSynthesis.speak(utterance);
     return null; 
   }
+  return null;
+}
+
+/**
+ * Generar Imagen de Actividad (Función faltante)
+ * Nota: Como Gemini Pro estándar no genera imágenes directamente,
+ * devolvemos null para que la app use sus imágenes por defecto y no se rompa.
+ */
+export async function generateActivityPreview(activityTitle: string): Promise<string | null> {
+  // Para futuras versiones: Aquí podrías conectar Unsplash API o Google Imagen.
+  // Por ahora, devolvemos null para que el build pase y la app use placeholders.
   return null;
 }
