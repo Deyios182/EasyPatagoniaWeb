@@ -177,9 +177,9 @@ export async function generateItineraryAI(days: number, budget: string, categori
  */
 export async function textToSpeechPatagonia(text: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-2.5-flash", 
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
@@ -187,5 +187,16 @@ export async function textToSpeechPatagonia(text: string) {
       }
     });
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
-  } catch (error) { return null; }
+
+  } catch (error: any) {
+    console.warn("TTS Quota exceeded or error. Using browser fallback.");
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-ES';
+        window.speechSynthesis.speak(utterance);
+        return null; 
+    }
+    return null;
+  }
 }
