@@ -4,7 +4,7 @@ import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-ro
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from './supabaseClient';
 
-// Importación de pantallas
+// Importación de pantallas (Sin cambios)
 import WelcomeScreen from './screens/WelcomeScreen';
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
@@ -20,7 +20,7 @@ import BusinessDirectoryScreen from './screens/BusinessDirectoryScreen';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary } from './types';
 import { getLocalizedBusinesses } from './constants';
 
-// --- CONFIGURACIÓN DE IDIOMAS ---
+// --- CONFIGURACIÓN DE IDIOMAS (Sin cambios) ---
 type Language = 'ES' | 'EN' | 'PT';
 
 const translations: Record<Language, Record<string, string>> = {
@@ -336,8 +336,13 @@ export const useAppAuth = () => {
   return context;
 };
 
-// --- SIDEBAR (ACTUALIZADO CON LOGO Y TEMA) ---
-const NavigationSidebar: React.FC = () => {
+// --- SIDEBAR (ACTUALIZADO: COLAPSABLE) ---
+interface SidebarProps {
+  isCollapsed: boolean;
+  toggle: () => void;
+}
+
+const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   const location = useLocation();
   const { user, t } = useAppAuth();
   if (!user) return null;
@@ -345,43 +350,76 @@ const NavigationSidebar: React.FC = () => {
   const NavItem = ({ to, icon, label }: { to: string, icon: string, label: string }) => {
     const isActive = location.pathname === to;
     return (
-      <Link to={to} className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${isActive ? 'bg-primary text-white shadow-lg' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 no-underline'}`}>
-        <span className="material-symbols-outlined">{icon}</span>
-        <span className="font-bold text-sm uppercase tracking-widest leading-none">{label}</span>
+      <Link 
+        to={to} 
+        title={isCollapsed ? label : ''}
+        className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${
+          isActive 
+            ? 'bg-primary text-white shadow-lg' 
+            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 no-underline'
+        } ${isCollapsed ? 'justify-center px-0' : ''}`}
+      >
+        <span className="material-symbols-outlined text-2xl">{icon}</span>
+        {!isCollapsed && (
+          <span className="font-bold text-sm uppercase tracking-widest leading-none animate-in fade-in duration-300">
+            {label}
+          </span>
+        )}
       </Link>
     );
   };
 
   return (
-    <div className="hidden md:flex flex-col w-72 h-screen bg-[#c0d6df] dark:bg-surface-dark border-r border-slate-300 dark:border-white/5 p-6 shrink-0 z-[100] overflow-hidden transition-colors duration-300">
+    <div 
+      className={`hidden md:flex flex-col h-screen bg-[#c0d6df] dark:bg-surface-dark border-r border-slate-300 dark:border-white/5 p-4 shrink-0 z-[100] overflow-hidden transition-all duration-300 ease-in-out ${
+        isCollapsed ? 'w-24' : 'w-72'
+      }`}
+    >
       
-      {/* LOGO DE IMAGEN */}
-      <div className="flex items-center justify-center mb-10 px-2 shrink-0">
+      {/* LOGO DE IMAGEN (CLICABLE PARA COLAPSAR) */}
+      <div 
+        className="flex items-center justify-center mb-8 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={toggle}
+        title={isCollapsed ? "Expandir menú" : "Ocultar menú"}
+      >
         <img 
           src="/logo_easy.png" 
           alt="Easy Patagonia" 
-          className="h-20 w-auto object-contain drop-shadow-md hover:scale-105 transition-transform"
+          className={`object-contain drop-shadow-md transition-all duration-300 ${
+            isCollapsed ? 'h-10 w-10' : 'h-20 w-auto hover:scale-105'
+          }`}
         />
       </div>
       
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-1">
-        <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none">Navegación</p>
+        {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Navegación</p>}
         <NavItem to="/map" icon="map" label={t('map')} />
         <NavItem to="/discover" icon="explore" label={t('discover')} />
         <NavItem to="/directory" icon="list_alt" label={t('list')} />
         
-        <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mt-6 mb-2 leading-none">Inteligencia</p>
+        <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
+
+        {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
         <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
         <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
       </div>
 
       <div className="mt-auto pt-6 border-t border-slate-300 dark:border-white/5 shrink-0">
-        <Link to="/profile" className={`group flex items-center gap-4 p-4 rounded-3xl transition-all no-underline ${location.pathname === '/profile' ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'}`}>
-          <img src={user.avatar} className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10" alt="Avatar" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{user.name}</p>
-            <p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{user.rol}</p>
-          </div>
+        <Link 
+          to="/profile" 
+          className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline ${
+            location.pathname === '/profile' 
+              ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' 
+              : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'
+          } ${isCollapsed ? 'justify-center' : ''}`}
+        >
+          <img src={user.avatar} className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10" alt="Avatar" />
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 animate-in fade-in duration-300">
+              <p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{user.name}</p>
+              <p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{user.rol}</p>
+            </div>
+          )}
         </Link>
       </div>
     </div>
@@ -393,6 +431,9 @@ const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
   const { isLoaded } = useUser();
   const role = user?.rol || 'Turista';
+  
+  // ESTADO PARA EL MENÚ LATERAL
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isLoaded) {
     return (
@@ -404,8 +445,15 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
-      {user && <NavigationSidebar />}
-      <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar">
+      {/* Pasamos el estado al sidebar */}
+      {user && (
+        <NavigationSidebar 
+          isCollapsed={sidebarCollapsed} 
+          toggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+        />
+      )}
+      
+      <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar transition-all duration-300">
         <Routes>
           <Route path="/" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
           <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/" />} />
