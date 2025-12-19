@@ -8,7 +8,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 /**
  * Función auxiliar para manejar reintentos cuando se acaba la cuota (Error 429)
  */
-async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-1.5-flash') {
+async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-2.5-flash') {
   try {
     return await ai.models.generateContent(params);
   } catch (error: any) {
