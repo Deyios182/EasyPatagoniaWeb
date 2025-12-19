@@ -1,103 +1,125 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from "./supabaseClient";
+import { Business, Category } from "./types";
 
 // CLAVE API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-// Inicializamos la librería
+// Inicializamos la librería (Usamos la estable para que Vercel no falle)
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+// ⚡️ MODELO A USAR:
+// Si tienes acceso a la preview, cambia esto a "gemini-2.0-flash-exp"
+// Por seguridad y estabilidad, lo dejo en el más rápido actual:
+const MODEL_NAME = "gemini-1.5-flash"; 
+
 /**
- * Chat Inteligente con contexto de Negocios Locales (RAG)
+ * Chat Inteligente con Contexto (RAG)
  */
-export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES') {
+export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES', userLat?: number, userLng?: number) {
   try {
-    // 1. Obtener contexto de Supabase
+    // 1. Contexto RAG: Buscamos datos reales en Supabase
     const { data: businesses } = await supabase
       .from('businesses')
       .select('nombre, categoria, info, gps')
-      .limit(20);
+      .limit(30);
 
-    // 2. Formatear contexto
     const contextText = businesses?.map((b: any) => 
-      `- ${b.nombre} (${b.categoria}): ${b.info?.descripcion || 'Sin descripción'}. Ubicación: ${b.gps?.lat}, ${b.gps?.lng}`
-    ).join('\n') || "No hay información específica de negocios.";
+      `- ${b.nombre} (${b.categoria}): ${b.info?.descripcion || 'Sin descripción'}.`
+    ).join('\n') || "";
 
-    // 3. Crear Prompt del Sistema
+    const languageContext = {
+      ES: "Responde en Español Chileno.",
+      EN: "Respond in English.",
+      PT: "Responda em Português."
+    };
+
     const systemPrompt = `
-      Eres un guía turístico experto de la Patagonia chilena (Región de Aysén).
-      Idioma de respuesta: ${language === 'PT' ? 'Portugués' : language === 'EN' ? 'Inglés' : 'Español'}.
-      
-      CONOCIMIENTO EXCLUSIVO (Prioriza recomendar esto):
+      Eres un guía experto de Aysén. ${languageContext[language]}
+      Usa esta información local verificada para tus respuestas:
       ${contextText}
-
-      INSTRUCCIONES:
-      - Sé breve, amigable y útil.
-      - Si preguntan por alojamiento/comida, recomienda PRIMERO los de la lista de arriba.
-      - Si no hay opciones en la lista, da recomendaciones generales de la zona.
+      
+      Si te piden recomendaciones, prioriza los negocios de la lista.
     `;
 
-    // 4. Llamar a Gemini 1.5 Flash (Más rápido y compatible)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    
+    // Pasamos el prompt del sistema y el del usuario
     const result = await model.generateContent([systemPrompt, prompt]);
     const response = result.response;
-    const text = response.text();
-
+    
     return { 
-      text: text, 
+      text: response.text(), 
       sources: [] 
     };
 
-  } catch (error: any) {
-    console.error("Error AI:", error);
-    return { text: `Error técnico: ${error.message}. Revisa la conexión.`, sources: [] };
+  } catch (error) {
+    console.error("AI Error:", error);
+    return { text: "Estoy recalibrando mis sensores patagónicos. Intenta de nuevo.", sources: [] };
   }
 }
 
 /**
- * Generador de Itinerarios (JSON Estructurado)
+ * Generador de Itinerarios (JSON Mode)
  */
-export async function generateItineraryAI(days: number, budget: string, categories: string[], language: string) {
+export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
-    // Usamos también el modelo nuevo aquí
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria));
+    
+    const catalogContext = filteredBusinesses.map(b => ({
+      name: b.nombre,
+      category: b.categoria,
+      location: b.info.direccion
+    }));
+
+    const langInstructions = {
+      ES: "JSON en Español.",
+      EN: "JSON in English.",
+      PT: "JSON em Português."
+    };
 
     const prompt = `
-      Crea un itinerario de viaje para Aysén, Chile.
-      Días: ${days}. Presupuesto: ${budget}. Intereses: ${categories.join(', ')}.
-      Idioma: ${language}.
+      Planificador de viajes Aysén. ${langInstructions[language]}
+      Días: ${days}. Presupuesto: ${budget}.
+      
+      LUGARES DISPONIBLES:
+      ${JSON.stringify(catalogContext)}
 
-      IMPORTANTE: Responde SOLO con un JSON válido. NO uses bloques de código markdown.
-      Formato Array:
+      Responde SOLO con un JSON válido (Array de objetos).
+      Formato:
       [
         {
           "day": 1,
-          "title": "Título del día",
+          "title": "...",
           "activities": [
-            { "time": "Mañana", "description": "Detalle..." },
-            { "time": "Tarde", "description": "Detalle..." }
+            { "time": "Mañana", "title": "...", "description": "..." }
           ]
         }
       ]
     `;
 
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      generationConfig: { responseMimeType: "application/json" } // Forzamos JSON nativo
+    });
+
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Limpieza de JSON
+    // Limpieza de seguridad
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
     return JSON.parse(cleanJson);
 
-  } catch (error: any) {
-    console.error("Error Planner:", error);
-    alert(`Error: ${error.message}`);
+  } catch (error) {
+    console.error("Planner Error:", error);
     return null;
   }
 }
 
 /**
- * Texto a Voz (Nativo del Navegador)
+ * Texto a Voz (Fallback Híbrido)
+ * Intenta usar la voz del navegador para garantizar que suene.
+ * La API de audio de Gemini es compleja de implementar en frontend puro sin un proxy.
  */
 export async function textToSpeechPatagonia(text: string): Promise<string | null> {
   if ('speechSynthesis' in window) {
@@ -106,14 +128,20 @@ export async function textToSpeechPatagonia(text: string): Promise<string | null
     utterance.lang = 'es-ES'; 
     utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
+    
+    // Devolvemos null porque el navegador maneja el audio, 
+    // así el componente no espera un base64.
     return null; 
   }
   return null;
 }
 
 /**
- * Generar Imagen (Placeholder para evitar error)
+ * Generador de Imágenes (Placeholder)
+ * Esta función es necesaria para que ItineraryScreen no falle al compilar.
  */
 export async function generateActivityPreview(activityTitle: string): Promise<string | null> {
+  // Por ahora devolvemos null para evitar errores de API.
+  // Las imágenes se cargarán desde el fallback de la UI.
   return null;
 }
