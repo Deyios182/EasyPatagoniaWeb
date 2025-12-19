@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Role, MapTheme, Currency, SavedItinerary } from '../types';
@@ -60,6 +59,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
     <div className="flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-y-auto no-scrollbar items-center p-6 md:p-12">
       <div className="w-full max-w-6xl space-y-12 pb-32 animate-in fade-in duration-500">
         
+        {/* HEADER */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
              <div className="w-16 h-16 rounded-[2rem] bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
@@ -112,6 +112,31 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
                 <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">{role}</span>
               </div>
             </div>
+
+            {/* --- ZONA DE ADMINISTRACIÓN (AGREGADA) --- */}
+            {(role === 'SuperAdmin' || role === 'DueñoEmpresa') && (
+              <div className="space-y-3">
+                 <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Zona de Gestión</h3>
+                 
+                 {role === 'SuperAdmin' && (
+                   <button 
+                     onClick={() => navigate('/admin')}
+                     className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] shadow-lg shadow-purple-500/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                   >
+                     <span className="material-symbols-outlined">admin_panel_settings</span>
+                     Panel Super Admin
+                   </button>
+                 )}
+
+                 <button 
+                   onClick={() => navigate('/portal')}
+                   className="w-full py-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-3"
+                 >
+                   <span className="material-symbols-outlined text-orange-500">storefront</span>
+                   Portal Empresa
+                 </button>
+              </div>
+            )}
 
             <button 
               onClick={() => { logout(); navigate('/'); }} 
@@ -206,13 +231,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
                   {/* BOTON APLICAR */}
                   <div className="pt-12">
-                     <button 
-                      onClick={handleApplyChanges}
-                      className={`w-full py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-5 transition-all shadow-2xl active:scale-95 ${showSuccess ? 'bg-green-500 text-white' : 'bg-primary text-white hover:brightness-110'}`}
-                     >
-                       <span className="material-symbols-outlined text-3xl">{showSuccess ? 'done_all' : 'save'}</span>
-                       {showSuccess ? 'CAMBIOS APLICADOS' : t('apply_changes')}
-                     </button>
+                      <button 
+                       onClick={handleApplyChanges}
+                       className={`w-full py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-5 transition-all shadow-2xl active:scale-95 ${showSuccess ? 'bg-green-500 text-white' : 'bg-primary text-white hover:brightness-110'}`}
+                      >
+                        <span className="material-symbols-outlined text-3xl">{showSuccess ? 'done_all' : 'save'}</span>
+                        {showSuccess ? 'CAMBIOS APLICADOS' : t('apply_changes')}
+                      </button>
                   </div>
                 </section>
               </div>
