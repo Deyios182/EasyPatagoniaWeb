@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
-import { esES } from '@clerk/localizations'; // (Opcional) Para que el login salga en español
+import { esES } from '@clerk/localizations';
 import App from './App';
 
 // Importamos la clave pública desde el entorno
