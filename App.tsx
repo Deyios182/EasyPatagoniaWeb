@@ -1,6 +1,10 @@
+"use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { useUser, useClerk, SignInButton, UserButton } from '@clerk/clerk-react';
+import { useUser, useClerk, SignInButton } from '@clerk/clerk-react';
+import { supabase } from './supabaseClient'; // IMPORTANTE: Tu cliente de base de datos
+
+// Importación de pantallas
 import WelcomeScreen from './screens/WelcomeScreen';
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
@@ -195,6 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const [appUser, setAppUser] = useState<User | null>(null);
 
+  // CONFIGURACIÓN PERSISTENTE
   const [language, setLanguage] = useState<Language>(() => 
     (localStorage.getItem('ep_language') as Language) || 'ES'
   );
@@ -205,71 +210,88 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     (localStorage.getItem('ep_currency') as Currency) || 'CLP'
   );
 
-  // Carga de negocios con persistencia simulada
+  // CARGA DE DATOS LOCALES (Fallback)
   const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => {
-    const saved = localStorage.getItem('ep_businesses_custom');
-    return saved ? JSON.parse(saved) : getLocalizedBusinesses(language);
+    return getLocalizedBusinesses(language);
   });
+  const [usersRegistry, setUsersRegistry] = useState<User[]>([]);
 
-  const [usersRegistry, setUsersRegistry] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ep_users_registry');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // SINCRONIZACIÓN CLERK -> APP USER
+  // --- SINCRONIZACIÓN DE ROLES CON SUPABASE ---
   useEffect(() => {
-    if (isLoaded && clerkUser) {
-      const email = clerkUser.primaryEmailAddress?.emailAddress || '';
-      
-      // LÓGICA DE ROLES SIMPLE
-      let role: Role = 'Turista';
-      // Pon aquí tu email real para ser Admin automáticamente
-      if (email.includes('admin') || email === 'deyios182@gmail.com') role = 'SuperAdmin'; 
-      
-      // Chequeamos si es dueño de algún negocio
-      const isOwner = allBusinesses.some(b => b.contacto.email === email);
-      if (isOwner) role = 'DueñoEmpresa';
+    const syncUserRole = async () => {
+      if (isLoaded && clerkUser) {
+        const email = clerkUser.primaryEmailAddress?.emailAddress || '';
+        const clerkId = clerkUser.id;
+        
+        // 1. Verificar si el perfil ya existe en DB
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('clerk_user_id', clerkId)
+          .single();
 
-      const newUser: User = {
-        uid: clerkUser.id,
-        name: clerkUser.fullName || 'Viajero',
-        email: email,
-        rol: role,
-        avatar: clerkUser.imageUrl,
-        savedItineraries: [] 
-      };
-      setAppUser(newUser);
-    } else if (isLoaded && !clerkUser) {
-      setAppUser(null);
-    }
-  }, [isLoaded, clerkUser, allBusinesses]);
+        let assignedRole: Role = 'Turista';
 
-  // Persistencia de configuraciones
+        if (profile) {
+            // Existe en BD -> Usamos su rol
+            const dbRole = profile.role;
+            if (dbRole === 'super_admin') assignedRole = 'SuperAdmin';
+            else if (dbRole === 'admin') assignedRole = 'SuperAdmin'; // Mapping simple por ahora
+            else if (dbRole === 'empresa') assignedRole = 'DueñoEmpresa';
+            else assignedRole = 'Turista';
+        } else {
+            // No existe -> Lo creamos
+            // 🔥 PON AQUÍ TU CORREO DE SUPER ADMIN
+            const isSuperAdminEmail = email === 'thejox.182@gmail.com'; 
+            const newRoleDB = isSuperAdminEmail ? 'super_admin' : 'turista';
+            assignedRole = isSuperAdminEmail ? 'SuperAdmin' : 'Turista';
+
+            await supabase.from('user_profiles').insert([{
+                clerk_user_id: clerkId,
+                email: email,
+                role: newRoleDB
+            }]);
+        }
+
+        const newUser: User = {
+          uid: clerkId,
+          name: clerkUser.fullName || 'Viajero',
+          email: email,
+          rol: assignedRole,
+          avatar: clerkUser.imageUrl,
+          savedItineraries: []
+        };
+        setAppUser(newUser);
+      } else if (isLoaded && !clerkUser) {
+        setAppUser(null);
+      }
+    };
+
+    syncUserRole();
+  }, [isLoaded, clerkUser]);
+
+  // Persistencia de configs
   useEffect(() => {
     localStorage.setItem('ep_language', language);
     localStorage.setItem('ep_map_theme', mapTheme);
     localStorage.setItem('ep_currency', currency);
-    localStorage.setItem('ep_users_registry', JSON.stringify(usersRegistry));
-    localStorage.setItem('ep_businesses_custom', JSON.stringify(allBusinesses));
-  }, [language, mapTheme, currency, usersRegistry, allBusinesses]);
+  }, [language, mapTheme, currency]);
 
-  // Actualizar lista de negocios al cambiar idioma (si no hay edits custom)
+  // Refrescar negocios al cambiar idioma
   useEffect(() => {
-    if (!localStorage.getItem('ep_businesses_custom')) {
-       setAllBusinesses(getLocalizedBusinesses(language));
-    }
+     setAllBusinesses(getLocalizedBusinesses(language));
   }, [language]);
 
   const t = (key: string) => translations[language][key] || key;
 
   const registerUser = (newUser: User) => {
+    // (Deprecated con Supabase, pero mantenemos para evitar errores de TS)
     setUsersRegistry(prev => [...prev, newUser]);
   };
 
   const updateBusiness = (updatedBiz: Business) => {
     setAllBusinesses(prev => {
       const newList = prev.map(b => b.id === updatedBiz.id ? updatedBiz : b);
-      // Si es nuevo, lo agregamos
       if (!prev.find(b => b.id === updatedBiz.id)) newList.push(updatedBiz);
       return newList;
     });
@@ -299,7 +321,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider value={{ 
       user: appUser, 
-      login: () => {}, // Clerk maneja el login
+      login: () => {}, 
       logout, 
       allBusinesses, updateBusiness, usersRegistry, registerUser,
       language, setLanguage, mapTheme, setMapTheme, currency, setCurrency,
@@ -366,10 +388,10 @@ const NavigationSidebar: React.FC = () => {
 // --- APP PRINCIPAL CON RUTAS PROTEGIDAS ---
 const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
-  const { isLoaded } = useUser(); // Hook de Clerk para saber si cargó
+  const { isLoaded } = useUser();
   const role = user?.rol || 'Turista';
 
-  // Pantalla de carga mientras Clerk verifica sesión
+  // Pantalla de carga mientras Clerk y Supabase verifican sesión
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-background-dark flex items-center justify-center">
@@ -379,43 +401,4 @@ const AuthenticatedApp: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden">
-      {user && <NavigationSidebar />}
-      <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar">
-        <Routes>
-          {/* Ruta Pública: Welcome Screen (Si no hay usuario) */}
-          <Route path="/" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
-          
-          {/* Rutas Protegidas */}
-          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/" />} />
-          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/" />} />
-          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/" />} />
-          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/" />} />
-          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/" />} />
-          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/" />} />
-          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/" />} />
-          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/" />} />
-          
-          {/* Rutas de Admin/Dueño */}
-          <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
-          <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
-          <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
-          
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </main>
-    </div>
-  );
-};
-
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <HashRouter>
-        <AuthenticatedApp />
-      </HashRouter>
-    </AuthProvider>
-  );
-};
-
-export default App;
+    <div className="
