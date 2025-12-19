@@ -40,8 +40,8 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedLocality, setSelectedLocality] = useState('tran');
   
-  // ESTADO PARA CONTROLAR LA CARGA DEL LOGO (Evita el punto/error visual)
-  const [logoLoaded, setLogoLoaded] = useState(false);
+  // Estado para manejar si el logo falla al cargar
+  const [logoError, setLogoError] = useState(false);
 
   const handleEnterApp = () => {
     if (isSignedIn) {
@@ -74,8 +74,9 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-[#eaeaea] font-body text-[#1a2a30] overflow-x-hidden">
       
       {/* --- HERO SECTION --- */}
-      <div className="relative h-screen w-full overflow-hidden">
-        <div className="absolute inset-0 bg-black">
+      <div className="relative h-screen w-full overflow-hidden bg-black">
+        {/* Fondo con imagen */}
+        <div className="absolute inset-0">
            <img 
              src="https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"
              className="w-full h-full object-cover opacity-60 animate-[pulse_10s_infinite]"
@@ -87,19 +88,25 @@ const LandingPage: React.FC = () => {
 
         {/* NAVBAR */}
         <nav className="absolute top-0 left-0 right-0 p-6 md:p-10 flex justify-between items-start md:items-center z-50">
-          <div className="relative group">
-             {/* LOGO CON LÓGICA ANTI-ERROR:
-                 1. opacity-0 por defecto (invisible).
-                 2. onLoad -> opacity-100 (se muestra suavemente solo cuando carga).
-                 3. onError -> display: none (desaparece si falla, sin dejar rastro/punto).
-             */}
-             <img 
-               src="/logo_easy.png" 
-               className={`h-20 md:h-32 w-auto object-contain transition-opacity duration-700 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
-               alt="Easy Patagonia Logo"
-               onLoad={() => setLogoLoaded(true)}
-               onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-             />
+          
+          {/* LOGO "A PRUEBA DE FALLOS" */}
+          <div className="relative group cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+             {!logoError ? (
+                 <img 
+                   src="/logo_easy.png" 
+                   // Quitamos la opacidad dinámica para que se vea siempre
+                   className="h-20 md:h-32 w-auto object-contain hover:scale-105 transition-transform drop-shadow-lg" 
+                   alt="Easy Patagonia Logo"
+                   // Si falla, activamos el modo texto
+                   onError={() => setLogoError(true)} 
+                 />
+             ) : (
+                 // Si la imagen falla, mostramos esto en su lugar (nunca un punto roto)
+                 <div className="flex flex-col">
+                    <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Easy Patagonia</h1>
+                    <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">Austral Experience</span>
+                 </div>
+             )}
           </div>
 
           <button 
@@ -110,6 +117,7 @@ const LandingPage: React.FC = () => {
           </button>
         </nav>
 
+        {/* Textos Principales */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
           <motion.h1 
             initial={{ y: 50, opacity: 0 }}
@@ -198,7 +206,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN NUESTRA VISIÓN (ARREGLADA: Texto alineado y Tarjeta ajustada) --- */}
+      {/* --- SECCIÓN NUESTRA VISIÓN --- */}
       <section className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
             
@@ -227,10 +235,10 @@ const LandingPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Misión y Visión + Imagen (ARREGLADO) */}
+            {/* Misión y Visión */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 
-                {/* Columna Texto (Alineado a la izquierda, limpio) */}
+                {/* Texto */}
                 <div className="space-y-10 order-2 lg:order-1">
                     <div>
                         <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">🚀 Nuestra Misión</h2>
@@ -250,9 +258,8 @@ const LandingPage: React.FC = () => {
                     </button>
                 </div>
                 
-                {/* Columna Imagen + Tarjeta Flotante (Posición arreglada) */}
+                {/* Imagen */}
                 <div className="relative mt-10 lg:mt-0 order-1 lg:order-2">
-                    {/* Fondo decorativo naranja */}
                     <div className="absolute top-4 right-4 -bottom-4 -left-4 bg-[#dd6e42] rounded-[3rem] rotate-3 opacity-20 z-0"></div>
                     
                     <img 
@@ -261,7 +268,7 @@ const LandingPage: React.FC = () => {
                         alt="Vision"
                     />
                     
-                    {/* Tarjeta Flotante de Contacto (Pegada mejor a la imagen) */}
+                    {/* Tarjeta Flotante Contacto */}
                     <div className="absolute -bottom-6 -left-2 md:-left-12 bg-white p-6 rounded-[2rem] shadow-2xl z-20 max-w-xs border border-gray-100 hidden md:block">
                        <p className="text-[#1a2a30] font-black uppercase italic mb-4 text-sm">¿Dudas sobre tu viaje?</p>
                        <div className="flex gap-3">
