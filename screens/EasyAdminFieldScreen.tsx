@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Locality, Attraction, Company } from '../types';
-import { uploadImage } from '../utils/imageHandler';
+import { uploadImage } from '../imageHandler';
 
 const EasyAdminFieldScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'localidades' | 'atractivos' | 'empresas'>('localidades');
