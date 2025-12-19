@@ -27,7 +27,7 @@ const WelcomeScreen: React.FC = () => {
           <div className="absolute top-0 left-0 right-0 p-8 flex justify-center md:justify-start">
              {/* Asegúrate de poner tu archivo logo_easy.jpg en la carpeta public */}
              <img 
-               src="/logo_easy.jpg" 
+               src="/logo_easy.png" 
                alt="Easy Patagonia Logo" 
                className="h-24 md:h-32 object-contain drop-shadow-lg"
              />
