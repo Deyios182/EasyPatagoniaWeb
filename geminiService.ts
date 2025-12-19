@@ -37,8 +37,8 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       - Si no hay opciones en la lista, da recomendaciones generales de la zona.
     `;
 
-    // 4. Llamar a Gemini Pro
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // 4. Llamar a Gemini 1.5 Flash (Más rápido y compatible)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent([systemPrompt, prompt]);
     const response = result.response;
     const text = response.text();
@@ -50,11 +50,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
 
   } catch (error: any) {
     console.error("Error AI:", error);
-    // CAMBIO: Ahora el chat te dirá cuál es el error técnico
-    return { 
-      text: `Error técnico: ${error.message || error.toString()}. Revisa tu API Key.`, 
-      sources: [] 
-    };
+    return { text: `Error técnico: ${error.message}. Revisa la conexión.`, sources: [] };
   }
 }
 
@@ -63,7 +59,8 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
  */
 export async function generateItineraryAI(days: number, budget: string, categories: string[], language: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Usamos también el modelo nuevo aquí
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
       Crea un itinerario de viaje para Aysén, Chile.
@@ -87,16 +84,14 @@ export async function generateItineraryAI(days: number, budget: string, categori
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Limpieza de JSON más segura
+    // Limpieza de JSON
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     return JSON.parse(cleanJson);
 
-  // ... dentro de generateItineraryAI ...
   } catch (error: any) {
     console.error("Error Planner:", error);
-    // Para ver el error en consola o alerta
-    alert(`Error al generar itinerario: ${error.message}`);
+    alert(`Error: ${error.message}`);
     return null;
   }
 }
@@ -117,12 +112,8 @@ export async function textToSpeechPatagonia(text: string): Promise<string | null
 }
 
 /**
- * Generar Imagen de Actividad (Función faltante)
- * Nota: Como Gemini Pro estándar no genera imágenes directamente,
- * devolvemos null para que la app use sus imágenes por defecto y no se rompa.
+ * Generar Imagen (Placeholder para evitar error)
  */
 export async function generateActivityPreview(activityTitle: string): Promise<string | null> {
-  // Para futuras versiones: Aquí podrías conectar Unsplash API o Google Imagen.
-  // Por ahora, devolvemos null para que el build pase y la app use placeholders.
   return null;
 }
