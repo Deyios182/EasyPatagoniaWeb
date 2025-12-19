@@ -39,6 +39,9 @@ const LandingPage: React.FC = () => {
   const { isSignedIn } = useUser();
   const navigate = useNavigate();
   const [selectedLocality, setSelectedLocality] = useState('tran');
+  
+  // ESTADO PARA CONTROLAR LA CARGA DEL LOGO (Evita el punto/error visual)
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   const handleEnterApp = () => {
     if (isSignedIn) {
@@ -48,7 +51,6 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  // Funciones para abrir redes sociales
   const openLink = (url: string) => window.open(url, '_blank');
   
   const handleWhatsApp = () => {
@@ -83,12 +85,19 @@ const LandingPage: React.FC = () => {
 
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30] via-transparent to-black/30"></div>
 
+        {/* NAVBAR */}
         <nav className="absolute top-0 left-0 right-0 p-6 md:p-10 flex justify-between items-start md:items-center z-50">
           <div className="relative group">
+             {/* LOGO CON LÓGICA ANTI-ERROR:
+                 1. opacity-0 por defecto (invisible).
+                 2. onLoad -> opacity-100 (se muestra suavemente solo cuando carga).
+                 3. onError -> display: none (desaparece si falla, sin dejar rastro/punto).
+             */}
              <img 
                src="/logo_easy.png" 
-               className="h-100 md:h-100 w-auto object-contain transition-transform duration-500 hover:scale-105" 
+               className={`h-20 md:h-32 w-auto object-contain transition-opacity duration-700 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
                alt="Easy Patagonia Logo"
+               onLoad={() => setLogoLoaded(true)}
                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
@@ -189,7 +198,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN NUESTRA VISIÓN (ARREGLADA) --- */}
+      {/* --- SECCIÓN NUESTRA VISIÓN (ARREGLADA: Texto alineado y Tarjeta ajustada) --- */}
       <section className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
             
@@ -198,21 +207,21 @@ const LandingPage: React.FC = () => {
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">🧭</span>
                     <h3 className="text-lg font-black uppercase mb-3">Conexión y Autenticidad</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">
                         Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.
                     </p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">💡</span>
                     <h3 className="text-lg font-black uppercase mb-3">Planificación Simple</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">
                         Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.
                     </p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">💚</span>
                     <h3 className="text-lg font-black uppercase mb-3">Turismo Sostenible</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">
                         Promover un turismo responsable que respeta la riqueza natural de la Patagonia.
                     </p>
                 </div>
@@ -221,7 +230,7 @@ const LandingPage: React.FC = () => {
             {/* Misión y Visión + Imagen (ARREGLADO) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 
-                {/* Columna Texto (Alineado a la izquierda, sin justificar) */}
+                {/* Columna Texto (Alineado a la izquierda, limpio) */}
                 <div className="space-y-10 order-2 lg:order-1">
                     <div>
                         <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">🚀 Nuestra Misión</h2>
@@ -241,7 +250,7 @@ const LandingPage: React.FC = () => {
                     </button>
                 </div>
                 
-                {/* Columna Imagen + Tarjeta Flotante (Ajustada) */}
+                {/* Columna Imagen + Tarjeta Flotante (Posición arreglada) */}
                 <div className="relative mt-10 lg:mt-0 order-1 lg:order-2">
                     {/* Fondo decorativo naranja */}
                     <div className="absolute top-4 right-4 -bottom-4 -left-4 bg-[#dd6e42] rounded-[3rem] rotate-3 opacity-20 z-0"></div>
@@ -252,8 +261,8 @@ const LandingPage: React.FC = () => {
                         alt="Vision"
                     />
                     
-                    {/* Tarjeta Flotante de Contacto (Posición mejorada) */}
-                    <div className="absolute -bottom-8 -left-4 lg:-left-12 bg-white p-6 rounded-[2rem] shadow-2xl z-20 max-w-xs border border-gray-100 hidden md:block">
+                    {/* Tarjeta Flotante de Contacto (Pegada mejor a la imagen) */}
+                    <div className="absolute -bottom-6 -left-2 md:-left-12 bg-white p-6 rounded-[2rem] shadow-2xl z-20 max-w-xs border border-gray-100 hidden md:block">
                        <p className="text-[#1a2a30] font-black uppercase italic mb-4 text-sm">¿Dudas sobre tu viaje?</p>
                        <div className="flex gap-3">
                           <button onClick={handleWhatsApp} className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
