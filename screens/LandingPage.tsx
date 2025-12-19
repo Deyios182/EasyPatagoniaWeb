@@ -39,35 +39,32 @@ const LandingPage: React.FC = () => {
   const { isSignedIn } = useUser();
   const navigate = useNavigate();
   const [selectedLocality, setSelectedLocality] = useState('tran');
-  
-  // Estado para manejar si el logo falla al cargar
-  const [logoError, setLogoError] = useState(false);
 
   const handleEnterApp = () => {
-    if (isSignedIn) {
-      navigate('/map');
-    } else {
-      navigate('/login');
-    }
+    if (isSignedIn) navigate('/map');
+    else navigate('/login');
   };
 
   const openLink = (url: string) => window.open(url, '_blank');
   
   const handleWhatsApp = () => {
       const telefono = "56956425005";
-      const mensaje = "¡Hola! Escribo desde la web EasyPatagonia. Tengo una consulta sobre su plataforma o alianzas.";
+      const mensaje = "¡Hola! Escribo desde la web EasyPatagonia.";
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const url = isMobile 
-        ? `whatsapp://send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`
-        : `https://web.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
+      const url = isMobile ? `whatsapp://send?phone=${telefono}&text=${encodeURIComponent(mensaje)}` : `https://web.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
   };
 
   const handleEmail = () => {
-      const email = "infoeasypatagonia@gmail.com";
-      const subject = "Consulta desde EasyPatagonia Web";
-      const body = "Estimado equipo EasyPatagonia,\n\nEscribo con respecto a...";
-      window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:infoeasypatagonia@gmail.com`;
+  };
+
+  // Función para scroll suave
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -75,70 +72,36 @@ const LandingPage: React.FC = () => {
       
       {/* --- HERO SECTION --- */}
       <div className="relative h-screen w-full overflow-hidden bg-black">
-        {/* Fondo con imagen */}
         <div className="absolute inset-0">
-           <img 
-             src="https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"
-             className="w-full h-full object-cover opacity-60 animate-[pulse_10s_infinite]"
-             alt="Patagonia Background"
-           />
+           <img src="https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070" className="w-full h-full object-cover opacity-60 animate-[pulse_10s_infinite]" alt="Patagonia Background" />
         </div>
-
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30] via-transparent to-black/30"></div>
 
-        {/* NAVBAR */}
-        <nav className="absolute top-0 left-0 right-0 p-6 md:p-10 flex justify-between items-start md:items-center z-50">
+        {/* NAVBAR CON MENÚ */}
+        <nav className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-center z-50">
           
-          {/* LOGO "A PRUEBA DE FALLOS" */}
-          <div className="relative group cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-             {!logoError ? (
-                 <img 
-                   src="/logo_easy.png" 
-                   // Quitamos la opacidad dinámica para que se vea siempre
-                   className="h-20 md:h-32 w-auto object-contain hover:scale-105 transition-transform drop-shadow-lg" 
-                   alt="Easy Patagonia Logo"
-                   // Si falla, activamos el modo texto
-                   onError={() => setLogoError(true)} 
-                 />
-             ) : (
-                 // Si la imagen falla, mostramos esto en su lugar (nunca un punto roto)
-                 <div className="flex flex-col">
-                    <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Easy Patagonia</h1>
-                    <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">Austral Experience</span>
-                 </div>
-             )}
+          {/* LOGO: SIMPLIFICADO AL MÁXIMO PARA EVITAR ERRORES VISUALES */}
+          <div className="mb-4 md:mb-0 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+             <img src="/logo_easy.png" className="h-24 w-auto object-contain hover:scale-105 transition-transform" alt="Easy Patagonia"/>
           </div>
 
-          <button 
-            onClick={handleEnterApp} 
-            className="bg-[#dd6e42] text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white mt-2 md:mt-0"
-          >
+          {/* MENÚ DE NAVEGACIÓN */}
+          <div className="flex gap-6 mb-4 md:mb-0 bg-black/30 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
+             <button onClick={() => scrollToSection('destinos')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
+             <button onClick={() => scrollToSection('vision')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
+             <button onClick={() => scrollToSection('contacto')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
+          </div>
+
+          <button onClick={handleEnterApp} className="bg-[#dd6e42] text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white">
             {isSignedIn ? 'Ir al Mapa' : 'Ingresar'}
           </button>
         </nav>
 
-        {/* Textos Principales */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
-          <motion.h1 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none"
-          >
+          <motion.h1 initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1 }} className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">
             Patagonia <br /> <span className="text-[#dd6e42]">Sin Límites</span>
           </motion.h1>
-          <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
-            "Tú Disfruta, Nosotros Resolvemos."
-          </p>
-          
-          <div className="mt-12 md:hidden">
-             <button 
-                onClick={handleEnterApp}
-                className="bg-[#dd6e42] text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(221,110,66,0.5)]"
-             >
-               Comenzar Aventura
-             </button>
-          </div>
+          <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">"Tú Disfruta, Nosotros Resolvemos."</p>
         </div>
         
         <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce">
@@ -146,8 +109,8 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* --- SECCIÓN DESTINOS --- */}
-      <section className="py-20 px-6 md:px-20 bg-[#eaeaea]">
+      {/* --- SECCIÓN DESTINOS (ID Agregado) --- */}
+      <section id="destinos" className="py-20 px-6 md:px-20 bg-[#eaeaea]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
@@ -156,12 +119,7 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                 {LOCALITIES.map(loc => (
-                    <button 
-                        key={loc.id}
-                        disabled={!loc.active}
-                        onClick={() => setSelectedLocality(loc.id)}
-                        className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
-                    >
+                    <button key={loc.id} disabled={!loc.active} onClick={() => setSelectedLocality(loc.id)} className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}>
                         {loc.name} {!loc.active && '(Pronto)'}
                     </button>
                 ))}
@@ -172,15 +130,11 @@ const LandingPage: React.FC = () => {
              <div className="lg:col-span-1 bg-white p-8 rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between">
                 <div>
                     <h4 className="text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4">Puerto Río Tranquilo</h4>
-                    <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium">
-                        El corazón turístico de la cuenca del Lago General Carrera. Hogar de las Catedrales de Mármol y puerta de entrada al hielo milenario.
-                    </p>
+                    <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium">El corazón turístico de la cuenca del Lago General Carrera.</p>
                 </div>
                 <div className="p-6 bg-[#eaeaea] rounded-3xl">
                     <p className="text-xs font-bold text-[#4f6d7a] uppercase tracking-widest mb-2">Gestión Local</p>
-                    <p className="text-[10px] text-gray-500 font-bold">
-                        Datos actualizados por nuestros embajadores en terreno.
-                    </p>
+                    <p className="text-[10px] text-gray-500 font-bold">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
              </div>
 
@@ -193,9 +147,7 @@ const LandingPage: React.FC = () => {
                             <div className="absolute bottom-8 left-8 right-8">
                                 <h5 className="text-2xl font-black text-white uppercase italic mb-1 leading-none">{place.title}</h5>
                                 <div className="flex gap-2 mt-3">
-                                    {place.tags.map(tag => (
-                                        <span key={tag} className="text-[9px] bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full uppercase font-black">{tag}</span>
-                                    ))}
+                                    {place.tags.map(tag => (<span key={tag} className="text-[9px] bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full uppercase font-black">{tag}</span>))}
                                 </div>
                             </div>
                         </div>
@@ -206,78 +158,55 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN NUESTRA VISIÓN --- */}
-      <section className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
+      {/* --- SECCIÓN NUESTRA VISIÓN (ID Agregado) --- */}
+      <section id="vision" className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
-            
-            {/* Pilares */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">🧭</span>
                     <h3 className="text-lg font-black uppercase mb-3">Conexión y Autenticidad</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed text-left">
-                        Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.
-                    </p>
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">💡</span>
                     <h3 className="text-lg font-black uppercase mb-3">Planificación Simple</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed text-left">
-                        Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.
-                    </p>
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
                     <span className="text-3xl mb-4 block">💚</span>
                     <h3 className="text-lg font-black uppercase mb-3">Turismo Sostenible</h3>
-                    <p className="text-sm text-slate-300 leading-relaxed text-left">
-                        Promover un turismo responsable que respeta la riqueza natural de la Patagonia.
-                    </p>
+                    <p className="text-sm text-slate-300 leading-relaxed text-left">Promover un turismo responsable que respeta la riqueza natural de la Patagonia.</p>
                 </div>
             </div>
 
-            {/* Misión y Visión */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                
-                {/* Texto */}
                 <div className="space-y-10 order-2 lg:order-1">
                     <div>
                         <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">🚀 Nuestra Misión</h2>
                         <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-left">
-                            Impulsar el desarrollo turístico de la Región de Aysén mediante una plataforma innovadora que conecta a viajeros con experiencias auténticas, la naturaleza y las comunidades locales. A través de tecnología inteligente facilitamos la exploración responsable, accesible y profunda de la Patagonia.
+                            Impulsar el desarrollo turístico de la Región de Aysén mediante una plataforma innovadora que conecta a viajeros con experiencias auténticas, la naturaleza y las comunidades locales.
                         </p>
                     </div>
                     <div>
                         <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">👁️ Nuestra Visión</h2>
                         <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-left">
-                            Convertirnos en la plataforma turística líder de toda la Patagonia —chilena y argentina— integrando tecnología, sostenibilidad y desarrollo comunitario. Aspiramos a transformar la manera en que las personas descubren y recorren este territorio único.
+                            Convertirnos en la plataforma turística líder de toda la Patagonia —chilena y argentina— integrando tecnología, sostenibilidad y desarrollo comunitario.
                         </p>
                     </div>
-                    
                     <button onClick={handleEnterApp} className="bg-white text-[#1a2a30] px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#dd6e42] hover:text-white transition-all shadow-xl w-full md:w-auto">
                         EXPLORAR LA PATAGONIA AHORA
                     </button>
                 </div>
                 
-                {/* Imagen */}
                 <div className="relative mt-10 lg:mt-0 order-1 lg:order-2">
                     <div className="absolute top-4 right-4 -bottom-4 -left-4 bg-[#dd6e42] rounded-[3rem] rotate-3 opacity-20 z-0"></div>
+                    <img src="https://images.unsplash.com/photo-1518182170546-0766be6f5a56?q=80&w=1000" className="relative rounded-[3rem] shadow-2xl border border-white/10 rotate-[-2deg] hover:rotate-0 transition-all duration-500 z-10 w-full object-cover h-[500px]" alt="Vision"/>
                     
-                    <img 
-                        src="https://images.unsplash.com/photo-1518182170546-0766be6f5a56?q=80&w=1000" 
-                        className="relative rounded-[3rem] shadow-2xl border border-white/10 rotate-[-2deg] hover:rotate-0 transition-all duration-500 z-10 w-full object-cover h-[500px]"
-                        alt="Vision"
-                    />
-                    
-                    {/* Tarjeta Flotante Contacto */}
                     <div className="absolute -bottom-6 -left-2 md:-left-12 bg-white p-6 rounded-[2rem] shadow-2xl z-20 max-w-xs border border-gray-100 hidden md:block">
                        <p className="text-[#1a2a30] font-black uppercase italic mb-4 text-sm">¿Dudas sobre tu viaje?</p>
                        <div className="flex gap-3">
-                          <button onClick={handleWhatsApp} className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
-                             <span className="material-symbols-outlined text-2xl">call</span>
-                          </button>
-                          <button onClick={handleEmail} className="w-12 h-12 bg-[#3498DB] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
-                             <span className="material-symbols-outlined text-2xl">mail</span>
-                          </button>
+                          <button onClick={handleWhatsApp} className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"><span className="material-symbols-outlined text-2xl">call</span></button>
+                          <button onClick={handleEmail} className="w-12 h-12 bg-[#3498DB] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"><span className="material-symbols-outlined text-2xl">mail</span></button>
                        </div>
                     </div>
                 </div>
@@ -285,43 +214,31 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN SOCIALES --- */}
-      <section className="py-20 bg-[#eaeaea]">
+      {/* --- SECCIÓN SOCIALES (ID Agregado) --- */}
+      <section id="contacto" className="py-20 bg-[#eaeaea]">
          <div className="max-w-4xl mx-auto px-6 text-center">
             <h2 className="text-[#1a2a30] text-2xl font-black uppercase italic mb-2">¡Únete a la Aventura EasyPatagonia!</h2>
             <p className="text-gray-500 mb-10">Síguenos en nuestras plataformas para no perderte ninguna novedad.</p>
             
             <div className="flex flex-wrap justify-center gap-6">
-                <button 
-                  onClick={() => openLink("https://www.instagram.com/easy.patagonia")}
-                  className="flex items-center gap-3 px-8 py-4 bg-[#E1306C] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
-                >
+                <button onClick={() => openLink("https://www.instagram.com/easy.patagonia")} className="flex items-center gap-3 px-8 py-4 bg-[#E1306C] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform">
                    <span className="font-black uppercase tracking-widest text-xs">Instagram</span>
                 </button>
-                <button 
-                  onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")}
-                  className="flex items-center gap-3 px-8 py-4 bg-black text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
-                >
+                <button onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")} className="flex items-center gap-3 px-8 py-4 bg-black text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform">
                    <span className="font-black uppercase tracking-widest text-xs">TikTok</span>
                 </button>
-                <button 
-                  onClick={handleWhatsApp}
-                  className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
-                >
+                <button onClick={handleWhatsApp} className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform">
                    <span className="font-black uppercase tracking-widest text-xs">Soporte WhatsApp</span>
                 </button>
             </div>
             
             <div className="mt-12 pt-12 border-t border-gray-300">
                <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
-               <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">
-                  infoeasypatagonia@gmail.com
-               </button>
+               <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">infoeasypatagonia@gmail.com</button>
             </div>
          </div>
       </section>
 
-      {/* --- FOOTER --- */}
       <footer className="bg-[#152024] py-12 text-center text-slate-500 text-xs">
         <img src="/logo_easy.png" className="h-10 w-auto mx-auto mb-6 opacity-50 grayscale hover:grayscale-0 transition-all" />
         <p className="uppercase tracking-widest font-black mb-4">Easy Patagonia © 2024</p>
