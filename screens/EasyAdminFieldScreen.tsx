@@ -1,117 +1,253 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import { Locality, Attraction, Company } from '../types';
+import { uploadImage } from '../utils/imageHandler';
 
 const EasyAdminFieldScreen: React.FC = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [gps, setGps] = useState<{lat: number, lng: number} | null>(null);
-  const [offlineQueue, setOfflineQueue] = useState(0);
+  const [activeTab, setActiveTab] = useState<'localidades' | 'atractivos' | 'empresas'>('localidades');
+  
+  // Datos
+  const [localities, setLocalities] = useState<Locality[]>([]);
+  const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
 
+  // Formularios
+  const [editingLocality, setEditingLocality] = useState<Partial<Locality> | null>(null);
+  const [editingAttraction, setEditingAttraction] = useState<Partial<Attraction> | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Partial<Company> | null>(null);
+  
+  // Asignación de dueño
+  const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
+  const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
+
+  // Carga inicial
   useEffect(() => {
-    // Check if there are pending items in local storage
-    const stored = localStorage.getItem('ep_field_queue');
-    if (stored) setOfflineQueue(JSON.parse(stored).length);
+    fetchData();
   }, []);
 
-  const captureGPS = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => alert("Error capturando GPS. Asegúrate de tener permisos.")
-      );
-    }
+  const fetchData = async () => {
+    const { data: locs } = await supabase.from('localities').select('*');
+    if (locs) setLocalities(locs);
+
+    const { data: attrs } = await supabase.from('attractions').select('*, localities(name)');
+    if (attrs) setAttractions(attrs.map(a => ({...a, locality_name: a.localities?.name})));
+
+    const { data: comps } = await supabase.from('companies').select('*, user_profiles(email)');
+    if (comps) setCompanies(comps.map(c => ({...c, owner_email: c.user_profiles?.email})));
   };
 
-  const handleSave = () => {
-    setLoading(true);
-    // Simulate offline saving
-    setTimeout(() => {
-      const newQueue = offlineQueue + 1;
-      setOfflineQueue(newQueue);
-      localStorage.setItem('ep_field_queue', JSON.stringify(new Array(newQueue).fill(1)));
-      setLoading(false);
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setGps(null);
-      }, 3000);
-    }, 1500);
+  // --- LOGICA LOCALIDADES ---
+  const saveLocality = async () => {
+    if (!editingLocality?.name) return;
+    const payload = { name: editingLocality.name, image_url: editingLocality.image_url, is_active: true };
+    
+    if (editingLocality.id) {
+        await supabase.from('localities').update(payload).eq('id', editingLocality.id);
+    } else {
+        await supabase.from('localities').insert([payload]);
+    }
+    setEditingLocality(null);
+    fetchData();
+  };
+
+  // --- LOGICA ATRACTIVOS ---
+  const saveAttraction = async () => {
+    if (!editingAttraction?.name || !editingAttraction.locality_id) return;
+    const payload = { 
+        name: editingAttraction.name, 
+        locality_id: editingAttraction.locality_id, 
+        description: editingAttraction.description, 
+        image_url: editingAttraction.image_url 
+    };
+
+    if (editingAttraction.id) {
+        await supabase.from('attractions').update(payload).eq('id', editingAttraction.id);
+    } else {
+        await supabase.from('attractions').insert([payload]);
+    }
+    setEditingAttraction(null);
+    fetchData();
+  };
+
+  // --- LOGICA EMPRESAS ---
+  const searchOwner = async () => {
+     const { data } = await supabase.from('user_profiles').select('clerk_user_id, email').eq('email', ownerEmailSearch).single();
+     if (data) setOwnerSearchResult(data);
+     else alert('Usuario no encontrado. Asegúrate de que se haya registrado primero.');
+  };
+
+  const saveCompany = async () => {
+    if (!editingCompany?.name) return;
+    const payload = {
+        name: editingCompany.name,
+        description: editingCompany.description,
+        logo_url: editingCompany.logo_url,
+        // Si encontramos un dueño, lo asignamos. Si no, queda null (sin dueño aún)
+        owner_id: ownerSearchResult ? ownerSearchResult.clerk_user_id : editingCompany.owner_id
+    };
+
+    if (editingCompany.id) {
+        await supabase.from('companies').update(payload).eq('id', editingCompany.id);
+    } else {
+        await supabase.from('companies').insert([payload]);
+    }
+    setEditingCompany(null);
+    setOwnerSearchResult(null);
+    setOwnerEmailSearch('');
+    fetchData();
+  };
+
+  // --- UPLOAD GENÉRICO ---
+  const handleUpload = async (e: any, setter: any) => {
+     const file = e.target.files[0];
+     if (file) {
+        const url = await uploadImage(file, 'places');
+        if (url) setter((prev: any) => ({ ...prev, image_url: url, logo_url: url }));
+     }
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col mx-auto max-w-[480px] bg-background-light dark:bg-background-dark">
-      <div className="p-6 pt-12 space-y-6 overflow-y-auto no-scrollbar pb-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined">add_location_alt</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold dark:text-white">EasyAdmin Campo</h1>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Colaborador en Terreno</p>
-            </div>
-          </div>
-          <button onClick={() => navigate('/profile')} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        {offlineQueue > 0 && (
-          <div className="bg-primary/10 border border-primary/20 p-4 rounded-3xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary animate-pulse">cloud_sync</span>
-              <p className="text-xs font-bold text-primary">{offlineQueue} registros pendientes de sincronizar</p>
-            </div>
-            <span className="text-[10px] font-black text-primary bg-white px-2 py-0.5 rounded-full">SINCRO AUTO</span>
-          </div>
-        )}
-
-        <div className="bg-white dark:bg-surface-dark p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-1 px-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre del Negocio</label>
-              <input type="text" className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl py-4 px-5 text-sm dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50" placeholder="Ej: Pizzería El Baker" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed border-slate-100 dark:border-white/10 rounded-3xl text-slate-400 hover:bg-slate-50 transition-colors">
-                <span className="material-symbols-outlined">add_a_photo</span>
-                <span className="text-[9px] font-black uppercase tracking-widest">Foto Local</span>
-              </button>
-              <button onClick={captureGPS} className={`flex flex-col items-center justify-center gap-2 py-6 border-2 rounded-3xl transition-all ${gps ? 'border-green-500 bg-green-500/5 text-green-500' : 'border-primary/20 bg-primary/5 text-primary'}`}>
-                <span className="material-symbols-outlined">{gps ? 'gps_fixed' : 'location_searching'}</span>
-                <span className="text-[9px] font-black uppercase tracking-widest">{gps ? 'GPS Capturado' : 'Fijar GPS'}</span>
-              </button>
-            </div>
-
-            {gps && (
-              <div className="p-3 bg-slate-50 dark:bg-background-dark rounded-2xl flex items-center gap-3 border border-slate-100 dark:border-white/5">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-slate-400">Coordenadas capturadas</p>
-                  <p className="text-[10px] font-black dark:text-white truncate">{gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}</p>
-                </div>
-                <span className="material-symbols-outlined text-green-500 text-sm">verified_user</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <button 
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full bg-primary text-white font-black h-16 rounded-full shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
-        >
-          {loading ? 'Procesando...' : success ? '¡Guardado con Éxito!' : 'Finalizar Registro'}
-          {!loading && !success && <span className="material-symbols-outlined">save</span>}
-          {success && <span className="material-symbols-outlined">check_circle</span>}
-        </button>
-
-        <p className="text-center text-[10px] text-slate-500 font-medium px-8">
-          Los datos se guardarán localmente si no hay conexión y se sincronizarán al detectar señal automáticamente.
-        </p>
+    <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="flex justify-between items-end mb-8">
+         <div>
+            <h1 className="text-3xl font-black text-slate-800">Panel de Campo</h1>
+            <p className="text-slate-500">Gestión operativa de Aysén.</p>
+         </div>
+         <div className="flex bg-white rounded-xl p-1 shadow-sm">
+            <button onClick={() => setActiveTab('localidades')} className={`px-4 py-2 rounded-lg font-bold text-sm ${activeTab === 'localidades' ? 'bg-primary text-white' : 'text-slate-500'}`}>Localidades</button>
+            <button onClick={() => setActiveTab('atractivos')} className={`px-4 py-2 rounded-lg font-bold text-sm ${activeTab === 'atractivos' ? 'bg-primary text-white' : 'text-slate-500'}`}>Atractivos</button>
+            <button onClick={() => setActiveTab('empresas')} className={`px-4 py-2 rounded-lg font-bold text-sm ${activeTab === 'empresas' ? 'bg-primary text-white' : 'text-slate-500'}`}>Empresas</button>
+         </div>
       </div>
+
+      {/* --- TAB LOCALIDADES --- */}
+      {activeTab === 'localidades' && (
+        <div>
+           <button onClick={() => setEditingLocality({})} className="mb-4 bg-primary text-white px-4 py-2 rounded-lg font-bold shadow-lg">+ Nueva Localidad</button>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {localities.map(loc => (
+                  <div key={loc.id} className="bg-white p-4 rounded-xl shadow-sm cursor-pointer hover:shadow-md" onClick={() => setEditingLocality(loc)}>
+                     <img src={loc.image_url || 'https://via.placeholder.com/150'} className="w-full h-32 object-cover rounded-lg mb-3" />
+                     <h3 className="font-bold text-lg">{loc.name}</h3>
+                  </div>
+              ))}
+           </div>
+           {/* MODAL LOCALIDAD */}
+           {editingLocality && (
+             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white p-6 rounded-2xl w-96">
+                   <h3 className="text-xl font-bold mb-4">Localidad</h3>
+                   <input type="text" placeholder="Nombre" className="w-full border p-2 rounded mb-2" value={editingLocality.name || ''} onChange={e => setEditingLocality({...editingLocality, name: e.target.value})} />
+                   <input type="file" onChange={e => handleUpload(e, setEditingLocality)} className="mb-4 text-xs"/>
+                   <div className="flex gap-2">
+                      <button onClick={saveLocality} className="flex-1 bg-primary text-white py-2 rounded font-bold">Guardar</button>
+                      <button onClick={() => setEditingLocality(null)} className="flex-1 bg-slate-200 py-2 rounded font-bold">Cancelar</button>
+                   </div>
+                </div>
+             </div>
+           )}
+        </div>
+      )}
+
+      {/* --- TAB ATRACTIVOS --- */}
+      {activeTab === 'atractivos' && (
+        <div>
+           <button onClick={() => setEditingAttraction({})} className="mb-4 bg-primary text-white px-4 py-2 rounded-lg font-bold shadow-lg">+ Nuevo Atractivo</button>
+           <div className="space-y-3">
+              {attractions.map(att => (
+                  <div key={att.id} className="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50" onClick={() => setEditingAttraction(att)}>
+                     <img src={att.image_url || 'https://via.placeholder.com/50'} className="w-16 h-16 rounded-lg object-cover" />
+                     <div>
+                        <h3 className="font-bold">{att.name}</h3>
+                        <p className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded inline-block">{att.locality_name}</p>
+                     </div>
+                  </div>
+              ))}
+           </div>
+           {/* MODAL ATRACTIVO */}
+           {editingAttraction && (
+             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white p-6 rounded-2xl w-96 max-h-[90vh] overflow-y-auto">
+                   <h3 className="text-xl font-bold mb-4">Atractivo Turístico</h3>
+                   <select className="w-full border p-2 rounded mb-2" value={editingAttraction.locality_id || ''} onChange={e => setEditingAttraction({...editingAttraction, locality_id: e.target.value})}>
+                      <option value="">Selecciona Localidad</option>
+                      {localities.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                   </select>
+                   <input type="text" placeholder="Nombre (ej. Capillas de Mármol)" className="w-full border p-2 rounded mb-2" value={editingAttraction.name || ''} onChange={e => setEditingAttraction({...editingAttraction, name: e.target.value})} />
+                   <textarea placeholder="Descripción..." className="w-full border p-2 rounded mb-2" rows={3} value={editingAttraction.description || ''} onChange={e => setEditingAttraction({...editingAttraction, description: e.target.value})} />
+                   <input type="file" onChange={e => handleUpload(e, setEditingAttraction)} className="mb-4 text-xs"/>
+                   <div className="flex gap-2">
+                      <button onClick={saveAttraction} className="flex-1 bg-primary text-white py-2 rounded font-bold">Guardar</button>
+                      <button onClick={() => setEditingAttraction(null)} className="flex-1 bg-slate-200 py-2 rounded font-bold">Cancelar</button>
+                   </div>
+                </div>
+             </div>
+           )}
+        </div>
+      )}
+
+      {/* --- TAB EMPRESAS --- */}
+      {activeTab === 'empresas' && (
+        <div>
+           <button onClick={() => setEditingCompany({})} className="mb-4 bg-primary text-white px-4 py-2 rounded-lg font-bold shadow-lg">+ Nueva Empresa</button>
+           <div className="space-y-3">
+              {companies.map(comp => (
+                  <div key={comp.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center cursor-pointer hover:bg-slate-50" onClick={() => setEditingCompany(comp)}>
+                     <div className="flex items-center gap-4">
+                        <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-12 h-12 rounded-full object-cover border" />
+                        <div>
+                            <h3 className="font-bold">{comp.name}</h3>
+                            <p className="text-xs text-slate-400 truncate w-64">{comp.description}</p>
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded ${comp.owner_email ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                           {comp.owner_email ? comp.owner_email : 'Sin Dueño'}
+                        </span>
+                     </div>
+                  </div>
+              ))}
+           </div>
+           {/* MODAL EMPRESA */}
+           {editingCompany && (
+             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white p-6 rounded-2xl w-full max-w-lg">
+                   <h3 className="text-xl font-bold mb-4">Datos Empresa</h3>
+                   
+                   <input type="text" placeholder="Nombre Fantasía" className="w-full border p-2 rounded mb-2" value={editingCompany.name || ''} onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} />
+                   <textarea placeholder="Descripción..." className="w-full border p-2 rounded mb-2" rows={2} value={editingCompany.description || ''} onChange={e => setEditingCompany({...editingCompany, description: e.target.value})} />
+                   
+                   <div className="bg-slate-100 p-4 rounded-xl mb-4">
+                      <label className="text-xs font-bold text-slate-500 mb-1 block">Asignar Dueño (Email)</label>
+                      <div className="flex gap-2">
+                         <input type="text" placeholder="ejemplo@gmail.com" className="flex-1 border p-2 rounded" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
+                         <button onClick={searchOwner} className="bg-slate-800 text-white px-3 rounded font-bold text-xs">Buscar</button>
+                      </div>
+                      {ownerSearchResult && <p className="text-xs text-green-600 mt-1 font-bold">✓ Usuario encontrado: {ownerSearchResult.email}</p>}
+                      {editingCompany.owner_id && !ownerSearchResult && <p className="text-xs text-slate-400 mt-1">Dueño actual asignado (ID: ...{editingCompany.owner_id.slice(-4)})</p>}
+                   </div>
+
+                   <label className="text-xs font-bold mb-1 block">Logo Empresa</label>
+                   <input type="file" onChange={e => handleUpload(e, (cb:any) => {
+                       // Adaptador simple porque la funcion handleUpload setea 'image_url' pero la empresa usa 'logo_url'
+                       const reader = new FileReader();
+                       reader.onload = async () => {
+                          const file = e.target.files[0];
+                          const url = await uploadImage(file, 'logos');
+                          if(url) setEditingCompany(prev => ({...prev, logo_url: url}));
+                       };
+                       reader.readAsDataURL(e.target.files[0]);
+                   })} className="mb-4 text-xs"/>
+
+                   <div className="flex gap-2 mt-4">
+                      <button onClick={saveCompany} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold">Guardar Empresa</button>
+                      <button onClick={() => {setEditingCompany(null); setOwnerSearchResult(null);}} className="flex-1 bg-slate-200 py-3 rounded-xl font-bold">Cancelar</button>
+                   </div>
+                </div>
+             </div>
+           )}
+        </div>
+      )}
     </div>
   );
 };
