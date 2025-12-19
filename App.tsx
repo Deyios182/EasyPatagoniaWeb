@@ -5,9 +5,9 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from './supabaseClient';
 
 // Importación de pantallas
-import WelcomeScreen from './screens/WelcomeScreen'; // Ahora será la pantalla de Login
-import LandingPage from './screens/LandingPage';     // Nueva pantalla principal
-import SplashScreen from './Screens/SplashScreen'; // Nuevo Splash
+import WelcomeScreen from './screens/WelcomeScreen'; 
+import LandingPage from './screens/LandingPage';     
+import SplashScreen from './screens/SplashScreen'; // <--- ¡CORREGIDO AQUÍ!
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
 import PlannerScreen from './screens/PlannerScreen';
@@ -428,7 +428,7 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   );
 };
 
-// --- APP PRINCIPAL (CON FLUJO SPLASH -> LANDING -> APP) ---
+// --- APP PRINCIPAL ---
 const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
   const { isLoaded } = useUser();
@@ -479,6 +479,8 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/login" />} />
           <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/login" />} />
           <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/login" />} />
+          
+          {/* Rutas de Admin/Dueño */}
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
