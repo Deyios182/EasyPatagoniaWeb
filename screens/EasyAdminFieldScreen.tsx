@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Locality, Attraction, Company } from '../types';
 // Ajusta esta ruta si tu archivo está en 'screens' o en 'utils'
-import { uploadImage } from '../utils/imageHandler'; 
+import { uploadImage } from './imageHandler'; 
 
 // --- MAPA ---
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
