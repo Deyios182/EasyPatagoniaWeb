@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useUser, useClerk, SignInButton, UserButton } from '@clerk/clerk-react';
@@ -170,7 +169,7 @@ const translations: Record<Language, Record<string, string>> = {
 // --- CONTEXTO DE AUTENTICACIÓN ---
 interface AuthContextType {
   user: User | null;
-  login: (userData: Partial<User>) => void; // Deprecado con Clerk, pero mantenido por compatibilidad
+  login: (userData: Partial<User>) => void;
   logout: () => void;
   allBusinesses: Business[];
   updateBusiness: (biz: Business) => void;
@@ -237,7 +236,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: email,
         rol: role,
         avatar: clerkUser.imageUrl,
-        savedItineraries: [] // Aquí podrías cargar itinerarios guardados de LS usando el ID
+        savedItineraries: [] 
       };
       setAppUser(newUser);
     } else if (isLoaded && !clerkUser) {
