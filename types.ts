@@ -1,75 +1,69 @@
+export type Role = 'SuperAdmin' | 'DueñoEmpresa' | 'EasyColaborador' | 'Turista';
 
-export type Category = 'Restaurante' | 'Hospedaje' | 'Actividad' | 'Natural' | 'Transporte';
+export interface User {
+  uid: string;
+  name: string;
+  email: string;
+  rol: Role;
+  avatar?: string;
+  savedItineraries?: SavedItinerary[];
+}
 
-export type MapTheme = 'dark' | 'light' | 'satellite';
+export type MapTheme = 'light' | 'dark' | 'satellite';
+export type Currency = 'CLP' | 'USD' | 'BRL';
 
-export type Currency = 'CLP' | 'USD' | 'EUR';
+// --- MODELOS DE BASE DE DATOS (Supabase) ---
+
+export interface Locality {
+  id: string;
+  name: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
+export interface Attraction {
+  id: string;
+  locality_id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  // Campos opcionales para UI
+  locality_name?: string; 
+}
+
+export interface Company {
+  id: string;
+  owner_id?: string; // ID del dueño en user_profiles
+  name: string;
+  description?: string;
+  logo_url?: string;
+  gallery_urls?: string[];
+  is_active: boolean;
+  // Relaciones
+  owner_email?: string; // Para mostrar en el admin
+}
 
 export interface Service {
   id: string;
-  nombre: string;
-  precio: string;
-  descripcion: string;
-  foto_url: string;
+  company_id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  description?: string;
 }
 
-export interface Business {
-  id: string;
-  nombre: string;
-  categoria: Category;
-  priority: 1 | 2 | 3;
-  gps: {
-    lat: number;
-    lng: number;
-  };
-  contacto: {
-    whatsapp: string;
-    email: string;
-    web: string;
-  };
-  info: {
-    descripcion: string;
-    horario: string;
-    direccion: string;
-  };
-  media: {
-    logo_url: string;
-    fotos_url: string[];
-  };
-  servicios: Service[];
-  rating: number;
-  reviewCount: number;
-  isOpen: boolean;
-  offlineReady: boolean;
-}
-
-export type Role = 'SuperAdmin' | 'DueñoEmpresa' | 'EasyColaborador' | 'Turista';
-
-export interface ItineraryDay {
-  day: number;
-  activities: {
-    time: string;
-    title: string;
-    description: string;
-    businessName?: string;
-    category?: Category;
-  }[];
+// Interfaz legacy para compatibilidad con componentes viejos (si quedan)
+export interface Business extends Company {
+  category?: string;
+  rating?: number;
+  lat?: number;
+  lng?: number;
+  services?: Service[];
 }
 
 export interface SavedItinerary {
   id: string;
-  createdAt: string;
-  days: number;
-  budget: string;
-  categories: Category[];
-  plan: ItineraryDay[];
-}
-
-export interface User {
-  uid: string;
-  email: string;
-  rol: Role;
   name: string;
-  avatar?: string;
-  savedItineraries?: SavedItinerary[];
+  date: string;
+  items: any[];
 }
