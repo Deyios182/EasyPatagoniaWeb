@@ -1,40 +1,43 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { supabase } from "./supabaseClient"; // Necesario para dar contexto real
+import { supabase } from "./supabaseClient";
 import { Business, Category } from "./types";
 
-// 1. CLAVE API SEGURA PARA VITE
-// process.env no funciona en Vite, usamos import.meta.env
+// 1. CLAVE API PARA VITE (Corrección obligatoria: process.env no funciona en Vite)
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-if (!API_KEY) {
-  console.warn("ADVERTENCIA: No se encontró la API KEY de Gemini.");
+/**
+ * Función auxiliar para manejar reintentos cuando se acaba la cuota (Error 429)
+ */
+async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-1.5-flash') {
+  try {
+    return await ai.models.generateContent(params);
+  } catch (error: any) {
+    // Si el error es 429 (Cuota excedida) o 404 (Modelo no encontrado), usamos el modelo seguro
+    if (error.status === 429 || error.code === 429 || error.status === 404) {
+      console.warn(`⚠️ Cuota agotada para ${params.model}. Usando fallback: ${fallbackModel}`);
+      return await ai.models.generateContent({ ...params, model: fallbackModel });
+    }
+    throw error;
+  }
 }
 
 /**
- * Chat IA con Modelos Avanzados (2.5 Flash)
+ * Chat Inteligente (Intenta 2.5 -> Fallback a 1.5)
  */
 export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES', userLat?: number, userLng?: number) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     
-    // 2. RECUPERAR DATOS DE SUPABASE (Contexto Local)
-    // Sin esto, la IA no sabrá sobre tus negocios específicos.
-    const { data: businesses } = await supabase
-      .from('businesses')
-      .select('nombre, categoria, info, gps')
-      .limit(30);
+    // Contexto de Supabase (Tus negocios)
+    const { data: businesses } = await supabase.from('businesses').select('nombre, categoria, info').limit(30);
+    const contextText = businesses?.map((b: any) => `- ${b.nombre} (${b.categoria}): ${b.info?.descripcion}`).join('\n') || "";
 
-    const contextText = businesses?.map((b: any) => 
-      `- ${b.nombre} (${b.categoria}): ${b.info?.descripcion || 'Sin descripción'}.`
-    ).join('\n') || "";
-
-    // Configuración de Herramientas
     const tools: any[] = [{ googleSearch: {} }];
     const toolConfig: any = {};
     const isMapsRequested = !!(userLat && userLng);
     
-    // MODELO SOLICITADO
-    const model = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-3-flash-preview';
+    // Intentamos usar el modelo que quieres
+    const preferredModel = isMapsRequested ? 'gemini-2.0-flash' : 'gemini-2.0-flash-exp';
 
     if (isMapsRequested) {
       tools.push({ googleMaps: {} });
@@ -42,32 +45,28 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     }
 
     const languageContext = {
-      ES: "Debes responder en Español Chileno.",
-      EN: "You must respond in English.",
-      PT: "Você deve responder em Português do Brasil."
+      ES: "Responde en Español Chileno.",
+      EN: "Respond in English.",
+      PT: "Responda em Português."
     };
 
-    const response = await ai.models.generateContent({
-      model,
+    const config = {
+      model: preferredModel,
       contents: prompt,
       config: {
-        systemInstruction: `
-          Eres un guía experto de Aysén. ${languageContext[language]} 
-          
-          INFORMACIÓN LOCAL VERIFICADA (Prioridad Alta):
-          ${contextText}
-
-          Si te piden recomendaciones de alojamiento, comida o tours, SIEMPRE intenta encajar uno de la lista de arriba.
-          Si usas Google Search, compleméntalo con la información local.
-        `,
+        systemInstruction: `Eres un guía experto de Aysén. ${languageContext[language]}
+        INFORMACIÓN LOCAL (Prioridad):
+        ${contextText}
+        Si recomiendas algo, menciona si está en la lista local.`,
         tools,
         toolConfig
       }
-    });
+    };
+
+    // Usamos la función segura
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
 
     const text = response.text || "";
-    
-    // Extracción de Fuentes (Grounding)
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = groundingChunks.map((chunk: any) => {
       if (chunk.web) return { uri: chunk.web.uri, title: chunk.web.title, type: 'web' };
@@ -78,72 +77,54 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     return { text, sources };
 
   } catch (error: any) {
-    // ERROR DETALLADO SOLICITADO
-    console.error("AI Error:", error);
-    return { 
-      text: `Error de Sistema (${error.status || 'Desconocido'}): ${error.message || JSON.stringify(error)}. Revisa tu API Key o acceso al modelo.`, 
-      sources: [] 
-    };
+    console.error("Chat Error:", error);
+    // Devolvemos el mensaje de error exacto para que sepas qué pasa
+    const msg = error.message || JSON.stringify(error);
+    if(msg.includes('429')) return { text: "⚠️ Mi cuota de energía IA se agotó por hoy. Intenta más tarde o actualiza el plan.", sources: [] };
+    return { text: `Error del sistema: ${msg}`, sources: [] };
   }
 }
 
 /**
- * Generador de Imágenes (Gemini 2.5 Image)
+ * Generador de Imágenes (Sin fallback, si falla, falla)
  */
 export async function generateActivityPreview(activityTitle: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-2.0-flash-exp', // Modelo capaz de imágenes
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
       config: { 
-        // @ts-ignore - La librería a veces no tipa bien imageConfig en beta
+         // @ts-ignore
         imageConfig: { aspectRatio: "16:9" } 
       }
     });
-    
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
     return null;
-  } catch (error) { 
-    console.error("Image Error:", error);
-    return null; 
-  }
+  } catch (error) { return null; }
 }
 
 /**
- * Generador de Itinerarios (Gemini 3 Pro Preview)
+ * Planificador (Intenta 3.0 -> Fallback a 1.5)
  */
 export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    
     const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria));
-    
     const catalogContext = filteredBusinesses.map(b => ({
       name: b.nombre,
-      category: b.categoria,
-      location: b.info.direccion,
-      services: b.servicios.map(s => `${s.nombre} (${s.precio})`)
+      cat: b.categoria,
+      loc: b.info.direccion
     }));
 
-    const langInstructions = {
-      ES: "Responde el JSON en Español.",
-      EN: "Response JSON fields must be in English.",
-      PT: "Os campos do JSON devem estar em Português."
-    };
+    const prompt = `Planificador Aysén. Idioma: ${language}. Días: ${days}. Presupuesto: ${budget}.
+    CATÁLOGO LOCAL: ${JSON.stringify(catalogContext)}
+    Genera JSON válido (Array de objetos).`;
 
-    const prompt = `Actúa como un planificador de viajes experto para la región de Aysén. ${langInstructions[language]}
-    Genera un itinerario lógico de ${days} días. Presupuesto: ${budget}. 
-    
-    USA EXCLUSIVAMENTE este catálogo local:
-    ${JSON.stringify(catalogContext)}
-
-    Devuelve un JSON estructurado.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Modelo solicitado
+    const config = {
+      model: 'gemini-2.0-flash-exp', // Intentamos el modelo potente
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -153,7 +134,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
             type: Type.OBJECT,
             properties: {
               day: { type: Type.INTEGER },
-              title: { type: Type.STRING }, // Agregado title al root del día para evitar error de parseo en frontend
+              title: { type: Type.STRING },
               activities: {
                 type: Type.ARRAY,
                 items: {
@@ -162,8 +143,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
                     time: { type: Type.STRING },
                     title: { type: Type.STRING },
                     description: { type: Type.STRING },
-                    businessName: { type: Type.STRING },
-                    category: { type: Type.STRING }
+                    businessName: { type: Type.STRING }
                   },
                   required: ["time", "title", "description"]
                 }
@@ -173,24 +153,26 @@ export async function generateItineraryAI(days: number, budget: string, categori
           }
         }
       }
-    });
+    };
 
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
     return JSON.parse(response.text || "[]");
+
   } catch (error: any) {
-    console.error("AI Generation Error:", error);
-    // Devuelve null para que el frontend maneje la alerta
-    return null; 
+    console.error("Planner Error:", error);
+    return null;
   }
 }
 
 /**
- * Texto a Voz (Gemini 2.5 Flash TTS)
+ * Audio TTS (Intenta Gemini -> Fallback a Navegador)
  */
 export async function textToSpeechPatagonia(text: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
+    // Intentamos Gemini TTS
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-2.0-flash-exp", 
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
@@ -198,8 +180,18 @@ export async function textToSpeechPatagonia(text: string) {
       }
     });
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
-  } catch (error) { 
-    console.error("TTS Error:", error);
-    return null; 
+
+  } catch (error: any) {
+    // Si Gemini falla por cuota (429), usamos el navegador (Gratis e ilimitado)
+    console.warn("TTS Quota exceeded or error. Using browser fallback.");
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-ES';
+        window.speechSynthesis.speak(utterance);
+        // Retornamos null para indicar que el navegador se encarga
+        return null; 
+    }
+    return null;
   }
 }
