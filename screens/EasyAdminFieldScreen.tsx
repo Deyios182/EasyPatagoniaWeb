@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Locality, Attraction, Company } from '../types';
-// Ajusta la ruta si es necesario (ej: '../utils/imageHandler')
-import { uploadImage } from '../utils/imageHandler'; 
+
+// --- CORRECCIÓN AQUÍ ---
+// Como tu archivo está en la carpeta 'screens', usamos './'
+import { uploadImage } from './imageHandler'; 
 
 // --- MAPA ---
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Arreglo para el ícono del marcador (fix estándar de Leaflet en React)
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -21,24 +22,17 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// 1. COMPONENTE AUXILIAR PARA CORREGIR EL "MAPA GRIS"
-// Esto fuerza al mapa a recalcular su tamaño apenas aparece
 const MapRecenter = () => {
     const map = useMap();
     useEffect(() => {
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 100); // Pequeño retraso para asegurar que el modal ya se abrió
+        setTimeout(() => { map.invalidateSize(); }, 100);
     }, [map]);
     return null;
 };
 
-// Componente para capturar clic en el mapa
 const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) => void, pos: {lat: number, lng: number} | null }) => {
   useMapEvents({
-    click(e) {
-      setPos(e.latlng.lat, e.latlng.lng);
-    },
+    click(e) { setPos(e.latlng.lat, e.latlng.lng); },
   });
   return pos ? <Marker position={[pos.lat, pos.lng]} /> : null;
 };
@@ -46,84 +40,61 @@ const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) =>
 const EasyAdminFieldScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'localidades' | 'atractivos' | 'empresas'>('empresas');
   
-  // Datos
   const [localities, setLocalities] = useState<Locality[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
 
-  // Formularios
   const [editingLocality, setEditingLocality] = useState<Partial<Locality> | null>(null);
   const [editingAttraction, setEditingAttraction] = useState<Partial<Attraction> | null>(null);
-  
-  // FORMULARIO EMPRESA
   const [editingCompany, setEditingCompany] = useState<Partial<Company> | null>(null);
+  
   const [dragActive, setDragActive] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  
-  // Estado para el Mapa
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempCoords, setTempCoords] = useState<{lat: number, lng: number} | null>(null);
 
-  // Búsqueda de dueño
   const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
   const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     const { data: locs } = await supabase.from('localities').select('*');
     if (locs) setLocalities(locs);
-
     const { data: attrs } = await supabase.from('attractions').select('*, localities(name)');
     if (attrs) setAttractions(attrs.map(a => ({...a, locality_name: a.localities?.name})));
-
     const { data: comps } = await supabase.from('companies').select('*, user_profiles(email)');
     if (comps) setCompanies(comps.map(c => ({...c, owner_email: c.user_profiles?.email})));
   };
 
-  // --- LOGICA DRAG & DROP IMAGEN ---
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    e.preventDefault(); e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
   };
 
   const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
+    if (e.target.files && e.target.files[0]) processFile(e.target.files[0]);
   };
 
   const processFile = async (file: File) => {
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
     const url = await uploadImage(file, 'logos');
-    if (url) {
-        setEditingCompany(prev => ({ ...prev, logo_url: url }));
-    }
+    if (url) setEditingCompany(prev => ({ ...prev, logo_url: url }));
   };
 
-  // --- LOGICA MAPA ---
   const openMap = () => {
-      const lat = editingCompany?.latitude || -46.6225; // Coordenada por defecto (Río Tranquilo aprox)
+      const lat = editingCompany?.latitude || -46.6225;
       const lng = editingCompany?.longitude || -72.6744;
       setTempCoords({ lat, lng });
       setShowMapModal(true);
@@ -131,19 +102,13 @@ const EasyAdminFieldScreen: React.FC = () => {
 
   const confirmLocation = () => {
       if (tempCoords) {
-          setEditingCompany(prev => ({
-              ...prev, 
-              latitude: tempCoords.lat, 
-              longitude: tempCoords.lng
-          }));
+          setEditingCompany(prev => ({ ...prev, latitude: tempCoords.lat, longitude: tempCoords.lng }));
       }
       setShowMapModal(false);
   };
 
-  // --- GUARDADO ---
   const saveCompany = async () => {
     if (!editingCompany?.name) return;
-    
     const payload = {
         name: editingCompany.name,
         description: editingCompany.description,
@@ -156,23 +121,17 @@ const EasyAdminFieldScreen: React.FC = () => {
         longitude: editingCompany.longitude
     };
 
-    if (editingCompany.id) {
-        await supabase.from('companies').update(payload).eq('id', editingCompany.id);
-    } else {
-        await supabase.from('companies').insert([payload]);
-    }
+    if (editingCompany.id) await supabase.from('companies').update(payload).eq('id', editingCompany.id);
+    else await supabase.from('companies').insert([payload]);
+    
     closeModal();
     fetchData();
   };
 
   const closeModal = () => {
-      setEditingCompany(null);
-      setOwnerSearchResult(null);
-      setOwnerEmailSearch('');
-      setPreviewImage(null);
+      setEditingCompany(null); setOwnerSearchResult(null); setOwnerEmailSearch(''); setPreviewImage(null);
   };
 
-  // Funciones placeholder para otras tabs
   const saveLocality = async () => {}; 
   const saveAttraction = async () => {}; 
   const searchOwner = async () => {
@@ -215,13 +174,10 @@ const EasyAdminFieldScreen: React.FC = () => {
               ))}
            </div>
 
-           {/* --- MODAL EDICIÓN EMPRESA --- */}
            {editingCompany && (
              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
                 <div className="bg-white p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10">
-                   <h3 className="text-2xl font-black text-slate-800 mb-6 border-b pb-4">
-                       {editingCompany.id ? 'Editar Empresa' : 'Registrar Nueva Empresa'}
-                   </h3>
+                   <h3 className="text-2xl font-black text-slate-800 mb-6 border-b pb-4">{editingCompany.id ? 'Editar Empresa' : 'Registrar Nueva Empresa'}</h3>
                    
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="space-y-4">
@@ -261,7 +217,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                  <input type="text" placeholder="usuario@gmail.com" className="flex-1 border border-orange-200 p-2 rounded-lg text-sm text-slate-900" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
                                  <button onClick={searchOwner} className="bg-orange-600 text-white px-3 rounded-lg font-bold text-xs hover:bg-orange-700">Buscar</button>
                               </div>
-                              {ownerSearchResult && <p className="text-xs text-green-600 mt-2 font-bold">✓ Encontrado</p>}
+                              {ownerSearchResult && <p className="text-xs text-green-600 mt-2 font-bold">✓ Encontrado: {ownerSearchResult.email}</p>}
                            </div>
                        </div>
                    </div>
@@ -287,40 +243,23 @@ const EasyAdminFieldScreen: React.FC = () => {
              </div>
            )}
 
-           {/* --- MODAL DEL MAPA (CORREGIDO) --- */}
            {showMapModal && (
                <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-                   {/* Quitamos 'animate-in' para evitar conflicto con Leaflet */}
                    <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col shadow-2xl h-[80vh]">
                        <div className="bg-slate-800 p-4 flex justify-between items-center text-white shrink-0">
                            <h3 className="font-bold">Selecciona la ubicación exacta</h3>
                            <button onClick={() => setShowMapModal(false)} className="hover:text-red-400 font-bold">CERRAR</button>
                        </div>
-                       
-                       {/* Contenedor del mapa con altura fija relativa al padre */}
                        <div className="flex-1 relative bg-slate-200 w-full h-full">
-                           <MapContainer 
-                             center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} 
-                             zoom={12} 
-                             style={{ height: '100%', width: '100%' }}
-                           >
-                               <MapRecenter /> {/* <--- ESTO ARREGLA EL MAPA GRIS */}
-                               <TileLayer 
-                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
-                                 attribution='&copy; OpenStreetMap contributors'
-                               />
+                           <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                               <MapRecenter />
+                               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
                                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({lat, lng})} />
                            </MapContainer>
-                           
-                           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg text-xs font-bold text-slate-700 pointer-events-none">
-                               Haz clic en el mapa para poner el marcador
-                           </div>
+                           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg text-xs font-bold text-slate-700 pointer-events-none">Haz clic en el mapa para poner el marcador</div>
                        </div>
-
                        <div className="p-4 bg-white border-t flex justify-end gap-4 shrink-0">
-                           <div className="mr-auto text-xs text-slate-500 content-center">
-                               {tempCoords && `Seleccionado: ${tempCoords.lat.toFixed(5)}, ${tempCoords.lng.toFixed(5)}`}
-                           </div>
+                           <div className="mr-auto text-xs text-slate-500 content-center">{tempCoords && `Seleccionado: ${tempCoords.lat.toFixed(5)}, ${tempCoords.lng.toFixed(5)}`}</div>
                            <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancelar</button>
                            <button onClick={confirmLocation} className="px-8 py-3 rounded-xl font-bold bg-primary text-white shadow-lg hover:bg-primary-dark">Confirmar Ubicación</button>
                        </div>
