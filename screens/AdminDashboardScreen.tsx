@@ -1,4 +1,5 @@
-
+import { supabase } from '../supabaseClient';
+import { MOCK_BUSINESSES } from '../constants';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
@@ -9,7 +10,32 @@ const AdminDashboardScreen: React.FC = () => {
   const { usersRegistry, allBusinesses, registerUser } = useAppAuth();
   const [activeTab, setActiveTab] = useState<'users' | 'businesses' | 'stats'>('stats');
   const [showUserModal, setShowUserModal] = useState(false);
-  
+  const handleMigration = async () => {
+  if (!confirm("¿Subir todos los negocios locales a Supabase? Esto puede duplicar si ya existen.")) return;
+
+  const { error } = await supabase
+    .from('businesses')
+    .upsert(MOCK_BUSINESSES.map(b => ({
+       id: b.id,
+       nombre: b.nombre,
+       categoria: b.categoria,
+       priority: b.priority,
+       gps: b.gps,
+       contacto: b.contacto,
+       info: b.info,
+       media: b.media,
+       servicios: b.servicios,
+       rating: b.rating,
+       review_count: b.reviewCount,
+       is_open: b.isOpen
+    })));
+
+  if (error) alert("Error en migración: " + error.message);
+  else alert("¡Migración Exitosa! Ahora tus datos están en la nube ☁️");
+};
+  <button onClick={handleMigration} className="w-full py-4 bg-purple-600 text-white font-black rounded-2xl mb-6 shadow-xl">
+   🚀 MIGRAR DATOS A LA NUBE
+</button>
   // Formulario nuevo usuario
   const [newUser, setNewUser] = useState({ name: '', email: '', rol: 'Turista' as Role });
 
