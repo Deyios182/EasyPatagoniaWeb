@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Locality, Attraction, Company } from '../types';
-// Ajusta esta ruta si tu archivo está en 'screens' o en 'utils'
-import { uploadImage } from './imageHandler'; 
+// Ajusta la ruta si es necesario (ej: '../utils/imageHandler')
+import { uploadImage } from '../utils/imageHandler'; 
 
 // --- MAPA ---
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Arreglo para el ícono del marcador de Leaflet (bug común en React)
+// Arreglo para el ícono del marcador (fix estándar de Leaflet en React)
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -21,7 +21,19 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Componente auxiliar para capturar clic en el mapa
+// 1. COMPONENTE AUXILIAR PARA CORREGIR EL "MAPA GRIS"
+// Esto fuerza al mapa a recalcular su tamaño apenas aparece
+const MapRecenter = () => {
+    const map = useMap();
+    useEffect(() => {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100); // Pequeño retraso para asegurar que el modal ya se abrió
+    }, [map]);
+    return null;
+};
+
+// Componente para capturar clic en el mapa
 const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) => void, pos: {lat: number, lng: number} | null }) => {
   useMapEvents({
     click(e) {
@@ -43,11 +55,11 @@ const EasyAdminFieldScreen: React.FC = () => {
   const [editingLocality, setEditingLocality] = useState<Partial<Locality> | null>(null);
   const [editingAttraction, setEditingAttraction] = useState<Partial<Attraction> | null>(null);
   
-  // FORMULARIO EMPRESA MEJORADO
+  // FORMULARIO EMPRESA
   const [editingCompany, setEditingCompany] = useState<Partial<Company> | null>(null);
-  // Estado para el Drag & Drop
   const [dragActive, setDragActive] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  
   // Estado para el Mapa
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempCoords, setTempCoords] = useState<{lat: number, lng: number} | null>(null);
@@ -56,7 +68,6 @@ const EasyAdminFieldScreen: React.FC = () => {
   const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
   const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
 
-  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -102,11 +113,8 @@ const EasyAdminFieldScreen: React.FC = () => {
   };
 
   const processFile = async (file: File) => {
-    // 1. Previsualizar
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
-
-    // 2. Subir inmediatamente (o podrías esperar al guardar)
     const url = await uploadImage(file, 'logos');
     if (url) {
         setEditingCompany(prev => ({ ...prev, logo_url: url }));
@@ -115,8 +123,7 @@ const EasyAdminFieldScreen: React.FC = () => {
 
   // --- LOGICA MAPA ---
   const openMap = () => {
-      // Usar coordenadas existentes o default (Coyhaique/Tranquilo)
-      const lat = editingCompany?.latitude || -46.6225;
+      const lat = editingCompany?.latitude || -46.6225; // Coordenada por defecto (Río Tranquilo aprox)
       const lng = editingCompany?.longitude || -72.6744;
       setTempCoords({ lat, lng });
       setShowMapModal(true);
@@ -137,16 +144,14 @@ const EasyAdminFieldScreen: React.FC = () => {
   const saveCompany = async () => {
     if (!editingCompany?.name) return;
     
-    // Preparar el objeto con los nuevos campos
     const payload = {
         name: editingCompany.name,
         description: editingCompany.description,
         logo_url: editingCompany.logo_url,
         owner_id: ownerSearchResult ? ownerSearchResult.clerk_user_id : editingCompany.owner_id,
-        // Campos nuevos
         category: editingCompany.category || 'Actividad',
         address: editingCompany.address,
-        whatsapp: editingCompany.whatsapp, // Debe ser string
+        whatsapp: editingCompany.whatsapp,
         latitude: editingCompany.latitude,
         longitude: editingCompany.longitude
     };
@@ -167,9 +172,9 @@ const EasyAdminFieldScreen: React.FC = () => {
       setPreviewImage(null);
   };
 
-  // (Lógica de localidades y atractivos se mantiene igual, simplificada aquí por espacio...)
-  const saveLocality = async () => { /* ... misma lógica anterior ... */ };
-  const saveAttraction = async () => { /* ... misma lógica anterior ... */ };
+  // Funciones placeholder para otras tabs
+  const saveLocality = async () => {}; 
+  const saveAttraction = async () => {}; 
   const searchOwner = async () => {
     const { data } = await supabase.from('user_profiles').select('clerk_user_id, email').eq('email', ownerEmailSearch).single();
     if (data) setOwnerSearchResult(data);
@@ -190,7 +195,6 @@ const EasyAdminFieldScreen: React.FC = () => {
          </div>
       </div>
 
-      {/* --- LISTA EMPRESAS --- */}
       {activeTab === 'empresas' && (
         <div>
            <button onClick={() => setEditingCompany({category: 'Actividad'})} className="mb-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform">+ Nueva Empresa</button>
@@ -211,166 +215,96 @@ const EasyAdminFieldScreen: React.FC = () => {
               ))}
            </div>
 
-           {/* --- MODAL EDICIÓN EMPRESA (TIPO FORMULARIO) --- */}
+           {/* --- MODAL EDICIÓN EMPRESA --- */}
            {editingCompany && (
              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
                 <div className="bg-white p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10">
-                   
                    <h3 className="text-2xl font-black text-slate-800 mb-6 border-b pb-4">
                        {editingCompany.id ? 'Editar Empresa' : 'Registrar Nueva Empresa'}
                    </h3>
                    
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       
-                       {/* COLUMNA IZQUIERDA: DATOS BÁSICOS */}
                        <div className="space-y-4">
                            <div>
                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nombre Fantasía</label>
-                               <input 
-                                   type="text" 
-                                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none font-bold"
-                                   placeholder="Ej: Turismo Aysén"
-                                   value={editingCompany.name || ''} 
-                                   onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} 
-                               />
+                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none font-bold" placeholder="Ej: Turismo Aysén" value={editingCompany.name || ''} onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} />
                            </div>
-
                            <div>
                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Categoría</label>
-                               <select 
-                                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none"
-                                   value={editingCompany.category || 'Actividad'}
-                                   onChange={e => setEditingCompany({...editingCompany, category: e.target.value})}
-                               >
+                               <select className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none" value={editingCompany.category || 'Actividad'} onChange={e => setEditingCompany({...editingCompany, category: e.target.value})}>
                                    <option value="Actividad">Actividad / Tour</option>
                                    <option value="Restaurante">Restaurante / Gastronomía</option>
                                    <option value="Hospedaje">Hospedaje / Hotel</option>
                                    <option value="Transporte">Transporte</option>
                                </select>
                            </div>
-
                            <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">WhatsApp / Teléfono</label>
-                               <input 
-                                   type="text" 
-                                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none"
-                                   placeholder="+569..."
-                                   value={editingCompany.whatsapp || ''} 
-                                   onChange={e => setEditingCompany({...editingCompany, whatsapp: e.target.value})} 
-                               />
+                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">WhatsApp</label>
+                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none" placeholder="+569..." value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({...editingCompany, whatsapp: e.target.value})} />
                            </div>
-
                            <div>
                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Dirección</label>
-                               <input 
-                                   type="text" 
-                                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none"
-                                   placeholder="Calle Principal 123"
-                                   value={editingCompany.address || ''} 
-                                   onChange={e => setEditingCompany({...editingCompany, address: e.target.value})} 
-                               />
+                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none" placeholder="Calle Principal 123" value={editingCompany.address || ''} onChange={e => setEditingCompany({...editingCompany, address: e.target.value})} />
                            </div>
                        </div>
-
-                       {/* COLUMNA DERECHA: LOGO Y DUEÑO */}
                        <div className="space-y-4">
-                           {/* DRAG & DROP LOGO */}
                            <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Logo de la Empresa</label>
-                               <div 
-                                   className={`relative h-40 w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${dragActive ? 'border-primary bg-blue-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
-                                   onDragEnter={handleDrag}
-                                   onDragLeave={handleDrag}
-                                   onDragOver={handleDrag}
-                                   onDrop={handleDrop}
-                                   onClick={() => fileInputRef.current?.click()}
-                               >
-                                   {previewImage ? (
-                                       <img src={previewImage} className="h-full w-full object-contain rounded-xl p-2" />
-                                   ) : (
-                                       <div className="text-center text-slate-400 p-4">
-                                           <span className="material-symbols-outlined text-3xl block mb-2">cloud_upload</span>
-                                           <p className="text-xs font-bold">Arrastra el logo aquí</p>
-                                           <p className="text-[10px]">o haz clic para buscar</p>
-                                       </div>
-                                   )}
+                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Logo</label>
+                               <div className={`relative h-40 w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${dragActive ? 'border-primary bg-blue-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
+                                   {previewImage ? <img src={previewImage} className="h-full w-full object-contain rounded-xl p-2" /> : <div className="text-center text-slate-400 p-4"><span className="material-symbols-outlined text-3xl block mb-2">cloud_upload</span><p className="text-xs font-bold">Arrastrar o Clic</p></div>}
                                    <input ref={fileInputRef} type="file" className="hidden" onChange={handleChangeFile} accept="image/*" />
                                </div>
                            </div>
-
-                           {/* ASIGNAR DUEÑO */}
                            <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                              <label className="text-xs font-bold text-orange-700 uppercase block mb-1">Asignar Dueño (Email)</label>
+                              <label className="text-xs font-bold text-orange-700 uppercase block mb-1">Dueño (Email)</label>
                               <div className="flex gap-2">
-                                 <input 
-                                    type="text" 
-                                    placeholder="usuario@gmail.com" 
-                                    className="flex-1 border border-orange-200 p-2 rounded-lg text-sm text-slate-900" 
-                                    value={ownerEmailSearch} 
-                                    onChange={e => setOwnerEmailSearch(e.target.value)} 
-                                 />
+                                 <input type="text" placeholder="usuario@gmail.com" className="flex-1 border border-orange-200 p-2 rounded-lg text-sm text-slate-900" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
                                  <button onClick={searchOwner} className="bg-orange-600 text-white px-3 rounded-lg font-bold text-xs hover:bg-orange-700">Buscar</button>
                               </div>
-                              {ownerSearchResult && <p className="text-xs text-green-600 mt-2 font-bold bg-green-50 p-2 rounded">✓ Encontrado: {ownerSearchResult.email}</p>}
-                              {editingCompany.owner_id && !ownerSearchResult && <p className="text-xs text-slate-500 mt-2 italic">Dueño actual asignado.</p>}
+                              {ownerSearchResult && <p className="text-xs text-green-600 mt-2 font-bold">✓ Encontrado</p>}
                            </div>
                        </div>
                    </div>
 
-                   {/* DESCRIPCIÓN (ANCHO COMPLETO) */}
                    <div className="mt-4">
                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                       <textarea 
-                           className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none resize-none"
-                           rows={3}
-                           placeholder="Resumen de lo que hace la empresa..."
-                           value={editingCompany.description || ''} 
-                           onChange={e => setEditingCompany({...editingCompany, description: e.target.value})} 
-                       />
+                       <textarea className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 outline-none resize-none" rows={3} value={editingCompany.description || ''} onChange={e => setEditingCompany({...editingCompany, description: e.target.value})} />
                    </div>
 
-                   {/* SELECCIÓN DE UBICACIÓN (MAPA) */}
                    <div className="mt-6 p-4 border rounded-2xl bg-slate-50 flex items-center justify-between">
                        <div>
                            <label className="text-xs font-bold text-slate-500 uppercase block">Ubicación GPS</label>
-                           {editingCompany.latitude ? (
-                               <p className="text-sm font-bold text-slate-700">
-                                   Lat: {editingCompany.latitude.toFixed(4)}, Lng: {editingCompany.longitude?.toFixed(4)}
-                               </p>
-                           ) : (
-                               <p className="text-sm text-red-400 font-bold">No definida</p>
-                           )}
+                           {editingCompany.latitude ? <p className="text-sm font-bold text-slate-700">{editingCompany.latitude.toFixed(4)}, {editingCompany.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold">No definida</p>}
                        </div>
-                       <button 
-                           onClick={openMap}
-                           className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-900 transition-colors"
-                       >
-                           <span className="material-symbols-outlined text-sm">map</span>
-                           Seleccionar en Mapa
-                       </button>
+                       <button onClick={openMap} className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-slate-900 transition-colors"><span className="material-symbols-outlined text-sm">map</span> Seleccionar en Mapa</button>
                    </div>
 
                    <div className="flex gap-4 mt-8 pt-4 border-t">
                       <button onClick={closeModal} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
-                      <button onClick={saveCompany} className="flex-1 py-4 bg-primary text-white rounded-xl font-bold shadow-lg hover:shadow-primary/30 hover:scale-[1.02] transition-all">
-                          {editingCompany.id ? 'Guardar Cambios' : 'Crear Empresa'}
-                      </button>
+                      <button onClick={saveCompany} className="flex-1 py-4 bg-primary text-white rounded-xl font-bold shadow-lg hover:shadow-primary/30">{editingCompany.id ? 'Guardar Cambios' : 'Crear Empresa'}</button>
                    </div>
                 </div>
              </div>
            )}
 
-           {/* --- MODAL DEL MAPA (SE ABRE AL HACER CLIC EN SELECCIONAR) --- */}
+           {/* --- MODAL DEL MAPA (CORREGIDO) --- */}
            {showMapModal && (
                <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-                   <div className="bg-white w-full max-w-4xl h-[80vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+                   {/* Quitamos 'animate-in' para evitar conflicto con Leaflet */}
+                   <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col shadow-2xl h-[80vh]">
                        <div className="bg-slate-800 p-4 flex justify-between items-center text-white shrink-0">
                            <h3 className="font-bold">Selecciona la ubicación exacta</h3>
                            <button onClick={() => setShowMapModal(false)} className="hover:text-red-400 font-bold">CERRAR</button>
                        </div>
                        
-                       <div className="flex-1 relative">
-                           <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                       {/* Contenedor del mapa con altura fija relativa al padre */}
+                       <div className="flex-1 relative bg-slate-200 w-full h-full">
+                           <MapContainer 
+                             center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} 
+                             zoom={12} 
+                             style={{ height: '100%', width: '100%' }}
+                           >
+                               <MapRecenter /> {/* <--- ESTO ARREGLA EL MAPA GRIS */}
                                <TileLayer 
                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
                                  attribution='&copy; OpenStreetMap contributors'
@@ -378,7 +312,6 @@ const EasyAdminFieldScreen: React.FC = () => {
                                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({lat, lng})} />
                            </MapContainer>
                            
-                           {/* Instrucción flotante */}
                            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg text-xs font-bold text-slate-700 pointer-events-none">
                                Haz clic en el mapa para poner el marcador
                            </div>
@@ -389,17 +322,13 @@ const EasyAdminFieldScreen: React.FC = () => {
                                {tempCoords && `Seleccionado: ${tempCoords.lat.toFixed(5)}, ${tempCoords.lng.toFixed(5)}`}
                            </div>
                            <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                           <button onClick={confirmLocation} className="px-8 py-3 rounded-xl font-bold bg-primary text-white shadow-lg hover:bg-primary-dark">
-                               Confirmar Ubicación
-                           </button>
+                           <button onClick={confirmLocation} className="px-8 py-3 rounded-xl font-bold bg-primary text-white shadow-lg hover:bg-primary-dark">Confirmar Ubicación</button>
                        </div>
                    </div>
                </div>
            )}
         </div>
       )}
-
-      {/* (Mantener código de tabs Localidades y Atractivos si lo deseas, o pedirme que lo replique completo) */}
     </div>
   );
 };
