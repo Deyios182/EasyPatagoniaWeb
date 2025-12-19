@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
 import { Company, Service } from '../types';
-import { uploadImage } from '../utils/imageHandler'; // Asegúrate de tener este archivo creado
+import { uploadImage } from './imageHandler';
 
 const BusinessPortalScreen: React.FC = () => {
   const { user } = useAppAuth();
