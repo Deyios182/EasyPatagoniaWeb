@@ -5,9 +5,9 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from './supabaseClient';
 
 // Importación de pantallas
-import WelcomeScreen from './screens/WelcomeScreen'; 
-import LandingPage from './screens/LandingPage';     
-import SplashScreen from './screens/SplashScreen'; // <--- ¡CORREGIDO AQUÍ!
+import WelcomeScreen from './screens/WelcomeScreen';
+import LandingPage from './screens/LandingPage';
+import SplashScreen from './screens/SplashScreen';
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
 import PlannerScreen from './screens/PlannerScreen';
@@ -338,7 +338,7 @@ export const useAppAuth = () => {
   return context;
 };
 
-// --- SIDEBAR (ACTUALIZADO: COLAPSABLE) ---
+// --- SIDEBAR ---
 interface SidebarProps {
   isCollapsed: boolean;
   toggle: () => void;
@@ -377,8 +377,6 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         isCollapsed ? 'w-24' : 'w-72'
       }`}
     >
-      
-      {/* LOGO DE IMAGEN (CLICABLE PARA COLAPSAR) */}
       <div 
         className="flex items-center justify-center mb-8 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={toggle}
@@ -433,17 +431,24 @@ const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
   const { isLoaded } = useUser();
   const role = user?.rol || 'Turista';
+  const location = useLocation(); 
   
-  // ESTADOS NUEVOS: CONTROL DEL SPLASH
-  const [showSplash, setShowSplash] = useState(true);
+  // 1. SPLASH SCREEN: Lógica corregida para mostrarse solo UNA vez por sesión del navegador
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('ep_splash_seen');
+  });
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // 1. Mostrar Splash Screen al inicio
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+    sessionStorage.setItem('ep_splash_seen', 'true');
+  };
+
   if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+    return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
-  // 2. Esperar carga de Auth
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
@@ -452,10 +457,15 @@ const AuthenticatedApp: React.FC = () => {
     );
   }
 
+  // 2. LÓGICA DE BARRA LATERAL (SIDEBAR)
+  // Solo mostrar si el usuario está logueado Y NO está en la Landing Page ('/') ni en Login ('/login')
+  const isPublicPage = location.pathname === '/' || location.pathname === '/login';
+  const shouldShowSidebar = user && !isPublicPage;
+
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
-      {/* Sidebar solo visible si el usuario está logueado */}
-      {user && (
+      
+      {shouldShowSidebar && (
         <NavigationSidebar 
           isCollapsed={sidebarCollapsed} 
           toggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
@@ -464,13 +474,13 @@ const AuthenticatedApp: React.FC = () => {
       
       <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar transition-all duration-300">
         <Routes>
-          {/* RUTA RAÍZ: Landing Page Pública */}
+          {/* RUTA PÚBLICA: Landing Page (Se ve SIEMPRE, incluso logueado) */}
           <Route path="/" element={<LandingPage />} />
           
-          {/* RUTA LOGIN: La antigua WelcomeScreen */}
+          {/* RUTA LOGIN: La pantalla de bienvenida antigua */}
           <Route path="/login" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
 
-          {/* RUTAS PROTEGIDAS (APP REAL) */}
+          {/* RUTAS PRIVADAS (APP) - Redirigen al login si no hay usuario */}
           <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/login" />} />
           <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/login" />} />
           <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/login" />} />
@@ -480,7 +490,6 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/login" />} />
           <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/login" />} />
           
-          {/* Rutas de Admin/Dueño */}
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
