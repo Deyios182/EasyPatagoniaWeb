@@ -112,7 +112,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN NUESTRA VISIÓN (ARREGLADA) --- */}
+      {/* --- SECCIÓN NUESTRA VISIÓN (LIMPIA) --- */}
       <section id="vision" className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
             
@@ -135,7 +135,7 @@ const LandingPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Misión y Visión + Imagen (DISEÑO ARREGLADO) */}
+            {/* Misión y Visión + Imagen */}
             <div className="flex flex-col lg:flex-row gap-16 items-center">
                 
                 {/* Columna Texto */}
@@ -164,34 +164,20 @@ const LandingPage: React.FC = () => {
                     </button>
                 </div>
                 
-                {/* Columna Imagen (ARREGLADA: Sin fondo marrón fantasma) */}
+                {/* Columna Imagen (SIN TARJETA BLANCA) */}
                 <div className="flex-1 relative w-full h-[500px]">
-                    {/* Imagen principal: Usamos una imagen de Unsplash diferente y segura */}
+                    {/* Imagen principal */}
                     <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
                         <img 
                             src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop" 
                             className="w-full h-full object-cover"
                             alt="Patagonia Vision"
                         />
-                        {/* Gradiente sutil para dar profundidad */}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/40 to-transparent"></div>
                     </div>
 
                     {/* Decoración de fondo */}
                     <div className="absolute top-4 -right-4 bottom-[-10px] left-4 bg-[#dd6e42] rounded-[3rem] -rotate-2 opacity-20 z-0"></div>
-                    
-                    {/* Tarjeta Flotante (Posicionada y estilizada) */}
-                    <div className="absolute -bottom-6 left-6 md:-left-6 bg-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-20 max-w-[280px] border border-gray-100 flex flex-col gap-3">
-                       <p className="text-[#1a2a30] font-black uppercase italic text-xs tracking-wider">¿Dudas sobre tu viaje?</p>
-                       <div className="flex gap-3">
-                          <button onClick={handleWhatsApp} className="flex-1 bg-[#25D366] py-3 rounded-xl flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform group">
-                             <span className="material-symbols-outlined text-xl group-hover:animate-bounce">call</span>
-                          </button>
-                          <button onClick={handleEmail} className="flex-1 bg-[#3498DB] py-3 rounded-xl flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform group">
-                             <span className="material-symbols-outlined text-xl group-hover:animate-bounce">mail</span>
-                          </button>
-                       </div>
-                    </div>
                 </div>
             </div>
         </div>
