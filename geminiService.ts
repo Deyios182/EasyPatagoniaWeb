@@ -7,11 +7,20 @@ import { Business, Category } from "./types";
  */
 export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES', userLat?: number, userLng?: number) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+    // ... (el resto del código sigue igual, pero con la variable API_KEY corregida)
+    
+    // Si quieres copiar el resto del archivo para asegurarte, avísame. 
+    // Lo más importante es que las líneas donde dice "new GoogleGenAI({ apiKey: ... })" 
+    // ahora usen la variable const API_KEY que definimos arriba.
+    
+    // ... resto de tu código de funciones (askPatagoniaAI, generateActivityPreview, etc.)
+    // ... asegúrate de reemplazar process.env.API_KEY por API_KEY en todas las funciones.
+    
     const tools: any[] = [{ googleSearch: {} }];
     const toolConfig: any = {};
     const isMapsRequested = !!(userLat && userLng);
-    const model = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-3-flash-preview';
+    const model = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-2.0-flash'; // Actualizado a modelo estable
 
     if (isMapsRequested) {
       tools.push({ googleMaps: {} });
