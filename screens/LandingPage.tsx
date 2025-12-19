@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
 
-// Datos simulados
+// Datos simulados (Se mantienen igual)
 const LOCALITIES = [
   { id: 'tran', name: 'Pto. Río Tranquilo', active: true },
   { id: 'coy', name: 'Coyhaique', active: false },
@@ -48,12 +48,32 @@ const LandingPage: React.FC = () => {
     }
   };
 
+  // Funciones para abrir redes sociales (Basadas en tu código Xamarin)
+  const openLink = (url: string) => window.open(url, '_blank');
+  
+  const handleWhatsApp = () => {
+      const telefono = "56956425005";
+      const mensaje = "¡Hola! Escribo desde la web EasyPatagonia. Tengo una consulta sobre su plataforma o alianzas.";
+      // Detectar si es móvil para usar api o web
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const url = isMobile 
+        ? `whatsapp://send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`
+        : `https://web.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+  };
+
+  const handleEmail = () => {
+      const email = "infoeasypatagonia@gmail.com";
+      const subject = "Consulta desde EasyPatagonia Web";
+      const body = "Estimado equipo EasyPatagonia,\n\nEscribo con respecto a...";
+      window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#eaeaea] font-body text-[#1a2a30] overflow-x-hidden">
       
       {/* --- HERO SECTION --- */}
       <div className="relative h-screen w-full overflow-hidden">
-        {/* Fondo */}
         <div className="absolute inset-0 bg-black">
            <img 
              src="https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"
@@ -64,20 +84,13 @@ const LandingPage: React.FC = () => {
 
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30] via-transparent to-black/30"></div>
 
-        {/* NAVBAR CORREGIDO */}
         <nav className="absolute top-0 left-0 right-0 p-6 md:p-10 flex justify-between items-start md:items-center z-50">
-          
-          {/* LOGO MEJORADO: Más grande y limpio */}
           <div className="relative group">
              <img 
                src="/logo_easy.png" 
-               // Aumentamos altura: h-20 en móvil, h-32 en escritorio
                className="h-20 md:h-32 w-auto object-contain transition-transform duration-500 hover:scale-105" 
                alt="Easy Patagonia Logo"
-               onError={(e) => {
-                 // Si falla la carga, ocultamos el cuadro roto
-                 e.currentTarget.style.display = 'none';
-               }} 
+               onError={(e) => { e.currentTarget.style.display = 'none'; }} 
              />
           </div>
 
@@ -89,7 +102,6 @@ const LandingPage: React.FC = () => {
           </button>
         </nav>
 
-        {/* Textos Principales */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
           <motion.h1 
             initial={{ y: 50, opacity: 0 }}
@@ -99,8 +111,8 @@ const LandingPage: React.FC = () => {
           >
             Patagonia <br /> <span className="text-[#dd6e42]">Sin Límites</span>
           </motion.h1>
-          <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md">
-            Tu ecosistema digital para descubrir, conectar y vivir la Región de Aysén como nunca antes.
+          <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
+            "Tú Disfruta, Nosotros Resolvemos."
           </p>
           
           <div className="mt-12 md:hidden">
@@ -113,13 +125,12 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce">
            <span className="material-symbols-outlined text-white text-4xl">keyboard_arrow_down</span>
         </div>
       </div>
 
-      {/* --- SECCIÓN DESTINOS --- */}
+      {/* --- SECCIÓN DESTINOS (Igual que antes) --- */}
       <section className="py-20 px-6 md:px-20 bg-[#eaeaea]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
@@ -127,7 +138,6 @@ const LandingPage: React.FC = () => {
                 <h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2>
                 <h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3>
             </div>
-            {/* Tabs Localidades */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                 {LOCALITIES.map(loc => (
                     <button 
@@ -142,9 +152,7 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Grid Lugares Hermosos */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-             {/* Info Panel */}
              <div className="lg:col-span-1 bg-white p-8 rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between">
                 <div>
                     <h4 className="text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4">Puerto Río Tranquilo</h4>
@@ -160,7 +168,6 @@ const LandingPage: React.FC = () => {
                 </div>
              </div>
 
-             {/* Cards */}
              <div className="lg:col-span-2">
                 <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x">
                     {HIGHLIGHTS.map(place => (
@@ -183,37 +190,114 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECCIÓN MISIÓN / VISIÓN --- */}
+      {/* --- SECCIÓN NUESTRA VISIÓN (TEXTO REAL) --- */}
       <section className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10">
         <div className="max-w-6xl mx-auto px-6 md:px-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-                <div className="space-y-8">
+            
+            {/* Pilares */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+                <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
+                    <span className="text-3xl mb-4 block">🧭</span>
+                    <h3 className="text-lg font-black uppercase mb-3">Conexión y Autenticidad</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                        Ser la plataforma líder que conecta a los viajeros con experiencias auténticas y memorables en la región austral.
+                    </p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
+                    <span className="text-3xl mb-4 block">💡</span>
+                    <h3 className="text-lg font-black uppercase mb-3">Planificación Simple</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                        Soluciones innovadoras para simplificar la planificación de tu viaje: hospedaje, gastronomía y tours personalizados.
+                    </p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
+                    <span className="text-3xl mb-4 block">💚</span>
+                    <h3 className="text-lg font-black uppercase mb-3">Turismo Sostenible</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                        Promover un turismo responsable que respeta y celebra la riqueza cultural y natural de la Patagonia.
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+                <div className="space-y-10">
                     <div>
-                        <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-2">Nuestra Esencia</h2>
-                        <h3 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter">Conectando la Patagonia</h3>
-                    </div>
-                    <div className="space-y-6 text-[#c0d6df]/80 text-lg leading-relaxed font-light">
-                        <p>
-                            <strong className="text-white font-black uppercase">Misión:</strong> Digitalizar y democratizar el acceso a las maravillas de Aysén, empoderando a los emprendedores locales.
-                        </p>
-                        <p>
-                            <strong className="text-white font-black uppercase">Visión:</strong> Ser el ecosistema digital líder del turismo austral, donde cada rincón hermoso tenga nombre y anfitrión.
+                        <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">🚀 Nuestra Misión</h2>
+                        <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-justify">
+                            Impulsar el desarrollo turístico de la Región de Aysén mediante una plataforma innovadora que conecta a viajeros con experiencias auténticas, la naturaleza y las comunidades locales. A través de tecnología inteligente —como nuestro algoritmo de planificación personalizada y un mapa interactivo en tiempo real— facilitamos la exploración responsable, accesible y profunda de la Patagonia. Somos el puente digital que potencia a emprendedores locales, fortalece la economía regional y permite que cada visitante disfrute la Patagonia de forma sencilla, segura y memorable.
                         </p>
                     </div>
-                    <button onClick={handleEnterApp} className="bg-white text-[#1a2a30] px-10 py-4 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#dd6e42] hover:text-white transition-all shadow-xl">
-                        Unirse a la Aventura
+                    <div>
+                        <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4">👁️ Nuestra Visión</h2>
+                        <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-justify">
+                            Convertirnos en la plataforma turística líder de toda la Patagonia —chilena y argentina— integrando tecnología, sostenibilidad y desarrollo comunitario. Aspiramos a transformar la manera en que las personas descubren y recorren este territorio único, impulsando mayor conectividad digital, más oportunidades para pequeños emprendedores y un turismo consciente que proteja el valor natural y cultural de la región.
+                        </p>
+                    </div>
+                    
+                    <button onClick={handleEnterApp} className="bg-white text-[#1a2a30] px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#dd6e42] hover:text-white transition-all shadow-xl">
+                        EXPLORAR LA PATAGONIA AHORA
                     </button>
                 </div>
-                <div className="relative">
+                
+                <div className="relative mt-10 md:mt-0">
                     <div className="absolute -inset-4 bg-[#dd6e42] rounded-[3rem] rotate-3 opacity-20"></div>
                     <img 
                         src="https://images.unsplash.com/photo-1518182170546-0766be6f5a56?q=80&w=1000" 
-                        className="relative rounded-[3rem] shadow-2xl border border-white/10 rotate-[-3deg] hover:rotate-0 transition-all duration-500"
+                        className="relative rounded-[3rem] shadow-2xl border border-white/10 rotate-[-3deg] hover:rotate-0 transition-all duration-500 z-10"
                         alt="Vision"
                     />
+                    
+                    {/* Tarjeta Flotante de Contacto */}
+                    <div className="absolute -bottom-10 -left-10 md:-left-20 bg-white p-6 rounded-[2rem] shadow-2xl z-20 max-w-xs border border-gray-100 hidden md:block">
+                       <p className="text-[#1a2a30] font-black uppercase italic mb-4">¿Dudas sobre tu viaje?</p>
+                       <div className="flex gap-3">
+                          <button onClick={handleWhatsApp} className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+                             <span className="material-symbols-outlined text-2xl">call</span>
+                          </button>
+                          <button onClick={handleEmail} className="w-12 h-12 bg-[#3498DB] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+                             <span className="material-symbols-outlined text-2xl">mail</span>
+                          </button>
+                       </div>
+                    </div>
                 </div>
             </div>
         </div>
+      </section>
+
+      {/* --- SECCIÓN SOCIALES (NUEVA) --- */}
+      <section className="py-20 bg-[#eaeaea]">
+         <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-[#1a2a30] text-2xl font-black uppercase italic mb-2">¡Únete a la Aventura EasyPatagonia!</h2>
+            <p className="text-gray-500 mb-10">Síguenos en nuestras plataformas para no perderte ninguna novedad.</p>
+            
+            <div className="flex flex-wrap justify-center gap-6">
+                <button 
+                  onClick={() => openLink("https://www.instagram.com/easy.patagonia")}
+                  className="flex items-center gap-3 px-8 py-4 bg-[#E1306C] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
+                >
+                   <span className="font-black uppercase tracking-widest text-xs">Instagram</span>
+                </button>
+                <button 
+                  onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")}
+                  className="flex items-center gap-3 px-8 py-4 bg-black text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
+                >
+                   <span className="font-black uppercase tracking-widest text-xs">TikTok</span>
+                </button>
+                <button 
+                  onClick={handleWhatsApp}
+                  className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"
+                >
+                   <span className="font-black uppercase tracking-widest text-xs">Soporte WhatsApp</span>
+                </button>
+            </div>
+            
+            <div className="mt-12 pt-12 border-t border-gray-300">
+               <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
+               <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">
+                  infoeasypatagonia@gmail.com
+               </button>
+            </div>
+         </div>
       </section>
 
       {/* --- FOOTER --- */}
