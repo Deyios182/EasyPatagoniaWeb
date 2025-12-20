@@ -47,14 +47,12 @@ const UserAdminScreen: React.FC = () => {
     }
   };
 
-  // --- FUNCIÓN PARA IMPORTAR USUARIO DE CLERK MANUALMENTE ---
   const handleImportUser = async () => {
       if (!newUser.id || !newUser.email) {
           alert("Debes ingresar el ID de Clerk y el Email.");
           return;
       }
 
-      // 1. Insertamos manualmente en Supabase
       const { error } = await supabase.from('user_profiles').insert([
           {
               clerk_user_id: newUser.id.trim(),
@@ -64,7 +62,7 @@ const UserAdminScreen: React.FC = () => {
       ]);
 
       if (error) {
-          if (error.code === '23505') { // Código de error para duplicados
+          if (error.code === '23505') { 
               alert("Este usuario YA existe en la base de datos.");
           } else {
               console.error(error);
@@ -74,7 +72,7 @@ const UserAdminScreen: React.FC = () => {
           alert("✅ Usuario importado y rol asignado correctamente.");
           setShowImportModal(false);
           setNewUser({ id: '', email: '', role: 'EasyColaborador' });
-          fetchUsers(); // Recargamos la lista
+          fetchUsers();
       }
   };
 
@@ -100,7 +98,7 @@ const UserAdminScreen: React.FC = () => {
                 <input 
                     type="text" 
                     placeholder="Buscar..." 
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary outline-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary outline-none text-slate-900 bg-white" // <-- TEXTO OSCURO
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -147,7 +145,7 @@ const UserAdminScreen: React.FC = () => {
                         <select 
                             value={u.role || 'turista'}
                             onChange={(e) => handleRoleChange(u.clerk_user_id, e.target.value)}
-                            className="bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded-lg py-1 px-2 outline-none cursor-pointer"
+                            className="bg-white border border-slate-300 text-slate-900 text-sm font-bold rounded-lg py-1 px-2 outline-none cursor-pointer" // <-- TEXTO OSCURO
                         >
                         {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                         </select>
@@ -184,7 +182,7 @@ const UserAdminScreen: React.FC = () => {
                           <input 
                               type="text" 
                               placeholder="user_2qk..." 
-                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 font-mono text-sm"
+                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 font-mono text-sm text-slate-900 font-bold" // <-- CORREGIDO AQUÍ
                               value={newUser.id}
                               onChange={e => setNewUser({...newUser, id: e.target.value})}
                           />
@@ -194,7 +192,7 @@ const UserAdminScreen: React.FC = () => {
                           <input 
                               type="email" 
                               placeholder="nombre@correo.com" 
-                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3"
+                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 font-bold" // <-- CORREGIDO AQUÍ
                               value={newUser.email}
                               onChange={e => setNewUser({...newUser, email: e.target.value})}
                           />
@@ -202,7 +200,7 @@ const UserAdminScreen: React.FC = () => {
                       <div>
                           <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Rol Inicial</label>
                           <select 
-                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 font-bold"
+                              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 font-bold text-slate-900" // <-- CORREGIDO AQUÍ
                               value={newUser.role}
                               onChange={e => setNewUser({...newUser, role: e.target.value})}
                           >
