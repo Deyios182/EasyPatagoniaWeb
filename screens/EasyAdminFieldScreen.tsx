@@ -35,29 +35,27 @@ const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) =>
 const EasyAdminFieldScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'localidades' | 'atractivos' | 'empresas'>('empresas');
   
-  // DATOS GENERALES
+  // DATOS
   const [localities, setLocalities] = useState<Locality[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
 
-  // ESTADOS DE EDICIÓN
+  // EDICIÓN PRINCIPAL
   const [editingLocality, setEditingLocality] = useState<Partial<Locality> | null>(null);
   const [editingAttraction, setEditingAttraction] = useState<Partial<Attraction> | null>(null);
   const [editingCompany, setEditingCompany] = useState<Partial<Company> | null>(null);
 
-  // ESTADOS PARA SERVICIOS (Sub-modal)
+  // SERVICIOS (SUB-MODAL)
   const [showServiceModal, setShowServiceModal] = useState<Company | null>(null);
   const [companyServices, setCompanyServices] = useState<Service[]>([]);
   const [editingService, setEditingService] = useState<Partial<Service> | null>(null);
   
-  // HERRAMIENTAS
-  const [dragActive, setDragActive] = useState(false);
+  // UTILIDADES
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempCoords, setTempCoords] = useState<{lat: number, lng: number} | null>(null);
   const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
   const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -72,11 +70,10 @@ const EasyAdminFieldScreen: React.FC = () => {
     if (comps) setCompanies(comps.map(c => ({...c, owner_email: c.user_profiles?.email})));
   };
 
-  // --- MANEJO DE IMÁGENES GENÉRICO ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
-          const url = await uploadImage(file, 'logos'); // Usamos bucket 'logos' o 'uploads'
+          const url = await uploadImage(file, 'logos');
           if (url) callback(url);
       }
   };
@@ -124,7 +121,7 @@ const EasyAdminFieldScreen: React.FC = () => {
     setEditingCompany(null); setPreviewImage(null); fetchData();
   };
 
-  // --- LOGICA SERVICIOS (NUEVO) ---
+  // --- LOGICA SERVICIOS ---
   const openServiceManager = async (company: Company) => {
       setShowServiceModal(company);
       const { data } = await supabase.from('services').select('*').eq('company_id', company.id);
@@ -137,11 +134,10 @@ const EasyAdminFieldScreen: React.FC = () => {
       const payload = {
           company_id: showServiceModal.id,
           name: editingService.name,
-          price: editingService.price || 'Consultar', // Ahora es texto
+          price: editingService.price || 'Consultar',
           description: editingService.description,
           image_url: editingService.image_url
       };
-      
       let res;
       if (editingService.id) res = await supabase.from('services').update(payload).eq('id', editingService.id).select();
       else res = await supabase.from('services').insert([payload]).select();
@@ -176,7 +172,6 @@ const EasyAdminFieldScreen: React.FC = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen font-body text-slate-900">
       
-      {/* HEADER TABS */}
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
          <div>
             <h1 className="text-3xl font-black text-slate-800">Panel de Campo</h1>
@@ -189,7 +184,7 @@ const EasyAdminFieldScreen: React.FC = () => {
          </div>
       </div>
 
-      {/* ================= PESTAÑA LOCALIDADES ================= */}
+      {/* --- LOCALIDADES --- */}
       {activeTab === 'localidades' && (
           <div>
             <button onClick={() => setEditingLocality({})} className="mb-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ Nueva Localidad</button>
@@ -201,19 +196,15 @@ const EasyAdminFieldScreen: React.FC = () => {
                     </div>
                 ))}
             </div>
-
-            {/* MODAL LOCALIDAD */}
             {editingLocality && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-2xl">
                         <h3 className="text-xl font-black mb-4">Editar Localidad</h3>
                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nombre</label>
                         <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 font-bold" value={editingLocality.name || ''} onChange={e => setEditingLocality({...editingLocality, name: e.target.value})} />
-                        
                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Imagen Portada</label>
                         {editingLocality.image_url && <img src={editingLocality.image_url} className="w-full h-32 object-cover rounded-xl mb-2" />}
                         <input type="file" onChange={e => handleFileUpload(e, url => setEditingLocality({...editingLocality, image_url: url}))} className="mb-6 text-sm"/>
-
                         <div className="flex gap-2">
                             <button onClick={() => setEditingLocality(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
                             <button onClick={saveLocality} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold">Guardar</button>
@@ -224,7 +215,7 @@ const EasyAdminFieldScreen: React.FC = () => {
           </div>
       )}
 
-      {/* ================= PESTAÑA ATRACTIVOS ================= */}
+      {/* --- ATRACTIVOS --- */}
       {activeTab === 'atractivos' && (
           <div>
             <button onClick={() => setEditingAttraction({})} className="mb-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ Nuevo Atractivo</button>
@@ -240,29 +231,22 @@ const EasyAdminFieldScreen: React.FC = () => {
                     </div>
                 ))}
             </div>
-
-            {/* MODAL ATRACTIVO */}
             {editingAttraction && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className="bg-white p-6 rounded-3xl w-full max-w-lg shadow-2xl">
                         <h3 className="text-xl font-black mb-4">Editar Atractivo</h3>
-                        
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Pertenece a Localidad</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Localidad</label>
                         <select className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 font-bold" value={editingAttraction.locality_id || ''} onChange={e => setEditingAttraction({...editingAttraction, locality_id: e.target.value})}>
                             <option value="">Seleccione...</option>
                             {localities.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                         </select>
-
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nombre Atractivo</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nombre</label>
                         <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 font-bold" value={editingAttraction.name || ''} onChange={e => setEditingAttraction({...editingAttraction, name: e.target.value})} />
-
                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
                         <textarea className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 resize-none" rows={3} value={editingAttraction.description || ''} onChange={e => setEditingAttraction({...editingAttraction, description: e.target.value})} />
-                        
                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Imagen</label>
                         {editingAttraction.image_url && <img src={editingAttraction.image_url} className="w-full h-32 object-cover rounded-xl mb-2" />}
                         <input type="file" onChange={e => handleFileUpload(e, url => setEditingAttraction({...editingAttraction, image_url: url}))} className="mb-6 text-sm"/>
-
                         <div className="flex gap-2">
                             <button onClick={() => setEditingAttraction(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
                             <button onClick={saveAttraction} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold">Guardar</button>
@@ -273,7 +257,7 @@ const EasyAdminFieldScreen: React.FC = () => {
           </div>
       )}
 
-      {/* ================= PESTAÑA EMPRESAS ================= */}
+      {/* --- EMPRESAS --- */}
       {activeTab === 'empresas' && (
         <div>
            <button onClick={() => setEditingCompany({category: 'Actividad', gallery_urls: []})} className="mb-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform">+ Nueva Empresa</button>
@@ -290,10 +274,9 @@ const EasyAdminFieldScreen: React.FC = () => {
                             </div>
                         </div>
                      </div>
-                     {/* BOTÓN GESTIONAR SERVICIOS */}
                      <button 
                         onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
-                        className="mt-4 md:mt-0 bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-900 flex items-center gap-2"
+                        className="mt-4 md:mt-0 bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-900 flex items-center gap-2 shrink-0"
                      >
                         <span className="material-symbols-outlined text-sm">inventory_2</span>
                         Gestionar Servicios
@@ -302,39 +285,23 @@ const EasyAdminFieldScreen: React.FC = () => {
               ))}
            </div>
 
-           {/* --- MODAL EDICIÓN EMPRESA (Principal) --- */}
+           {/* MODAL EMPRESA */}
            {editingCompany && (
              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
                 <div className="bg-white p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10">
                    <h3 className="text-2xl font-black text-slate-800 mb-6 border-b pb-4">{editingCompany.id ? 'Editar Empresa' : 'Registrar Nueva Empresa'}</h3>
-                   
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       {/* Columna Izq */}
                        <div className="space-y-4">
-                           <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nombre</label>
-                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 font-bold" value={editingCompany.name || ''} onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} />
-                           </div>
-                           <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Categoría</label>
-                               <select className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.category || 'Actividad'} onChange={e => setEditingCompany({...editingCompany, category: e.target.value})}>
-                                   <option value="Actividad">Actividad / Tour</option>
-                                   <option value="Restaurante">Restaurante</option>
-                                   <option value="Hospedaje">Hospedaje</option>
-                                   <option value="Transporte">Transporte</option>
-                               </select>
-                           </div>
-                           <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">WhatsApp</label>
-                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({...editingCompany, whatsapp: e.target.value})} />
-                           </div>
-                           <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Dirección</label>
-                               <input type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.address || ''} onChange={e => setEditingCompany({...editingCompany, address: e.target.value})} />
-                           </div>
+                           <input type="text" placeholder="Nombre Fantasía" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 font-bold" value={editingCompany.name || ''} onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} />
+                           <select className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.category || 'Actividad'} onChange={e => setEditingCompany({...editingCompany, category: e.target.value})}>
+                               <option value="Actividad">Actividad / Tour</option>
+                               <option value="Restaurante">Restaurante</option>
+                               <option value="Hospedaje">Hospedaje</option>
+                               <option value="Transporte">Transporte</option>
+                           </select>
+                           <input type="text" placeholder="WhatsApp" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({...editingCompany, whatsapp: e.target.value})} />
+                           <input type="text" placeholder="Dirección" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3" value={editingCompany.address || ''} onChange={e => setEditingCompany({...editingCompany, address: e.target.value})} />
                        </div>
-                       
-                       {/* Columna Der */}
                        <div className="space-y-4">
                            <div>
                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Logo</label>
@@ -343,9 +310,8 @@ const EasyAdminFieldScreen: React.FC = () => {
                                    <input type="file" onChange={e => handleFileUpload(e, url => { setPreviewImage(url); setEditingCompany({...editingCompany, logo_url: url}); })} className="text-xs" />
                                </div>
                            </div>
-
                            <div>
-                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Galería (Fachada/Interior)</label>
+                               <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Galería</label>
                                <div className="flex gap-2 flex-wrap mb-2">
                                    {editingCompany.gallery_urls?.map((url, i) => (
                                        <div key={i} className="relative group w-12 h-12">
@@ -356,23 +322,17 @@ const EasyAdminFieldScreen: React.FC = () => {
                                </div>
                                <input type="file" onChange={e => handleFileUpload(e, url => setEditingCompany(prev => ({...prev, gallery_urls: [...(prev?.gallery_urls || []), url]})))} className="text-xs" />
                            </div>
-
                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                              <label className="text-xs font-bold text-orange-700 uppercase block mb-1">Asignar Dueño</label>
+                              <label className="text-xs font-bold text-orange-700 uppercase block mb-1">Asignar Dueño (Email)</label>
                               <div className="flex gap-2">
-                                 <input type="text" placeholder="email@..." className="flex-1 border border-orange-200 p-1.5 rounded-lg text-sm text-slate-900" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
+                                 <input type="text" className="flex-1 border border-orange-200 p-1.5 rounded-lg text-sm text-slate-900" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
                                  <button onClick={searchOwner} className="bg-orange-600 text-white px-2 rounded-lg font-bold text-xs">Buscar</button>
                               </div>
                               {ownerSearchResult && <p className="text-[10px] text-green-600 mt-1 font-bold">✓ {ownerSearchResult.email}</p>}
                            </div>
                        </div>
                    </div>
-
-                   <div className="mt-4">
-                       <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                       <textarea className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 resize-none" rows={2} value={editingCompany.description || ''} onChange={e => setEditingCompany({...editingCompany, description: e.target.value})} />
-                   </div>
-
+                   <textarea placeholder="Descripción..." className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 resize-none mt-4" rows={2} value={editingCompany.description || ''} onChange={e => setEditingCompany({...editingCompany, description: e.target.value})} />
                    <div className="mt-4 p-4 border rounded-2xl bg-slate-50 flex items-center justify-between">
                        <div>
                            <label className="text-xs font-bold text-slate-500 uppercase block">Ubicación</label>
@@ -380,6 +340,79 @@ const EasyAdminFieldScreen: React.FC = () => {
                        </div>
                        <button onClick={openMap} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs">Seleccionar Mapa</button>
                    </div>
-
                    <div className="flex gap-4 mt-6 pt-4 border-t">
-                      <button onClick={() => { setEditingCompany(null); setPreviewImage(null); }}
+                      <button onClick={() => { setEditingCompany(null); setPreviewImage(null); }} className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold">Cancelar</button>
+                      <button onClick={saveCompany} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold shadow-lg">Guardar</button>
+                   </div>
+                </div>
+             </div>
+           )}
+
+           {/* MODAL MAPA */}
+           {showMapModal && (
+               <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+                   <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh]">
+                       <div className="flex-1 relative bg-slate-200">
+                           <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                               <MapRecenter />
+                               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
+                               <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({lat, lng})} />
+                           </MapContainer>
+                       </div>
+                       <div className="p-4 bg-white border-t flex justify-end gap-4">
+                           <button onClick={() => setShowMapModal(false)} className="px-6 py-2 rounded-xl font-bold text-slate-500 bg-slate-100">Cancelar</button>
+                           <button onClick={confirmLocation} className="px-6 py-2 rounded-xl font-bold bg-primary text-white">Confirmar</button>
+                       </div>
+                   </div>
+               </div>
+           )}
+
+           {/* MODAL SERVICIOS */}
+           {showServiceModal && (
+             <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="bg-white p-6 rounded-3xl w-full max-w-3xl shadow-2xl h-[90vh] flex flex-col">
+                   <div className="flex justify-between items-center mb-6 shrink-0">
+                       <div>
+                           <h3 className="text-xl font-black text-slate-800">Servicios de {showServiceModal.name}</h3>
+                           <p className="text-xs text-slate-500">Administra los productos que ofrece esta empresa.</p>
+                       </div>
+                       <button onClick={() => setShowServiceModal(null)} className="text-slate-400 font-bold hover:text-red-500">CERRAR</button>
+                   </div>
+                   <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                       {companyServices.map(srv => (
+                           <div key={srv.id} className="border p-3 rounded-xl flex gap-3 items-center bg-slate-50">
+                               <img src={srv.image_url || 'https://via.placeholder.com/80'} className="w-16 h-16 rounded-lg object-cover bg-white" />
+                               <div className="flex-1">
+                                   <h4 className="font-bold text-slate-800">{srv.name}</h4>
+                                   <p className="text-xs text-primary font-bold">{srv.price}</p>
+                                   <p className="text-[10px] text-slate-500 line-clamp-1">{srv.description}</p>
+                               </div>
+                               <button onClick={() => setEditingService(srv)} className="bg-blue-100 text-blue-600 p-2 rounded-lg"><span className="material-symbols-outlined text-sm">edit</span></button>
+                               <button onClick={() => deleteService(srv.id)} className="bg-red-100 text-red-600 p-2 rounded-lg"><span className="material-symbols-outlined text-sm">delete</span></button>
+                           </div>
+                       ))}
+                       {companyServices.length === 0 && <p className="text-center text-slate-400 py-10">No hay servicios registrados.</p>}
+                   </div>
+                   <div className="shrink-0 mt-4 pt-4 border-t bg-slate-50 p-4 rounded-xl">
+                       <h4 className="font-bold text-sm text-slate-700 mb-3">{editingService?.id ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                           <input type="text" placeholder="Nombre (ej. Tour Mármol)" className="bg-white border p-2 rounded-lg text-sm text-slate-900 font-bold" value={editingService?.name || ''} onChange={e => setEditingService(prev => ({...prev, name: e.target.value}))} />
+                           <input type="text" placeholder="Precio (ej. CLP 20.000)" className="bg-white border p-2 rounded-lg text-sm text-slate-900 font-bold" value={editingService?.price || ''} onChange={e => setEditingService(prev => ({...prev, price: e.target.value}))} />
+                       </div>
+                       <textarea placeholder="Descripción..." className="w-full bg-white border p-2 rounded-lg text-sm mb-3 resize-none text-slate-900" rows={2} value={editingService?.description || ''} onChange={e => setEditingService(prev => ({...prev, description: e.target.value}))}></textarea>
+                       <div className="flex items-center gap-3">
+                           <input type="file" className="text-xs flex-1" onChange={e => handleFileUpload(e, url => setEditingService(prev => ({...prev, image_url: url})))} />
+                           {editingService?.id && <button onClick={() => setEditingService(null)} className="bg-slate-200 px-4 py-2 rounded-lg text-xs font-bold text-slate-600">Cancelar</button>}
+                           <button onClick={saveService} className="bg-green-600 text-white px-6 py-2 rounded-lg text-xs font-bold hover:bg-green-700 shadow-md">{editingService?.id ? 'Actualizar' : 'Agregar'}</button>
+                       </div>
+                   </div>
+                </div>
+             </div>
+           )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EasyAdminFieldScreen;
