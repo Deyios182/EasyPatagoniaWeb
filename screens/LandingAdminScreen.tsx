@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { uploadImage } from '../utils/imageHandler'; // Asegúrate de tener esta ruta correcta
+import { uploadImage } from '../imageHandler'; // Asegúrate de tener esta ruta correcta
 
 const LandingAdminScreen: React.FC = () => {
   const [content, setContent] = useState<any[]>([]);
