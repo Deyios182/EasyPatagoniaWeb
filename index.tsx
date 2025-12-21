@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { esES } from '@clerk/localizations';
 import App from './App';
 
+
 // Importamos la clave pública desde el entorno
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 

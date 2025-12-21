@@ -74,6 +74,7 @@ const EasyAdminFieldScreen: React.FC = () => {
     // UTILIDADES
     const [showMapModal, setShowMapModal] = useState(false);
     const [tempCoords, setTempCoords] = useState<{ lat: number, lng: number } | null>(null);
+    const [mapTarget, setMapTarget] = useState<'locality' | 'attraction' | 'company' | null>(null); // New state to know what we are editing
     const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
     const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
 
@@ -84,13 +85,23 @@ const EasyAdminFieldScreen: React.FC = () => {
         const { data: locs } = await supabase.from('localities').select('*').order('name');
         if (locs) setLocalities(locs);
 
-        // 2. Cargar Atractivos (usando la vista o la tabla según disponibilidad)
-        const { data: attrs } = await supabase.from('atractivos_con_localidad').select('*').order('name');
-        if (attrs) setAttractions(attrs);
+        // 2. Cargar Atractivos (Tabla directa)
+        const { data: attrs } = await supabase.from('attractions').select('*').order('name');
+        if (attrs) {
+            // Mapeamos para inyectar el nombre de la localidad (ya que types.ts no lo tiene, lo manejamos localmente o extendemos el tipo)
+            // @ts-ignore
+            const mappedAttrs = attrs.map(a => ({
+                ...a,
+                locality_name: locs?.find(l => l.id === a.locality_id)?.name || 'Sin Localidad'
+            }));
+            setAttractions(mappedAttrs);
+        }
 
-        // 3. Cargar Empresas con sus dueños
-        const { data: comps } = await supabase.from('companies').select('*, user_profiles(email)').order('name');
-        if (comps) setCompanies(comps.map(c => ({ ...c, owner_email: c.user_profiles?.email })));
+        // 3. Cargar Empresas
+        const { data: comps } = await supabase.from('companies').select('*').order('name');
+        if (comps) {
+            setCompanies(comps.map(c => ({ ...c, owner_email: '' })));
+        }
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
@@ -104,7 +115,13 @@ const EasyAdminFieldScreen: React.FC = () => {
     // --- LOCALIDADES ---
     const saveLocality = async () => {
         if (!editingLocality?.name) return;
-        const payload = { name: editingLocality.name, image_url: editingLocality.image_url, is_active: true };
+        const payload = {
+            name: editingLocality.name,
+            image_url: editingLocality.image_url,
+            is_active: true,
+            latitude: editingLocality.latitude || null,
+            longitude: editingLocality.longitude || null
+        };
         if (editingLocality.id) await supabase.from('localities').update(payload).eq('id', editingLocality.id);
         else await supabase.from('localities').insert([payload]);
         setEditingLocality(null); fetchData();
@@ -115,9 +132,11 @@ const EasyAdminFieldScreen: React.FC = () => {
         if (!editingAttraction?.name || !editingAttraction.locality_id) { alert("Nombre y Localidad requeridos"); return; }
         const payload = {
             name: editingAttraction.name,
-            description: editingAttraction.description,
+            short_description: editingAttraction.short_description,
             locality_id: editingAttraction.locality_id,
-            image_url: editingAttraction.image_url
+            main_image_url: editingAttraction.main_image_url,
+            latitude: editingAttraction.latitude || null,
+            longitude: editingAttraction.longitude || null
         };
         if (editingAttraction.id) await supabase.from('attractions').update(payload).eq('id', editingAttraction.id);
         else await supabase.from('attractions').insert([payload]);
@@ -226,13 +245,31 @@ const EasyAdminFieldScreen: React.FC = () => {
     };
 
     // --- MAPA ---
-    const openMap = () => {
-        setTempCoords({ lat: editingCompany?.latitude || -46.6225, lng: editingCompany?.longitude || -72.6744 });
+    // Universal openMap
+    const openMap = (target: 'locality' | 'attraction' | 'company') => {
+        setMapTarget(target);
+        if (target === 'locality' && editingLocality) {
+            setTempCoords({ lat: editingLocality.latitude || -46.6225, lng: editingLocality.longitude || -72.6744 });
+        } else if (target === 'attraction' && editingAttraction) {
+            setTempCoords({ lat: editingAttraction.latitude || -46.6225, lng: editingAttraction.longitude || -72.6744 });
+        } else if (target === 'company' && editingCompany) {
+            setTempCoords({ lat: editingCompany.latitude || -46.6225, lng: editingCompany.longitude || -72.6744 });
+        }
         setShowMapModal(true);
     };
+
     const confirmLocation = () => {
-        if (tempCoords) setEditingCompany(prev => ({ ...prev, latitude: tempCoords.lat, longitude: tempCoords.lng }));
+        if (!tempCoords) return;
+
+        if (mapTarget === 'locality') {
+            setEditingLocality(prev => ({ ...prev, latitude: tempCoords.lat, longitude: tempCoords.lng }));
+        } else if (mapTarget === 'attraction') {
+            setEditingAttraction(prev => ({ ...prev, latitude: tempCoords.lat, longitude: tempCoords.lng }));
+        } else if (mapTarget === 'company') {
+            setEditingCompany(prev => ({ ...prev, latitude: tempCoords.lat, longitude: tempCoords.lng }));
+        }
         setShowMapModal(false);
+        setMapTarget(null);
     };
     const searchOwner = async () => {
         const { data } = await supabase.from('user_profiles').select('clerk_user_id, email').eq('email', ownerEmailSearch).single();
@@ -276,6 +313,15 @@ const EasyAdminFieldScreen: React.FC = () => {
 
                                 <ImageUploader label="Imagen de Portada" currentImage={editingLocality.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingLocality({ ...editingLocality, image_url: url }))} />
 
+                                <div className="mt-4">
+                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Ubicación GPS</label>
+                                    {editingLocality.latitude ? <p className="text-sm font-bold text-slate-700 mb-2">{editingLocality.latitude.toFixed(4)}, {editingLocality.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
+                                    <button onClick={() => openMap('locality')} className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+                                        <span className="material-symbols-outlined">location_on</span>
+                                        {editingLocality.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
+                                    </button>
+                                </div>
+
                                 <div className="flex gap-2 mt-6">
                                     <button onClick={() => setEditingLocality(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
                                     <button onClick={saveLocality} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg">Guardar</button>
@@ -293,11 +339,12 @@ const EasyAdminFieldScreen: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {attractions.map(att => (
                             <div key={att.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md cursor-pointer flex gap-4" onClick={() => setEditingAttraction(att)}>
-                                <img src={att.image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-lg bg-slate-100" />
+                                <img src={att.main_image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-lg bg-slate-100" />
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-800 leading-tight mb-1">{att.name}</h3>
+                                    {/* @ts-ignore */}
                                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">{att.locality_name}</span>
-                                    <p className="text-xs text-slate-500 mt-2 line-clamp-2">{att.description}</p>
+                                    <p className="text-xs text-slate-500 mt-2 line-clamp-2">{att.short_description}</p>
                                 </div>
                             </div>
                         ))}
@@ -320,10 +367,19 @@ const EasyAdminFieldScreen: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                                <textarea className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 resize-none" rows={3} value={editingAttraction.description || ''} onChange={e => setEditingAttraction({ ...editingAttraction, description: e.target.value })} />
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción Corta</label>
+                                <textarea className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl p-3 mb-4 resize-none" rows={3} value={editingAttraction.short_description || ''} onChange={e => setEditingAttraction({ ...editingAttraction, short_description: e.target.value })} />
 
-                                <ImageUploader label="Foto del Atractivo" currentImage={editingAttraction.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingAttraction({ ...editingAttraction, image_url: url }))} />
+                                <ImageUploader label="Foto del Atractivo" currentImage={editingAttraction.main_image_url} onUpload={(e) => handleFileUpload(e, url => setEditingAttraction({ ...editingAttraction, main_image_url: url }))} />
+
+                                <div className="mt-4">
+                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Ubicación GPS</label>
+                                    {editingAttraction.latitude ? <p className="text-sm font-bold text-slate-700 mb-2">{editingAttraction.latitude.toFixed(4)}, {editingAttraction.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
+                                    <button onClick={() => openMap('attraction')} className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+                                        <span className="material-symbols-outlined">location_on</span>
+                                        {editingAttraction.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
+                                    </button>
+                                </div>
 
                                 <div className="flex gap-2 mt-6">
                                     <button onClick={() => setEditingAttraction(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
@@ -430,32 +486,11 @@ const EasyAdminFieldScreen: React.FC = () => {
                                         <label className="text-xs font-bold text-slate-500 uppercase block">Ubicación GPS</label>
                                         {editingCompany.latitude ? <p className="text-sm font-bold text-slate-700">{editingCompany.latitude.toFixed(4)}, {editingCompany.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold">No definida</p>}
                                     </div>
-                                    <button onClick={openMap} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">map</span> Seleccionar Mapa</button>
+                                    <button onClick={() => openMap('company')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">map</span> Seleccionar Mapa</button>
                                 </div>
                                 <div className="flex gap-4 mt-6 pt-4 border-t">
                                     <button onClick={() => setEditingCompany(null)} className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200">Cancelar</button>
                                     <button onClick={saveCompany} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold shadow-lg hover:shadow-primary/30">Guardar Empresa</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* MODAL MAPA */}
-                    {showMapModal && (
-                        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-                            <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh]">
-                                <div className="flex-1 relative bg-slate-200">
-                                    {/* @ts-ignore */}
-                                    <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
-                                        <MapRecenter />
-                                        {/* @ts-ignore */}
-                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
-                                        <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
-                                    </MapContainer>
-                                </div>
-                                <div className="p-4 bg-white border-t flex justify-end gap-4">
-                                    <button onClick={() => setShowMapModal(false)} className="px-6 py-2 rounded-xl font-bold text-slate-500 bg-slate-100">Cancelar</button>
-                                    <button onClick={confirmLocation} className="px-6 py-2 rounded-xl font-bold bg-primary text-white">Confirmar</button>
                                 </div>
                             </div>
                         </div>
@@ -539,6 +574,26 @@ const EasyAdminFieldScreen: React.FC = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+            {/* MODAL MAPA (RESTORED) */}
+            {showMapModal && (
+                <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh]">
+                        <div className="flex-1 relative bg-slate-200">
+                            {/* @ts-ignore */}
+                            <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                                <MapRecenter />
+                                {/* @ts-ignore */}
+                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
+                                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
+                            </MapContainer>
+                        </div>
+                        <div className="p-4 bg-white border-t flex justify-end gap-4">
+                            <button onClick={() => setShowMapModal(false)} className="px-6 py-2 rounded-xl font-bold text-slate-500 bg-slate-100">Cancelar</button>
+                            <button onClick={confirmLocation} className="px-6 py-2 rounded-xl font-bold bg-primary text-white">Confirmar</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

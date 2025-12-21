@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateItineraryAI } from '../geminiService';
 import { useAppAuth } from '../App';
+import { supabase } from '../supabaseClient';
 import { Category } from '../types';
 
 const PlannerScreen: React.FC = () => {
@@ -13,7 +14,27 @@ const PlannerScreen: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(['Restaurante', 'Hospedaje', 'Actividad']);
   const [loading, setLoading] = useState(false);
 
-  const categories: {id: Category, icon: string, label: string}[] = [
+  // RESTORE STATE from LocalStorage (Draft)
+  useEffect(() => {
+    const savedMeta = localStorage.getItem('ep_plan_meta');
+    if (savedMeta) {
+      try {
+        const parsed = JSON.parse(savedMeta);
+        if (parsed.days) setDays(parsed.days);
+        if (parsed.budget) setBudget(parsed.budget);
+        if (parsed.categories) setSelectedCategories(parsed.categories);
+      } catch (e) {
+        console.error("Failed to parse saved draft", e);
+      }
+    }
+  }, []);
+
+  // AUTO-SAVE Draft
+  useEffect(() => {
+    localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories }));
+  }, [days, budget, selectedCategories]);
+
+  const categories: { id: Category, icon: string, label: string }[] = [
     { id: 'Hospedaje', icon: 'hotel', label: t('hotel') },
     { id: 'Actividad', icon: 'hiking', label: t('activity') },
     { id: 'Restaurante', icon: 'restaurant', label: t('restaurant') },
@@ -21,7 +42,7 @@ const PlannerScreen: React.FC = () => {
   ];
 
   const toggleCategory = (cat: Category) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     );
   };
@@ -38,7 +59,7 @@ const PlannerScreen: React.FC = () => {
       localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories }));
       navigate('/itinerary');
     } else {
-      alert("Hubo un error generando tu aventura. Por favor intenta de nuevo.");
+      alert(language === 'ES' ? "No se pudo generar el itinerario. Es posible que el servicio de IA esté saturado momentáneamente. Por favor, intenta de nuevo en unos segundos." : "Could not generate itinerary. AI service might be busy. Please try again shortly.");
     }
     setLoading(false);
   };
@@ -65,7 +86,7 @@ const PlannerScreen: React.FC = () => {
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center p-6 md:p-12 overflow-y-auto no-scrollbar">
       <div className="w-full max-w-4xl space-y-12 pb-24">
-        
+
         <div className="flex items-center justify-between">
           <button onClick={() => navigate('/map')} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark dark:text-white shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
             <span className="material-symbols-outlined text-2xl">arrow_back</span>
@@ -78,18 +99,18 @@ const PlannerScreen: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-surface-dark p-10 md:p-16 rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-16">
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            
+
             {/* Duración */}
             <section className="space-y-8">
               <div className="flex justify-between items-end">
                 <h2 className="text-xl font-black dark:text-white uppercase tracking-tighter leading-none italic">Duración</h2>
                 <span className="text-primary text-5xl font-black leading-none tracking-tighter">{days} <span className="text-sm">días</span></span>
               </div>
-              <input 
-                type="range" min="1" max="10" 
-                value={days} 
+              <input
+                type="range" min="1" max="10"
+                value={days}
                 onChange={(e) => setDays(Number(e.target.value))}
                 className="w-full h-4 bg-slate-100 dark:bg-background-dark rounded-full appearance-none cursor-pointer accent-primary"
               />
@@ -98,7 +119,7 @@ const PlannerScreen: React.FC = () => {
             {/* Presupuesto */}
             <section className="space-y-4">
               <h2 className="text-xl font-black dark:text-white uppercase tracking-tighter leading-none italic">Monto Estimado</h2>
-              <input 
+              <input
                 type="text"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
@@ -115,10 +136,10 @@ const PlannerScreen: React.FC = () => {
               <div className="w-10 h-1 bg-primary"></div>
               <h2 className="text-xl font-black dark:text-white uppercase tracking-tighter leading-none italic">¿Qué incluimos?</h2>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {categories.map(cat => (
-                <button 
+                <button
                   key={cat.id}
                   onClick={() => toggleCategory(cat.id)}
                   className={`flex flex-col items-center justify-center p-8 rounded-[2.5rem] border-4 transition-all group ${selectedCategories.includes(cat.id) ? 'bg-primary border-primary text-white shadow-xl scale-105' : 'bg-slate-50 dark:bg-background-dark border-transparent text-slate-400'}`}
@@ -130,7 +151,7 @@ const PlannerScreen: React.FC = () => {
             </div>
           </section>
 
-          <button 
+          <button
             onClick={handleGenerate}
             className="w-full bg-primary text-white font-black h-28 rounded-[3rem] shadow-2xl flex items-center justify-center gap-6 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] text-sm"
           >

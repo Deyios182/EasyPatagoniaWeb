@@ -27,15 +27,15 @@ async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemin
 export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT' = 'ES', userLat?: number, userLng?: number) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    
+
     // Contexto de Supabase (Tus negocios)
-    const { data: businesses } = await supabase.from('businesses').select('nombre, categoria, info').limit(30);
-    const contextText = businesses?.map((b: any) => `- ${b.nombre} (${b.categoria}): ${b.info?.descripcion}`).join('\n') || "";
+    const { data: companies } = await supabase.from('companies').select('name, category, description').limit(30);
+    const contextText = companies?.map((b: any) => `- ${b.name} (${b.category}): ${b.description}`).join('\n') || "";
 
     const tools: any[] = [{ googleSearch: {} }];
     const toolConfig: any = {};
     const isMapsRequested = !!(userLat && userLng);
-    
+
     // Intentamos usar el modelo que quieres
     const preferredModel = isMapsRequested ? 'gemini-2.5-flash' : 'gemini-2.5-flash';
 
@@ -79,7 +79,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
   } catch (error: any) {
     console.error("Chat Error:", error);
     const msg = error.message || JSON.stringify(error);
-    if(msg.includes('429')) return { text: "⚠️ Mi cuota de energía IA se agotó por hoy. Intenta más tarde o actualiza el plan.", sources: [] };
+    if (msg.includes('429')) return { text: "⚠️ Mi cuota de energía IA se agotó por hoy. Intenta más tarde o actualiza el plan.", sources: [] };
     return { text: `Error del sistema: ${msg}`, sources: [] };
   }
 }
@@ -91,11 +91,11 @@ export async function generateActivityPreview(activityTitle: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', 
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
-      config: { 
-         // @ts-ignore
-        imageConfig: { aspectRatio: "16:9" } 
+      config: {
+        // @ts-ignore
+        imageConfig: { aspectRatio: "16:9" }
       }
     });
     for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -109,23 +109,19 @@ export async function generateActivityPreview(activityTitle: string) {
  * 🚀 MODIFICADO: Planificador conectado a Supabase
  * Ya no recibe 'businesses' como argumento, los busca él mismo en la BD.
  */
-export async function generateItineraryAI(days: number, budget: string, categories: Category[], language: 'ES' | 'EN' | 'PT' = 'ES') {
+export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-    // 1. BUSCAR EN SUPABASE (Filtrado por categorías)
-    const { data: dbBusinesses } = await supabase
-      .from('businesses')
-      .select('nombre, categoria, info')
-      .in('categoria', categories)
-      .limit(50);
-    
+    // FILTER LOCAL BUSINESSES
+    const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria as Category));
+
     // 2. Crear contexto del catálogo
-    const catalogContext = dbBusinesses?.map((b: any) => ({
-      name: b.nombre,
-      cat: b.categoria,
-      loc: b.info?.direccion || "Región de Aysén"
-    })) || [];
+    const catalogContext = filteredBusinesses.map((b: any) => ({
+      name: b.nombre || b.name,
+      cat: b.categoria || b.category,
+      loc: b.info?.direccion || b.description || "Región de Aysén"
+    }));
 
     const prompt = `Planificador Aysén. Idioma: ${language}. Días: ${days}. Presupuesto: ${budget}.
     CATÁLOGO LOCAL (Prioridad): ${JSON.stringify(catalogContext)}
@@ -168,6 +164,11 @@ export async function generateItineraryAI(days: number, budget: string, categori
 
   } catch (error: any) {
     console.error("Planner Error:", error);
+    if (error.status === 429 || error.message?.includes('429')) {
+      // Fallback or User Notification
+      // Return a basic empty structure or a specific error object we can handle in UI
+      return null; // The UI will show "Error generating" but at least it won't crash hard if we handle null.
+    }
     return null;
   }
 }
@@ -179,7 +180,7 @@ export async function textToSpeechPatagonia(text: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.5-flash",
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
@@ -191,11 +192,11 @@ export async function textToSpeechPatagonia(text: string) {
   } catch (error: any) {
     console.warn("TTS Quota exceeded or error. Using browser fallback.");
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'es-ES';
-        window.speechSynthesis.speak(utterance);
-        return null; 
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      window.speechSynthesis.speak(utterance);
+      return null;
     }
     return null;
   }

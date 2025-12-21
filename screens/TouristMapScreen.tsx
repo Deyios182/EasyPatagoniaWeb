@@ -12,21 +12,22 @@ const MAP_TILES: Record<MapTheme, string> = {
 
 const TouristMapScreen: React.FC = () => {
   const navigate = useNavigate();
-  // AGREGAMOS 'user' AQUÍ PARA LA FOTO DE PERFIL
-  const { allBusinesses, t, mapTheme, user } = useAppAuth();
-  
-  const mapRef = useRef<L.Map | null>(null);
+  const { allBusinesses, t, mapTheme, user, allLocalities, allAttractions } = useAppAuth();
+
+  // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<{ [key: string]: L.Marker }>({});
+  const markersRef = useRef<{ [key: string]: L.Marker | L.CircleMarker }>({});
 
   const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
   const [serviceSearch, setServiceSearch] = useState('');
   const [zoom, setZoom] = useState(14);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [selectedAttraction, setSelectedAttraction] = useState<any | null>(null); // New state for Attraction
   const [showRouteAssistant, setShowRouteAssistant] = useState(false);
 
-  // Detectar móvil
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -35,16 +36,10 @@ const TouristMapScreen: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const localTransfers = useMemo(() => 
+  const localTransfers = useMemo(() =>
     allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios.some(s => s.nombre.toLowerCase().includes('traslado') || s.nombre.toLowerCase().includes('aeropuerto'))),
     [allBusinesses]
   );
-
-  useEffect(() => {
-    if (allBusinesses.length > 0 && !selectedBusiness) {
-      if (!isMobile) setSelectedBusiness(allBusinesses[0]);
-    }
-  }, [allBusinesses, isMobile]);
 
   const zoomLevelPriority = useMemo(() => {
     if (zoom < 13.0) return 0;
@@ -55,97 +50,217 @@ const TouristMapScreen: React.FC = () => {
 
   const filtered = useMemo(() => {
     return allBusinesses.filter(b => {
-      if (!b.isOpen) return false;
-      const matchesFilter = activeFilter === 'All' || b.categoria === activeFilter;
-      const matchesPriority = b.priority <= zoomLevelPriority;
-      const matchesSearch = serviceSearch === '' || 
+      // Robust checks
+      if (!b.gps) return false;
+      if (b.isOpen === false) return false;
+
+      let matchesFilter = false;
+      if (activeFilter === 'All') {
+        matchesFilter = true;
+      } else if (activeFilter === 'Actividad') {
+        matchesFilter = ['Actividad', 'Tour Operador', 'Agencia', 'Tour', 'Excursión'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Hospedaje') {
+        matchesFilter = ['Hospedaje', 'Hotel', 'Cabaña', 'Hostal', 'Lodge', 'Camping', 'Alojamiento'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Restaurante') {
+        matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Transporte') {
+        matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
+      } else {
+        matchesFilter = b.categoria === activeFilter;
+      }
+
+      // Ignore Priority for now to debug - Uncomment if strict priority needed
+      // const businessPriority = b.priority !== undefined ? b.priority : 0; 
+      // const matchesPriority = businessPriority <= zoomLevelPriority;
+      const matchesPriority = true; // FORCE SHOW ALL
+
+      const matchesSearch = serviceSearch === '' ||
         b.servicios.some(s => s.nombre.toLowerCase().includes(serviceSearch.toLowerCase())) ||
         b.nombre.toLowerCase().includes(serviceSearch.toLowerCase());
+
       return matchesFilter && matchesPriority && matchesSearch;
     });
   }, [allBusinesses, activeFilter, zoomLevelPriority, serviceSearch]);
 
-  // Init Map
+  // Init Map (unchanged)
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
-    const initialPos: L.LatLngExpression = [-46.6225, -72.6745];
-    const map = L.map(containerRef.current, { 
-      zoomControl: false, 
-      attributionControl: false, 
-      center: initialPos, 
-      zoom: 14 
+    if (!containerRef.current || mapInstance) return;
+    const initialPos: L.LatLngExpression = [-46.6225, -72.6745]; // Tranquilo
+    const map = L.map(containerRef.current, {
+      zoomControl: false,
+      attributionControl: false,
+      center: initialPos,
+      zoom: 14
     });
-    mapRef.current = map;
+
     map.on('zoomend', () => setZoom(map.getZoom()));
-    
-    tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], { 
-      maxZoom: 20 
+
+    tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
+      maxZoom: 20
     }).addTo(map);
 
-    return () => { map.remove(); mapRef.current = null; };
-  }, []);
+    setMapInstance(map);
 
-  // Update Theme
+    return () => {
+      map.remove();
+      setMapInstance(null);
+    };
+  }, []); // Run once (but strictly clean up)
+
+  // Update Theme (unchanged)
   useEffect(() => {
-    if (mapRef.current && tileLayerRef.current) {
-      mapRef.current.removeLayer(tileLayerRef.current);
-      tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], { 
-        maxZoom: 20 
-      }).addTo(mapRef.current);
+    if (mapInstance && tileLayerRef.current) {
+      mapInstance.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
+        maxZoom: 20
+      }).addTo(mapInstance);
     }
-  }, [mapTheme]);
+  }, [mapTheme, mapInstance]);
 
+  // Update Markers (Localities + Attractions + Businesses)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapInstance) return;
+    // const { allLocalities, allAttractions } = useAppAuth(); // REMOVED INVALID HOOK CALL
+
+    // --- 1. Prepare Data ---
+    // Businesses (ONLY at Zoom >= 13)
+    const SHOW_BUSINESS_ZOOM_THRESHOLD = 13;
+    const businessMarkers = (zoom >= SHOW_BUSINESS_ZOOM_THRESHOLD)
+      ? filtered.filter(b => b.gps).map(b => ({
+        id: b.id,
+        lat: b.gps!.lat,
+        lng: b.gps!.lng,
+        title: b.nombre,
+        type: 'business',
+        color: b.categoria === 'Transporte' ? '#4f6d7a' :
+          ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
+            ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' : '#2ecc71',
+        icon: b.media.logo_url,
+        data: b
+      }))
+      : [];
+
+    // Localities (Always visible)
+    const localityMarkers = allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
+      id: l.id,
+      lat: l.latitude!,
+      lng: l.longitude!,
+      title: l.name,
+      type: 'locality',
+      color: '#8e44ad', // Purple
+      icon: l.image_url,
+      data: l
+    }));
+
+    // Attractions (Always visible now, as requested)
+    const attractionMarkers = allAttractions.filter(a => a.latitude && a.longitude).map(a => ({
+      id: a.id,
+      lat: a.latitude!,
+      lng: a.longitude!,
+      title: a.name,
+      type: 'attraction',
+      color: '#e67e22', // Orange
+      icon: a.main_image_url,
+      data: a
+    }));
+
+
+    const allMarkers = [...businessMarkers, ...localityMarkers, ...attractionMarkers];
+
+    // --- 2. Cleanup ---
     Object.keys(markersRef.current).forEach(id => {
-      if (!filtered.find(b => b.id === id)) { markersRef.current[id].remove(); delete markersRef.current[id]; }
+      if (!allMarkers.find(m => m.id === id)) {
+        markersRef.current[id].remove();
+        delete markersRef.current[id];
+      }
     });
-    filtered.forEach(b => {
-      const isActive = selectedBusiness?.id === b.id;
-      const color = b.categoria === 'Restaurante' ? '#dd6e42' : b.categoria === 'Hospedaje' ? '#3498db' : b.categoria === 'Transporte' ? '#4f6d7a' : '#2ecc71';
-      
+
+    // --- 3. Render ---
+    allMarkers.forEach(item => {
+      const isActive = selectedBusiness?.id === item.id || selectedAttraction?.id === item.id;
+
+      // Custom Icon Logic
+      let innerHtml = '';
+      if (item.type === 'business') {
+        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                      <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
+      } else if (item.type === 'locality') {
+        innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">location_city</span></div>`;
+      } else if (item.type === 'attraction') {
+        innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">photo_camera</span></div>`;
+      }
+
       const customIcon = L.divIcon({
-        className: `custom-marker ${isActive ? 'active' : ''}`,
+        className: "",
         html: `
           <div style="
             position: relative;
-            width: 100%; 
-            height: 100%; 
+            width: ${isActive ? '56px' : '40px'}; 
+            height: ${isActive ? '56px' : '40px'}; 
             border-radius: 50%; 
-            border: ${isActive ? '3px' : '2px'} solid ${color}; 
-            background-color: white;
+            border: ${isActive ? '3px' : '2px'} solid white; 
+            background-color: ${item.color}; 
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: all 0.3s ease;
+            z-index: ${isActive ? 1000 : 1};
+            display: flex;
+            align-items: center;
+            justify-content: center;
           ">
-            <img 
-              src="${b.media.logo_url}" 
-              alt="${b.nombre}" 
-              style="width: 100%; height: 100%; object-fit: cover;" 
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-            />
-            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${color}; color: white;">
-               <span style="font-family: 'Material Symbols Outlined'; font-size: 20px;">location_on</span>
-            </div>
+            ${innerHtml}
           </div>
         `,
         iconSize: isActive ? [56, 56] : [40, 40],
         iconAnchor: isActive ? [28, 28] : [20, 20]
       });
 
-      if (markersRef.current[b.id]) {
-        markersRef.current[b.id].setIcon(customIcon);
-        if (isActive) markersRef.current[b.id].setZIndexOffset(1000);
+      if (markersRef.current[item.id]) {
+        const m = markersRef.current[item.id];
+        if (m instanceof L.Marker) {
+          m.setIcon(customIcon);
+          m.setZIndexOffset(isActive ? 1000 : 0);
+        }
       } else {
-        const marker = L.marker([b.gps.lat, b.gps.lng], { icon: customIcon }).addTo(mapRef.current!).on('click', () => setSelectedBusiness(b));
-        markersRef.current[b.id] = marker;
+        const marker = L.marker([item.lat, item.lng], { icon: customIcon })
+          .addTo(mapInstance)
+          .on('click', () => {
+            // If Business, Select it
+            if (item.type === 'business') {
+              setSelectedBusiness(item.data as Business);
+              setSelectedAttraction(null);
+            } else if (item.type === 'attraction') {
+              setSelectedAttraction(item.data);
+              setSelectedBusiness(null);
+            }
+          });
+        markersRef.current[item.id] = marker;
       }
     });
-  }, [filtered, selectedBusiness]);
 
-  const googleMapsUrl = selectedBusiness 
-    ? `http://googleusercontent.com/maps.google.com/9{selectedBusiness.gps.lat},${selectedBusiness.gps.lng}`
-    : `https://www.google.com/maps/dir/?api=1&destination=Puerto+Rio+Tranquilo0`;
+    // Auto Center (only if GPS valid and explicitly selected)
+    if (selectedBusiness && selectedBusiness.gps) {
+      mapInstance.flyTo([selectedBusiness.gps.lat, selectedBusiness.gps.lng], 16, { animate: true, duration: 1.5 });
+    } else if (selectedAttraction && selectedAttraction.latitude && selectedAttraction.longitude) {
+      mapInstance.flyTo([selectedAttraction.latitude, selectedAttraction.longitude], 15, { animate: true, duration: 1.5 });
+    }
+
+  }, [filtered, selectedBusiness, selectedAttraction, mapInstance, allLocalities, allAttractions]);
+
+  const handleLocalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const locId = e.target.value;
+    if (!locId) return;
+    const loc = allLocalities.find(l => l.id === locId);
+    if (loc && loc.latitude && loc.longitude && mapInstance) {
+      mapInstance.flyTo([loc.latitude, loc.longitude], 14, { animate: true, duration: 1.5 });
+    }
+  };
+
+  const googleMapsUrl = selectedBusiness
+    ? `http://googleusercontent.com/maps.google.com/maps?daddr=${selectedBusiness.gps?.lat},${selectedBusiness.gps?.lng}`
+    : selectedAttraction
+      ? `http://googleusercontent.com/maps.google.com/maps?daddr=${selectedAttraction.latitude},${selectedAttraction.longitude}`
+      : `https://www.google.com/maps/dir/?api=1&destination=Puerto+Rio+Tranquilo`;
 
   return (
     <div className="relative h-screen w-full bg-background-light dark:bg-background-dark overflow-hidden flex flex-col transition-colors duration-300">
@@ -179,7 +294,7 @@ const TouristMapScreen: React.FC = () => {
                     Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
                   </a>
                 </div>
-                 <div className="bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] space-y-4">
+                <div className="bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] space-y-4">
                   <div className="flex justify-between items-center text-slate-400">
                     <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">flight</span>
                     <span className="bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest leading-none">VUELOS</span>
@@ -193,6 +308,36 @@ const TouristMapScreen: React.FC = () => {
                   </a>
                 </div>
               </div>
+
+              {/* LOCAL TRANSFERS SECTION */}
+              {localTransfers.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="material-symbols-outlined text-green-500 text-3xl">airport_shuttle</span>
+                    <div>
+                      <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white leading-none">Traslados & Tours</h3>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Servicios Locales Disponibles</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {localTransfers.map(tr => (
+                      <div
+                        key={tr.id}
+                        onClick={() => { setSelectedBusiness(tr); setShowRouteAssistant(false); }}
+                        className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-white hover:shadow-lg transition-all group"
+                      >
+                        <img src={tr.media.logo_url} className="w-14 h-14 rounded-xl object-cover bg-white shadow-sm" alt={tr.nombre} />
+                        <div>
+                          <h4 className="font-black text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors">{tr.nombre}</h4>
+                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1 line-clamp-1">{tr.info.descripcion}</p>
+                        </div>
+                        <span className="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary">chevron_right</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
@@ -200,38 +345,43 @@ const TouristMapScreen: React.FC = () => {
 
       {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
       <div className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-8 flex flex-col md:flex-row gap-3 md:gap-4 pointer-events-none">
-        
+
         {/* Contenedor Superior: Buscador + Botón Perfil */}
         <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
           <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-4 py-3 md:px-8 md:py-5 flex items-center gap-3 shadow-2xl group focus-within:border-primary/50 transition-all">
-            <span className="material-symbols-outlined text-primary group-focus-within:scale-110 transition-transform leading-none text-xl md:text-2xl">search</span>
-            <input 
-              type="text" 
-              placeholder={t('search_placeholder')} 
-              value={serviceSearch}
-              onChange={(e) => setServiceSearch(e.target.value)}
-              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white placeholder-slate-400 w-full text-sm md:text-base font-bold py-1 leading-none" 
-            />
+            <span className="material-symbols-outlined text-primary leading-none text-xl md:text-2xl">location_on</span>
+            <select
+              onChange={handleLocalityChange}
+              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none"
+              defaultValue=""
+            >
+              <option value="" disabled>📍 Ir a Localidad...</option>
+              {allLocalities.map(loc => (
+                <option key={loc.id} value={loc.id} className="text-slate-800">
+                  {loc.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* BOTÓN PERFIL (SOLO MÓVIL) */}
-          <div 
+          <div
             onClick={() => navigate('/profile')}
             className="md:hidden w-12 h-auto rounded-2xl bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-2xl cursor-pointer active:scale-95 transition-transform"
           >
-             <img 
-               src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"} 
-               alt="Perfil" 
-               className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
-             />
+            <img
+              src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"}
+              alt="Perfil"
+              className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
+            />
           </div>
         </div>
 
         {/* Filtros */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
           {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
-            <button 
-              key={cat} 
+            <button
+              key={cat}
               onClick={() => setActiveFilter(cat as any)}
               className={`whitespace-nowrap px-5 py-2.5 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
             >
@@ -243,18 +393,18 @@ const TouristMapScreen: React.FC = () => {
 
       {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
       <div className="mt-auto relative z-[100] p-4 md:p-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 pointer-events-none mb-[70px] md:mb-0">
-        
+
         {/* TARJETA DE NEGOCIO */}
         {selectedBusiness && (
-          <div 
-            className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group" 
+          <div
+            className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
             onClick={() => navigate(`/details/${selectedBusiness.id}`)}
           >
-            <div 
-                className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
-                onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
+            <div
+              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
+              onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
             >
-                <span className="material-symbols-outlined text-sm">close</span>
+              <span className="material-symbols-outlined text-sm">close</span>
             </div>
 
             <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
@@ -265,7 +415,7 @@ const TouristMapScreen: React.FC = () => {
               <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedBusiness.nombre}</h3>
               <div className="flex items-center gap-2 text-primary text-[10px] md:text-xs font-black mt-2 md:mt-3 leading-none">
                 <span className="material-symbols-outlined text-xs md:text-sm leading-none">star</span>
-                {selectedBusiness.rating} 
+                {selectedBusiness.rating}
                 <span className="text-slate-400 font-bold ml-1 uppercase tracking-widest text-[8px] md:text-[9px] leading-none">({selectedBusiness.reviewCount})</span>
               </div>
             </div>
@@ -275,17 +425,47 @@ const TouristMapScreen: React.FC = () => {
           </div>
         )}
 
-        {/* BOTÓN CÓMO LLEGAR (Se oculta en móvil si hay selección) */}
-        {(!selectedBusiness || !isMobile) && (
-            <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
-            <button 
-                onClick={() => setShowRouteAssistant(true)}
-                className="w-full bg-primary text-white font-black h-14 md:h-20 rounded-2xl md:rounded-[2rem] shadow-2xl flex items-center justify-center gap-3 md:gap-4 active:scale-95 transition-all uppercase tracking-[0.15em] text-[10px] md:text-xs shadow-primary/30 border-2 md:border-4 border-white/20 dark:border-white/10 px-4 py-2 leading-tight text-center"
+        {/* TARJETA DE ATRACTIVO (Nuevo) */}
+        {selectedAttraction && (
+          <div
+            className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
+            onClick={() => navigate('/discover', { state: { selectedAttractionId: selectedAttraction.id } })}
+          >
+            <div
+              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
+              onClick={(e) => { e.stopPropagation(); setSelectedAttraction(null); }}
             >
-                <span className="material-symbols-outlined text-2xl md:text-3xl leading-none">directions_car</span>
-                {t('how_to_get')}
-            </button>
+              <span className="material-symbols-outlined text-sm">close</span>
             </div>
+
+            <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
+              <img src={selectedAttraction.main_image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Selected" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] md:text-[9px] text-orange-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-1 md:mb-2 leading-none">Atractivo Turístico</p>
+              <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedAttraction.name}</h3>
+              <div className="flex items-center gap-2 text-slate-400 text-[10px] md:text-xs font-bold mt-2 md:mt-3 leading-none">
+                <span className="material-symbols-outlined text-xs md:text-sm leading-none">location_on</span>
+                Ver Tours Disponibles
+              </div>
+            </div>
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-orange-100 dark:bg-white/5 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-md">
+              <span className="material-symbols-outlined text-lg md:text-2xl leading-none">explore</span>
+            </div>
+          </div>
+        )}
+
+        {/* BOTÓN CÓMO LLEGAR (Se oculta en móvil si hay selección) */}
+        {(!selectedBusiness && !selectedAttraction || !isMobile) && (
+          <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
+            <button
+              onClick={() => setShowRouteAssistant(true)}
+              className="w-full bg-primary text-white font-black h-14 md:h-20 rounded-2xl md:rounded-[2rem] shadow-2xl flex items-center justify-center gap-3 md:gap-4 active:scale-95 transition-all uppercase tracking-[0.15em] text-[10px] md:text-xs shadow-primary/30 border-2 md:border-4 border-white/20 dark:border-white/10 px-4 py-2 leading-tight text-center"
+            >
+              <span className="material-symbols-outlined text-2xl md:text-3xl leading-none">directions_car</span>
+              {t('how_to_get')}
+            </button>
+          </div>
         )}
       </div>
 
@@ -299,11 +479,11 @@ const TouristMapScreen: React.FC = () => {
           <span className="material-symbols-outlined text-2xl leading-none">list_alt</span>
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">{t('list')}</span>
         </Link>
-        
+
         <div className="-mt-8">
-            <Link to="/chat" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-transform">
-                <span className="material-symbols-outlined text-2xl">smart_toy</span>
-            </Link>
+          <Link to="/chat" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-transform">
+            <span className="material-symbols-outlined text-2xl">smart_toy</span>
+          </Link>
         </div>
 
         <Link to="/discover" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
@@ -315,7 +495,7 @@ const TouristMapScreen: React.FC = () => {
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Plan</span>
         </Link>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -21,8 +21,9 @@ import EasyAdminFieldScreen from './screens/EasyAdminFieldScreen';
 import BusinessDirectoryScreen from './screens/BusinessDirectoryScreen';
 import UserAdminScreen from './screens/UserAdminScreen';
 import LandingAdminScreen from './screens/LandingAdminScreen';
-import { Role, User, Business, MapTheme, Currency, SavedItinerary } from './types';
-import { getLocalizedBusinesses } from './constants';
+import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
+// import { getLocalizedBusinesses } from './constants'; // Deleted
+
 
 // --- CONFIGURACIÓN DE IDIOMAS (Sin cambios) ---
 type Language = 'ES' | 'EN' | 'PT';
@@ -42,14 +43,19 @@ interface AuthContextType {
   updateBusiness: (biz: Business) => void;
   usersRegistry: User[];
   registerUser: (user: User) => void;
+  // New Global Data
+  allAttractions: Attraction[];
+  allLocalities: Locality[];
+  companyServices: any[]; // Add companyServices to interface
+
   language: Language;
   setLanguage: (l: Language) => void;
   mapTheme: MapTheme;
   setMapTheme: (t: MapTheme) => void;
   currency: Currency;
   setCurrency: (c: Currency) => void;
-  saveItinerary: (itinerary: SavedItinerary) => void;
-  deleteItinerary: (id: string) => void;
+  saveItinerary: (itinerary: SavedItinerary) => Promise<void>;
+  deleteItinerary: (id: string) => Promise<void>;
   t: (key: string) => string;
 }
 
@@ -66,15 +72,142 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [mapTheme, setMapTheme] = useState<MapTheme>(() => (localStorage.getItem('ep_map_theme') as MapTheme) || 'dark');
   const [currency, setCurrency] = useState<Currency>(() => (localStorage.getItem('ep_currency') as Currency) || 'CLP');
 
-  const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => getLocalizedBusinesses(language));
+  // const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => getLocalizedBusinesses(language)); // OLD
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
+  const [allAttractions, setAllAttractions] = useState<Attraction[]>([]);
+  const [allLocalities, setAllLocalities] = useState<Locality[]>([]);
+  const [allServices, setAllServices] = useState<any[]>([]); // New state for all services
   const [usersRegistry, setUsersRegistry] = useState<User[]>([]);
+
+  // FETCH BUSINESSES FROM SUPABASE
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      // Query Companies with Services
+      const { data: companies, error } = await supabase
+        .from('companies')
+        .select(`
+                *,
+                services (*)
+            `)
+        .eq('is_active', true);
+
+      if (error) {
+        console.error("Error loading businesses:", error);
+        return;
+      }
+
+      // Map to Business Type
+      if (companies) {
+        const mapped: Business[] = companies.map(c => ({
+          id: c.id,
+          name: c.name,
+          nombre: c.name, // Legacy
+          categoria: c.category,
+          description: c.description,
+
+          // Location & Contact
+          // Location & Contact
+          gps: (function () {
+            const parse = (val: any) => {
+              if (typeof val === 'number') return val;
+              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
+              return 0;
+            };
+            const lat = parse(c.latitude);
+            const lng = parse(c.longitude);
+            return (lat && lng) ? { lat, lng } : undefined;
+          })(),
+          lat: (function () {
+            const parse = (val: any) => {
+              if (typeof val === 'number') return val;
+              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
+              return 0;
+            };
+            return parse(c.latitude);
+          })(),
+          lng: (function () {
+            const parse = (val: any) => {
+              if (typeof val === 'number') return val;
+              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
+              return 0;
+            };
+            return parse(c.longitude);
+          })(),
+
+          // Contact
+          contacto: { whatsapp: c.whatsapp, email: c.owner_email, web: "" },
+
+          // UI Info
+          info: {
+            descripcion: c.description,
+            direccion: c.address,
+            horario: "09:00 - 19:00" // Default for now
+          },
+
+          // Media
+          media: {
+            logo_url: c.logo_url || "https://placehold.co/100",
+            fotos_url: c.gallery_urls || ["https://placehold.co/600x400"]
+          },
+          // Important for Map
+          priority: 0,
+          isOpen: c.is_active,
+          is_active: c.is_active, // Fix lint error
+
+          // Services
+          services: c.services?.map((s: any) => ({
+            id: s.id,
+            nombre: s.name,
+            precio: s.price,
+            descripcion: s.description,
+            foto_url: s.image_url || c.gallery_urls?.[0] || "https://placehold.co/400"
+          })) || [],
+
+          // Legacy alias ('servicios') to prevent crash in TouristMapScreen
+          servicios: c.services?.map((s: any) => ({
+            id: s.id,
+            nombre: s.name,
+            precio: s.price,
+            descripcion: s.description,
+            foto_url: s.image_url || c.gallery_urls?.[0] || "https://placehold.co/400"
+          })) || [],
+
+          // Ratings & Metadata
+          rating: 5.0, // Default until reviews implemented
+          reviewCount: 0
+        }));
+        setAllBusinesses(mapped);
+
+        // FLATTEN SERVICES FOR GLOBAL ACCESS
+        const services = mapped.flatMap(b => b.services || []);
+        setAllServices(services);
+
+      }
+    };
+
+    fetchBusinesses();
+
+    // FETCH LOCATIONS & ATTRACTIONS
+    const fetchDiscoveryData = async () => {
+      // Localities
+      const { data: locs } = await supabase.from('localities').select('*').eq('is_active', true);
+      if (locs) setAllLocalities(locs);
+
+      // Attractions
+      const { data: attrs } = await supabase.from('attractions').select('*').eq('is_active', true);
+      if (attrs) setAllAttractions(attrs);
+    };
+
+    fetchDiscoveryData();
+
+  }, []); // Run once on mount
 
   // EFECTO PARA MODO CLARO/OSCURO
   useEffect(() => {
     const root = window.document.documentElement;
     if (mapTheme === 'light') root.classList.remove('dark');
     else root.classList.add('dark');
-    
+
     localStorage.setItem('ep_language', language);
     localStorage.setItem('ep_map_theme', mapTheme);
     localStorage.setItem('ep_currency', currency);
@@ -86,7 +219,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (isLoaded && clerkUser) {
         const email = clerkUser.primaryEmailAddress?.emailAddress || '';
         const clerkId = clerkUser.id;
-        
+
         // 1. Obtener o crear perfil
         const { data: profile } = await supabase
           .from('user_profiles')
@@ -96,21 +229,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         let assignedRole: Role = 'Turista';
         if (profile) {
-            const dbRole = profile.role;
-            if (dbRole === 'super_admin') assignedRole = 'SuperAdmin';
-            else if (dbRole === 'admin') assignedRole = 'SuperAdmin';
-            else if (dbRole === 'empresa') assignedRole = 'DueñoEmpresa';
-            else assignedRole = 'Turista';
+          const dbRole = profile.role;
+          if (dbRole === 'super_admin') assignedRole = 'SuperAdmin';
+          else if (dbRole === 'admin') assignedRole = 'SuperAdmin';
+          else if (dbRole === 'empresa') assignedRole = 'DueñoEmpresa';
+          else assignedRole = 'Turista';
         } else {
-            const isSuperAdminEmail = email === 'thejozx.182@gmail.com'; 
-            const newRoleDB = isSuperAdminEmail ? 'super_admin' : 'turista';
-            assignedRole = isSuperAdminEmail ? 'SuperAdmin' : 'Turista';
+          const isSuperAdminEmail = email === 'thejozx.182@gmail.com';
+          const newRoleDB = isSuperAdminEmail ? 'super_admin' : 'turista';
+          assignedRole = isSuperAdminEmail ? 'SuperAdmin' : 'Turista';
 
-            await supabase.from('user_profiles').insert([{
-                clerk_user_id: clerkId,
-                email: email,
-                role: newRoleDB
-            }]);
+          await supabase.from('user_profiles').insert([{
+            clerk_user_id: clerkId,
+            email: email,
+            role: newRoleDB
+          }]);
         }
 
         const newUser: User = {
@@ -121,18 +254,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           avatar: clerkUser.imageUrl,
           savedItineraries: []
         };
+
+        // 3. FETCH SAVED ITINERARIES
+        const { data: savedTrips, error: tripsError } = await supabase
+          .from('saved_itineraries')
+          .select('*')
+          .eq('user_id', clerkId);
+
+        if (savedTrips && !tripsError) {
+          // Mapping from DB columns to SavedItinerary if needed
+          // Assuming DB stores specific fields or a JSON dump. 
+          // We'll try to map common snake_case to camelCase just in case, 
+          // or assume it matches.
+          // If stored as JSONB in a column 'data':
+          // const mapped = savedTrips.map(t => t.data);
+          // If stored as columns:
+          const mapped: SavedItinerary[] = savedTrips.map(t => ({
+            id: t.id,
+            createdAt: t.created_at || t.createdAt || new Date().toISOString(),
+            days: t.days,
+            budget: t.budget,
+            categories: t.categories,
+            plan: t.plan || t.items // Fallback
+          }));
+          newUser.savedItineraries = mapped;
+        }
+
         setAppUser(newUser);
 
         // 2. REGISTRAR LOG DE INGRESO (NUEVO)
         // Verificamos si ya logueamos en esta sesión para no spamear la DB
         if (!sessionStorage.getItem('ep_logged_in_log')) {
-            await supabase.from('user_activity_logs').insert([{
-                user_id: clerkId,
-                email: email,
-                activity_type: 'LOGIN_APP',
-                details: navigator.userAgent
-            }]);
-            sessionStorage.setItem('ep_logged_in_log', 'true');
+          await supabase.from('user_activity_logs').insert([{
+            user_id: clerkId,
+            email: email,
+            activity_type: 'LOGIN_APP',
+            details: navigator.userAgent
+          }]);
+          sessionStorage.setItem('ep_logged_in_log', 'true');
         }
 
       } else if (isLoaded && !clerkUser) {
@@ -143,9 +302,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     syncUserRole();
   }, [isLoaded, clerkUser]);
 
+  // REMOVED: getLocalizedBusinesses no longer exists. 
+  // TODO: Refetch or filter existing businesses when language changes if strictly needed.
+  // For now, names come from DB directly.
+  /*
   useEffect(() => {
-     setAllBusinesses(getLocalizedBusinesses(language));
+    setAllBusinesses(getLocalizedBusinesses(language));
   }, [language]);
+  */
 
   const t = (key: string) => translations[language][key] || key;
 
@@ -161,31 +325,61 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     if (appUser) {
-        // Registrar salida
-        await supabase.from('user_activity_logs').insert([{
-            user_id: appUser.uid,
-            email: appUser.email,
-            activity_type: 'LOGOUT',
-            details: 'User initiated logout'
-        }]);
+      // Registrar salida
+      await supabase.from('user_activity_logs').insert([{
+        user_id: appUser.uid,
+        email: appUser.email,
+        activity_type: 'LOGOUT',
+        details: 'User initiated logout'
+      }]);
     }
     sessionStorage.removeItem('ep_logged_in_log'); // Permitir loguear de nuevo al volver
     await signOut();
     setAppUser(null);
   };
 
-  const saveItinerary = (itinerary: SavedItinerary) => {
+  const saveItinerary = async (itinerary: SavedItinerary) => {
     if (!appUser) return;
+
+    // Optimistic Update
     setAppUser(prev => prev ? ({ ...prev, savedItineraries: [...(prev.savedItineraries || []), itinerary] }) : null);
+
+    // Persist to Supabase
+    // We expect a table 'saved_itineraries' with columns matching our data or a JSONB column.
+    // For safety, we'll try to insert flattened data.
+    const { error } = await supabase.from('saved_itineraries').insert([{
+      id: itinerary.id,
+      user_id: appUser.uid,
+      created_at: itinerary.createdAt,
+      days: itinerary.days,
+      budget: itinerary.budget,
+      categories: itinerary.categories,
+      plan: itinerary.plan
+    }]);
+
+    if (error) {
+      console.error('Error saving itinerary to Supabase:', error);
+      // Optionally rollback state or show notification
+    }
   };
 
-  const deleteItinerary = (id: string) => {
+  const deleteItinerary = async (id: string) => {
     if (!appUser) return;
     setAppUser(prev => prev ? ({ ...prev, savedItineraries: (prev.savedItineraries || []).filter(i => i.id !== id) }) : null);
+
+    await supabase.from('saved_itineraries').delete().eq('id', id);
   };
 
   return (
-    <AuthContext.Provider value={{ user: appUser, login: () => {}, logout, allBusinesses, updateBusiness, usersRegistry, registerUser, language, setLanguage, mapTheme, setMapTheme, currency, setCurrency, saveItinerary, deleteItinerary, t }}>
+    <AuthContext.Provider value={{
+      user: appUser, login: () => { }, logout,
+      allBusinesses, updateBusiness, usersRegistry, registerUser,
+      allAttractions,
+      allLocalities,
+      companyServices: allServices,
+      language, setLanguage, mapTheme, setMapTheme, currency, setCurrency,
+      saveItinerary, deleteItinerary, t
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -218,7 +412,7 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   return (
     <div className={`hidden md:flex flex-col h-screen bg-[#c0d6df] dark:bg-surface-dark border-r border-slate-300 dark:border-white/5 p-4 shrink-0 z-[100] overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'w-24' : 'w-72'}`}>
       <div className="flex items-center justify-center mb-8 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={toggle} title={isCollapsed ? "Expandir menú" : "Ocultar menú"}>
-        <img src="/logo_easy.png" alt="Easy Patagonia" className={`object-contain drop-shadow-md transition-all duration-300 ${isCollapsed ? 'h-10 w-10' : 'h-20 w-auto hover:scale-105'}`}/>
+        <img src="/logo_easy.png" alt="Easy Patagonia" className={`object-contain drop-shadow-md transition-all duration-300 ${isCollapsed ? 'h-10 w-10' : 'h-20 w-auto hover:scale-105'}`} />
       </div>
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-1">
         {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Navegación</p>}
@@ -245,8 +439,8 @@ const AuthenticatedApp: React.FC = () => {
   const { user } = useAppAuth();
   const { isLoaded } = useUser();
   const role = user?.rol || 'Turista';
-  const location = useLocation(); 
-  
+  const location = useLocation();
+
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('ep_splash_seen'));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -281,7 +475,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
           <Route path="*" element={<Navigate to="/" />} />
           <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
-<Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
+          <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
         </Routes>
       </main>
     </div>
