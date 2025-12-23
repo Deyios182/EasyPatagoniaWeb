@@ -1,16 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ClerkProvider } from '@clerk/clerk-react';
-import { esES } from '@clerk/localizations';
 import App from './App';
 
-
-// Importamos la clave pública desde el entorno
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Falta la variable VITE_CLERK_PUBLISHABLE_KEY en Vercel o .env");
-}
+// Removed Clerk - now using Supabase Auth
+// ClerkProvider is no longer needed as authentication is handled by SupabaseAuthProvider in App.tsx
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -20,8 +13,6 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} localization={esES}>
-      <App />
-    </ClerkProvider>
+    <App />
   </React.StrictMode>
 );

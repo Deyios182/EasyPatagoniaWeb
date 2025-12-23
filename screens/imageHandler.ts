@@ -3,30 +3,71 @@ import { supabase } from '../supabaseClient';
 // --- 1. SUBIR IMAGEN ---
 export const uploadImage = async (file: File, bucketName: string = 'uploads'): Promise<string | null> => {
   try {
-    // Generamos un nombre único para que no se sobrescriban
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    console.log('🔵 [UPLOAD] Iniciando subida de imagen...', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      bucket: bucketName
+    });
 
-    // Subimos el archivo al "Bucket" de Supabase
-    const { error: uploadError } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Error subiendo:', uploadError);
+    // Validar tamaño (max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE) {
+      alert('La imagen es demasiado grande. Máximo 5MB.');
+      console.error('❌ [UPLOAD] Archivo muy grande:', file.size);
       return null;
     }
 
-    // Obtenemos la URL pública para usarla después
+    // Validar tipo de archivo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Formato de imagen no válido. Usa JPG, PNG, WEBP o GIF.');
+      console.error('❌ [UPLOAD] Tipo de archivo no válido:', file.type);
+      return null;
+    }
+
+    // Generar nombre único
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    console.log('🔵 [UPLOAD] Intentando subir a bucket:', bucketName, 'con ruta:', filePath);
+
+    // Subir archivo
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('❌ [UPLOAD] Error de Supabase Storage:', uploadError);
+
+      // Mensajes específicos según el error
+      if (uploadError.message.includes('not found')) {
+        alert(`El bucket "${bucketName}" no existe. Verifica la configuración en Supabase.`);
+      } else if (uploadError.message.includes('policies')) {
+        alert('Sin permisos para subir archivos. Verifica las políticas RLS del bucket.');
+      } else {
+        alert(`Error al subir imagen: ${uploadError.message}`);
+      }
+      return null;
+    }
+
+    console.log('✅ [UPLOAD] Archivo subido exitosamente:', uploadData);
+
+    // Obtener URL pública
     const { data } = supabase.storage
       .from(bucketName)
       .getPublicUrl(filePath);
 
+    console.log('✅ [UPLOAD] URL pública generada:', data.publicUrl);
     return data.publicUrl;
 
-  } catch (error) {
-    console.error('Error:', error);
+  } catch (error: any) {
+    console.error('❌ [UPLOAD] Error inesperado:', error);
+    alert(`Error inesperado al subir imagen: ${error.message || 'Desconocido'}`);
     return null;
   }
 };
@@ -42,16 +83,16 @@ export const downloadImage = async (imageUrl: string, fileName: string = 'imagen
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    
+
     // 3. Forzamos el nombre del archivo y la descarga
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
-    
+
     // 4. Hacemos "clic" automático y limpiamos
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-    
+
   } catch (error) {
     console.error('Error al descargar:', error);
   }

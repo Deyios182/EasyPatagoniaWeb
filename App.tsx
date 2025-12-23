@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from './supabaseClient';
 
 // Importación de pantallas
@@ -21,6 +20,11 @@ import EasyAdminFieldScreen from './screens/EasyAdminFieldScreen';
 import BusinessDirectoryScreen from './screens/BusinessDirectoryScreen';
 import UserAdminScreen from './screens/UserAdminScreen';
 import LandingAdminScreen from './screens/LandingAdminScreen';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import AuthCallbackScreen from './screens/AuthCallbackScreen';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
 // import { getLocalizedBusinesses } from './constants'; // Deleted
 
@@ -37,6 +41,9 @@ const translations: Record<Language, Record<string, string>> = {
 // --- CONTEXTO DE AUTENTICACIÓN ---
 interface AuthContextType {
   user: User | null;
+  supabaseUser: any | null; // NEW: Raw Supabase user for auth checks
+  isAuthenticating: boolean; // NEW: True during auth sync
+  loading: boolean; // NEW: Expose loading state
   login: (userData: Partial<User>) => void;
   logout: () => void;
   allBusinesses: Business[];
@@ -61,11 +68,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user: clerkUser, isLoaded } = useUser();
-  const { signOut } = useClerk();
+export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user: supabaseUser, profile, loading } = useAuth();
+  const isLoaded = !loading;
 
   const [appUser, setAppUser] = useState<User | null>(null);
+  const currentUserIdRef = React.useRef<string | null>(null); // Track current user without re-renders
 
   // CONFIGURACIÓN PERSISTENTE
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('ep_language') as Language) || 'ES');
@@ -98,6 +106,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Map to Business Type
       if (companies) {
+        console.log('📊 [APP] Raw companies data sample:', companies.slice(0, 2).map(c => ({
+          name: c.name,
+          gallery_urls: c.gallery_urls,
+          logo_url: c.logo_url
+        })));
         const mapped: Business[] = companies.map(c => ({
           id: c.id,
           name: c.name,
@@ -213,94 +226,72 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('ep_currency', currency);
   }, [language, mapTheme, currency]);
 
-  // LOGICA DE LOGGING Y AUTENTICACIÓN
+  // OPTIMIZED: User sync with lazy itinerary loading
   useEffect(() => {
     const syncUserRole = async () => {
-      if (isLoaded && clerkUser) {
-        const email = clerkUser.primaryEmailAddress?.emailAddress || '';
-        const clerkId = clerkUser.id;
+      // Case 1: User is logged in with profile
+      if (isLoaded && supabaseUser && profile) {
+        const userId = supabaseUser.id;
 
-        // 1. Obtener o crear perfil
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('clerk_user_id', clerkId)
-          .single();
+        // Skip sync if we already have this user loaded
+        if (currentUserIdRef.current === userId) {
+          return;
+        }
 
+        // Mapear roles de Supabase a roles de la app
         let assignedRole: Role = 'Turista';
-        if (profile) {
-          const dbRole = profile.role;
-          if (dbRole === 'super_admin') assignedRole = 'SuperAdmin';
-          else if (dbRole === 'admin') assignedRole = 'SuperAdmin';
-          else if (dbRole === 'empresa') assignedRole = 'DueñoEmpresa';
+        if (profile.roles && profile.roles.length > 0) {
+          const primaryRole = profile.roles[0];
+          if (primaryRole === 'super_admin') assignedRole = 'SuperAdmin';
+          else if (primaryRole === 'admin') assignedRole = 'SuperAdmin';
+          else if (primaryRole === 'business_owner') assignedRole = 'DueñoEmpresa';
+          else if (primaryRole === 'collaborator') assignedRole = 'EasyColaborador';
           else assignedRole = 'Turista';
-        } else {
-          const isSuperAdminEmail = email === 'thejozx.182@gmail.com';
-          const newRoleDB = isSuperAdminEmail ? 'super_admin' : 'turista';
-          assignedRole = isSuperAdminEmail ? 'SuperAdmin' : 'Turista';
-
-          await supabase.from('user_profiles').insert([{
-            clerk_user_id: clerkId,
-            email: email,
-            role: newRoleDB
-          }]);
         }
 
         const newUser: User = {
-          uid: clerkId,
-          name: clerkUser.fullName || 'Viajero',
-          email: email,
+          uid: userId,
+          name: profile.full_name || profile.first_name || 'Viajero',
+          email: profile.email || '',
           rol: assignedRole,
-          avatar: clerkUser.imageUrl,
-          savedItineraries: []
+          avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+          savedItineraries: [] // Lazy load when needed
         };
 
-        // 3. FETCH SAVED ITINERARIES
-        const { data: savedTrips, error: tripsError } = await supabase
-          .from('saved_itineraries')
-          .select('*')
-          .eq('user_id', clerkId);
-
-        if (savedTrips && !tripsError) {
-          // Mapping from DB columns to SavedItinerary if needed
-          // Assuming DB stores specific fields or a JSON dump. 
-          // We'll try to map common snake_case to camelCase just in case, 
-          // or assume it matches.
-          // If stored as JSONB in a column 'data':
-          // const mapped = savedTrips.map(t => t.data);
-          // If stored as columns:
-          const mapped: SavedItinerary[] = savedTrips.map(t => ({
-            id: t.id,
-            createdAt: t.created_at || t.createdAt || new Date().toISOString(),
-            days: t.days,
-            budget: t.budget,
-            categories: t.categories,
-            plan: t.plan || t.items // Fallback
-          }));
-          newUser.savedItineraries = mapped;
-        }
-
+        // Update ref BEFORE state to prevent race conditions
+        currentUserIdRef.current = userId;
         setAppUser(newUser);
 
-        // 2. REGISTRAR LOG DE INGRESO (NUEVO)
-        // Verificamos si ya logueamos en esta sesión para no spamear la DB
-        if (!sessionStorage.getItem('ep_logged_in_log')) {
-          await supabase.from('user_activity_logs').insert([{
-            user_id: clerkId,
-            email: email,
-            activity_type: 'LOGIN_APP',
-            details: navigator.userAgent
-          }]);
-          sessionStorage.setItem('ep_logged_in_log', 'true');
-        }
+        // LAZY LOAD: Fetch itineraries in background (non-blocking)
+        supabase
+          .from('saved_itineraries')
+          .select('*')
+          .eq('user_id', userId)
+          .then(({ data: savedTrips, error: tripsError }) => {
+            if (savedTrips && !tripsError) {
+              const mapped: SavedItinerary[] = savedTrips.map(t => ({
+                id: t.id,
+                createdAt: t.created_at || new Date().toISOString(),
+                days: t.days,
+                budget: t.budget,
+                categories: t.categories,
+                plan: t.plan || t.items
+              }));
+              setAppUser(prev => prev ? { ...prev, savedItineraries: mapped } : null);
+            }
+          });
 
-      } else if (isLoaded && !clerkUser) {
-        setAppUser(null);
+        // Case 2: Auth is loaded but no user (logged out)
+      } else if (isLoaded && !supabaseUser) {
+        if (currentUserIdRef.current) {
+          currentUserIdRef.current = null;
+          setAppUser(null);
+        }
       }
     };
 
     syncUserRole();
-  }, [isLoaded, clerkUser]);
+  }, [isLoaded, supabaseUser, profile]);
 
   // REMOVED: getLocalizedBusinesses no longer exists. 
   // TODO: Refetch or filter existing businesses when language changes if strictly needed.
@@ -324,18 +315,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    if (appUser) {
-      // Registrar salida
-      await supabase.from('user_activity_logs').insert([{
-        user_id: appUser.uid,
-        email: appUser.email,
-        activity_type: 'LOGOUT',
-        details: 'User initiated logout'
-      }]);
-    }
-    sessionStorage.removeItem('ep_logged_in_log'); // Permitir loguear de nuevo al volver
-    await signOut();
+    // 1. Clear app state FIRST for instant UI update
+    currentUserIdRef.current = null;
     setAppUser(null);
+
+    // 2. Clear ONLY auth-related session storage (NOT splash screen flag)
+    // Keep ep_splash_seen so splash doesn't show again
+
+    // 3. Sign out from Supabase (async, but UI already updated)
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+
+    // 4. Clear Supabase auth data from localStorage (optimized)
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        localStorage.removeItem(key);
+      }
+    });
   };
 
   const saveItinerary = async (itinerary: SavedItinerary) => {
@@ -372,7 +371,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={{
-      user: appUser, login: () => { }, logout,
+      user: appUser,
+      supabaseUser: supabaseUser, // NEW: Expose raw Supabase user for auth checks
+      isAuthenticating: loading, // True if authentication is in progress
+      loading: loading, // EXPOSE LOADING
+      login: () => { }, logout,
       allBusinesses, updateBusiness, usersRegistry, registerUser,
       allAttractions,
       allLocalities,
@@ -396,8 +399,21 @@ interface SidebarProps { isCollapsed: boolean; toggle: () => void; }
 
 const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   const location = useLocation();
-  const { user, t } = useAppAuth();
-  if (!user) return null;
+  const { user, supabaseUser, t } = useAppAuth();
+  const { profile, loading: profileLoading } = useAuth(); // Get Supabase profile as fallback
+
+  // If no user data at all, don't render
+  if (!user && !supabaseUser) return null;
+
+  // Get Google OAuth metadata as fallback (available immediately after login)
+  const googleMeta = supabaseUser?.user_metadata;
+  const googleName = googleMeta?.full_name || googleMeta?.name;
+  const googleAvatar = googleMeta?.avatar_url || googleMeta?.picture;
+
+  // Create display data - prefer appUser, then DB profile, then Google metadata
+  const displayName = user?.name || profile?.full_name || googleName || 'Cargando...';
+  const displayAvatar = user?.avatar || profile?.avatar_url || googleAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser?.id || 'user'}`;
+  const displayRole = user?.rol || (profile?.roles?.includes('super_admin') ? 'SuperAdmin' : 'Cargando...');
 
   const NavItem = ({ to, icon, label }: { to: string, icon: string, label: string }) => {
     const isActive = location.pathname === to;
@@ -426,8 +442,8 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
       </div>
       <div className="mt-auto pt-6 border-t border-slate-300 dark:border-white/5 shrink-0">
         <Link to="/profile" className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline ${location.pathname === '/profile' ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'justify-center' : ''}`}>
-          <img src={user.avatar} className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10" alt="Avatar" />
-          {!isCollapsed && (<div className="flex-1 min-w-0 animate-in fade-in duration-300"><p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{user.name}</p><p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{user.rol}</p></div>)}
+          <img src={displayAvatar} className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10 object-cover" alt="Avatar" />
+          {!isCollapsed && (<div className="flex-1 min-w-0 animate-in fade-in duration-300"><p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{displayName}</p><p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{displayRole}</p></div>)}
         </Link>
       </div>
     </div>
@@ -436,24 +452,28 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
 
 // --- APP PRINCIPAL ---
 const AuthenticatedApp: React.FC = () => {
-  const { user } = useAppAuth();
-  const { isLoaded } = useUser();
+  const { user, supabaseUser, isAuthenticating, loading } = useAppAuth();
   const role = user?.rol || 'Turista';
   const location = useLocation();
 
-  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('ep_splash_seen'));
+  const [showSplash, setShowSplash] = useState(() => !localStorage.getItem('ep_splash_seen'));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleSplashFinish = () => {
     setShowSplash(false);
-    sessionStorage.setItem('ep_splash_seen', 'true');
+    localStorage.setItem('ep_splash_seen', 'true'); // Changed to localStorage
   };
 
   if (showSplash) return <SplashScreen onFinish={handleSplashFinish} />;
-  if (!isLoaded) return (<div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>);
 
-  const isPublicPage = location.pathname === '/' || location.pathname === '/login';
-  const shouldShowSidebar = user && !isPublicPage;
+  // NEW: Use supabaseUser OR appUser for auth checks to prevent race condition
+  const isAuthenticated = !!(supabaseUser || user);
+
+  // NOTE: We no longer block on profile loading. The app proceeds with fallback data
+  // and the sidebar/profile will update when the data arrives.
+
+  const isPublicPage = location.pathname === '/' || location.pathname === '/auth/login' || location.pathname === '/auth/register' || location.pathname === '/auth/callback';
+  const shouldShowSidebar = isAuthenticated && !isPublicPage;
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
@@ -461,26 +481,43 @@ const AuthenticatedApp: React.FC = () => {
       <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar transition-all duration-300">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={!user ? <WelcomeScreen /> : <Navigate to="/map" />} />
-          <Route path="/map" element={user ? <TouristMapScreen /> : <Navigate to="/login" />} />
-          <Route path="/discover" element={user ? <DiscoveryScreen /> : <Navigate to="/login" />} />
-          <Route path="/directory" element={user ? <BusinessDirectoryScreen /> : <Navigate to="/login" />} />
-          <Route path="/details/:id" element={user ? <BusinessDetailsScreen /> : <Navigate to="/login" />} />
-          <Route path="/planner" element={user ? <PlannerScreen /> : <Navigate to="/login" />} />
-          <Route path="/itinerary" element={user ? <ItineraryScreen /> : <Navigate to="/login" />} />
-          <Route path="/profile" element={user ? <ProfileScreen role={role} /> : <Navigate to="/login" />} />
-          <Route path="/chat" element={user ? <ChatBotScreen /> : <Navigate to="/login" />} />
+          {/* Pantalla de bienvenida */}
+          <Route path="/welcome" element={<WelcomeScreen />} />
+          {/* Rutas de Supabase Auth */}
+          <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <LoginScreen />} />
+          <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <RegisterScreen />} />
+          <Route path="/auth/callback" element={<AuthCallbackScreen />} />
+
+          {/* Rutas protegidas - Use isAuthenticated instead of just user */}
+          <Route path="/map" element={isAuthenticated ? <TouristMapScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/discover" element={isAuthenticated ? <DiscoveryScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/directory" element={isAuthenticated ? <BusinessDirectoryScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/details/:id" element={isAuthenticated ? <BusinessDetailsScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/itinerary" element={isAuthenticated ? <ItineraryScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/profile" element={isAuthenticated ? <ProfileScreen role={role} /> : <Navigate to="/auth/login" />} />
+          <Route path="/chat" element={isAuthenticated ? <ChatBotScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
-          <Route path="*" element={<Navigate to="/" />} />
           <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
           <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
     </div>
   );
 };
 
-const App: React.FC = () => { return (<AuthProvider><HashRouter><AuthenticatedApp /></HashRouter></AuthProvider>); };
+const App: React.FC = () => {
+  return (
+    <SupabaseAuthProvider>
+      <AppAuthProvider>
+        <HashRouter>
+          <AuthenticatedApp />
+        </HashRouter>
+      </AppAuthProvider>
+    </SupabaseAuthProvider>
+  );
+};
 export default App;

@@ -10,7 +10,7 @@ type Language = 'ES' | 'EN' | 'PT';
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
   const navigate = useNavigate();
   const { logout, user, language, setLanguage, mapTheme, setMapTheme, currency, setCurrency, deleteItinerary, t } = useAppAuth();
-  
+
   const [tempLanguage, setTempLanguage] = useState<Language>(language);
   const [tempMapTheme, setTempMapTheme] = useState<MapTheme>(mapTheme);
   const [tempCurrency, setTempCurrency] = useState<Currency>(currency);
@@ -27,10 +27,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
   const handleOpenTrip = (trip: SavedItinerary) => {
     localStorage.setItem('ep_plan', JSON.stringify(trip.plan));
-    localStorage.setItem('ep_plan_meta', JSON.stringify({ 
-      days: trip.days, 
-      budget: trip.budget, 
-      categories: trip.categories 
+    localStorage.setItem('ep_plan_meta', JSON.stringify({
+      days: trip.days,
+      budget: trip.budget,
+      categories: trip.categories
     }));
     navigate('/itinerary');
   };
@@ -58,17 +58,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-y-auto no-scrollbar items-center p-6 md:p-12">
       <div className="w-full max-w-6xl space-y-12 pb-32 animate-in fade-in duration-500">
-        
+
         {/* HEADER */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-             <div className="w-16 h-16 rounded-[2rem] bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
-               <span className="material-symbols-outlined text-4xl">person</span>
-             </div>
-             <div>
-               <h1 className="text-4xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('my_account')}</h1>
-               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">{user.email}</p>
-             </div>
+            <div className="w-16 h-16 rounded-[2rem] bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
+              <span className="material-symbols-outlined text-4xl">person</span>
+            </div>
+            <div>
+              <h1 className="text-4xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('my_account')}</h1>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">{user.email}</p>
+            </div>
           </div>
           <button onClick={() => navigate('/map')} className="w-16 h-16 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark dark:text-white shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
             <span className="material-symbols-outlined text-3xl">close</span>
@@ -77,32 +77,32 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
         {/* Tab Selector */}
         <div className="flex gap-4 p-2 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md rounded-[2.5rem] border border-slate-200 dark:border-white/5 max-w-lg mx-auto md:mx-0">
-           <button 
+          <button
             onClick={() => setActiveTab('settings')}
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'settings' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
-           >
-             <span className="material-symbols-outlined text-xl">settings</span>
-             {t('settings')}
-           </button>
-           <button 
+          >
+            <span className="material-symbols-outlined text-xl">settings</span>
+            {t('settings')}
+          </button>
+          <button
             onClick={() => setActiveTab('trips')}
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'trips' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
-           >
-             <span className="material-symbols-outlined text-xl">map</span>
-             {t('my_trips')}
-             <span className="bg-white/20 text-white w-6 h-6 rounded-full flex items-center justify-center text-[8px]">{user.savedItineraries?.length || 0}</span>
-           </button>
+          >
+            <span className="material-symbols-outlined text-xl">map</span>
+            {t('my_trips')}
+            <span className="bg-white/20 text-white w-6 h-6 rounded-full flex items-center justify-center text-[8px]">{user.savedItineraries?.length || 0}</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-          
+
           {/* PERFIL IZQUIERDO */}
           <div className="lg:col-span-1 space-y-8 sticky top-0">
             <div className="bg-white dark:bg-surface-dark p-10 rounded-[4.5rem] shadow-xl border border-slate-100 dark:border-white/5 text-center flex flex-col items-center">
               <div className="relative mb-10 group">
                 <div className="absolute -inset-4 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/40 transition-all"></div>
-                <img 
-                  src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} 
+                <img
+                  src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
                   className="w-48 h-48 md:w-56 md:h-56 rounded-full border-8 border-white dark:border-background-dark shadow-2xl object-cover relative z-10"
                 />
               </div>
@@ -116,30 +116,43 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
             {/* --- ZONA DE ADMINISTRACIÓN (AGREGADA) --- */}
             {(role === 'SuperAdmin' || role === 'DueñoEmpresa') && (
               <div className="space-y-3">
-                 <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Zona de Gestión</h3>
-                 
-                 {role === 'SuperAdmin' && (
-                   <button 
-                     onClick={() => navigate('/admin')}
-                     className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] shadow-lg shadow-purple-500/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                   >
-                     <span className="material-symbols-outlined">admin_panel_settings</span>
-                     Panel Super Admin
-                   </button>
-                 )}
+                <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Zona de Gestión</h3>
 
-                 <button 
-                   onClick={() => navigate('/portal')}
-                   className="w-full py-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-3"
-                 >
-                   <span className="material-symbols-outlined text-orange-500">storefront</span>
-                   Portal Empresa
-                 </button>
+                {role === 'SuperAdmin' && (
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] shadow-lg shadow-purple-500/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                  >
+                    <span className="material-symbols-outlined">admin_panel_settings</span>
+                    Panel Super Admin
+                  </button>
+                )}
+
+                <button
+                  onClick={() => navigate('/portal')}
+                  className="w-full py-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2.5rem] hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-3"
+                >
+                  <span className="material-symbols-outlined text-orange-500">storefront</span>
+                  Portal Empresa
+                </button>
               </div>
             )}
 
-            <button 
-              onClick={() => { logout(); navigate('/'); }} 
+            <button
+              onClick={async () => {
+                try {
+                  console.log('🔘 [PROFILE] Logout button clicked');
+                  await logout();
+                  console.log('🔘 [PROFILE] Logout completed');
+                } catch (e) {
+                  console.error('🔘 [PROFILE] Logout error:', e);
+                }
+                // Force complete page reload to reset all React state
+                // This ensures no cached auth data remains
+                console.log('🔘 [PROFILE] Forcing page reload to landing');
+                window.location.href = '/#/';
+                window.location.reload();
+              }}
               className="w-full py-8 text-red-500 font-black text-xs uppercase tracking-[0.3em] border-2 border-red-500/20 rounded-[2.5rem] hover:bg-red-500/5 transition-all shadow-sm flex items-center justify-center gap-4"
             >
               <span className="material-symbols-outlined">logout</span>
@@ -149,11 +162,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
           {/* CONTENIDO DERECHA */}
           <div className="lg:col-span-2">
-            
+
             {activeTab === 'settings' && (
               <div className="space-y-12 animate-in fade-in slide-in-from-right duration-500">
                 <section className="bg-white dark:bg-surface-dark rounded-[4.5rem] p-12 shadow-xl border border-slate-100 dark:border-white/5 space-y-16">
-                  
+
                   {/* IDIOMA */}
                   <div className="space-y-8">
                     <div className="flex items-center gap-6">
@@ -231,13 +244,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
                   {/* BOTON APLICAR */}
                   <div className="pt-12">
-                      <button 
-                       onClick={handleApplyChanges}
-                       className={`w-full py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-5 transition-all shadow-2xl active:scale-95 ${showSuccess ? 'bg-green-500 text-white' : 'bg-primary text-white hover:brightness-110'}`}
-                      >
-                        <span className="material-symbols-outlined text-3xl">{showSuccess ? 'done_all' : 'save'}</span>
-                        {showSuccess ? 'CAMBIOS APLICADOS' : t('apply_changes')}
-                      </button>
+                    <button
+                      onClick={handleApplyChanges}
+                      className={`w-full py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-5 transition-all shadow-2xl active:scale-95 ${showSuccess ? 'bg-green-500 text-white' : 'bg-primary text-white hover:brightness-110'}`}
+                    >
+                      <span className="material-symbols-outlined text-3xl">{showSuccess ? 'done_all' : 'save'}</span>
+                      {showSuccess ? 'CAMBIOS APLICADOS' : t('apply_changes')}
+                    </button>
                   </div>
                 </section>
               </div>
@@ -254,15 +267,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
                 ) : (
                   <div className="grid grid-cols-1 gap-6">
                     {user.savedItineraries.map((trip) => (
-                      <div 
+                      <div
                         key={trip.id}
                         className="bg-white dark:bg-surface-dark rounded-[3.5rem] p-8 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all group flex flex-col md:flex-row items-center gap-8"
                       >
                         <div className="w-full md:w-32 h-32 rounded-[2.5rem] bg-primary/10 flex items-center justify-center text-primary shrink-0 relative overflow-hidden">
-                           <span className="material-symbols-outlined text-5xl">landscape</span>
-                           <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"></div>
+                          <span className="material-symbols-outlined text-5xl">landscape</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"></div>
                         </div>
-                        
+
                         <div className="flex-1 space-y-2 text-center md:text-left">
                           <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Viaje de {trip.days} días</p>
                           <h4 className="text-2xl font-black dark:text-white uppercase italic tracking-tighter leading-tight">Ruta del {new Date(trip.createdAt).toLocaleDateString()}</h4>
@@ -274,13 +287,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
                         </div>
 
                         <div className="flex gap-3 w-full md:w-auto">
-                          <button 
+                          <button
                             onClick={() => handleOpenTrip(trip)}
                             className="flex-1 md:w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-110 transition-all"
                           >
                             <span className="material-symbols-outlined">explore</span>
                           </button>
-                          <button 
+                          <button
                             onClick={() => deleteItinerary(trip.id)}
                             className="w-14 h-14 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
                           >
@@ -297,7 +310,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

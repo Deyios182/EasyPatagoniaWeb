@@ -6,7 +6,7 @@ import { Category, Business, MapTheme } from '../types';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  light: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',  // Changed to OSM for reliability
   satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 };
 
@@ -96,8 +96,14 @@ const TouristMapScreen: React.FC = () => {
     map.on('zoomend', () => setZoom(map.getZoom()));
 
     tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
-      maxZoom: 20
+      maxZoom: 20,
+      attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+
+    // Add error handling for tile loading
+    tileLayerRef.current.on('tileerror', (error) => {
+      console.error('❌ [MAP] Tile load error:', error);
+    });
 
     setMapInstance(map);
 
@@ -112,8 +118,14 @@ const TouristMapScreen: React.FC = () => {
     if (mapInstance && tileLayerRef.current) {
       mapInstance.removeLayer(tileLayerRef.current);
       tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
-        maxZoom: 20
+        maxZoom: 20,
+        attribution: '© OpenStreetMap contributors'
       }).addTo(mapInstance);
+
+      // Add error handling
+      tileLayerRef.current.on('tileerror', (error) => {
+        console.error('❌ [MAP] Tile load error:', error);
+      });
     }
   }, [mapTheme, mapInstance]);
 
@@ -140,17 +152,19 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Localities (Always visible)
-    const localityMarkers = allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
-      id: l.id,
-      lat: l.latitude!,
-      lng: l.longitude!,
-      title: l.name,
-      type: 'locality',
-      color: '#8e44ad', // Purple
-      icon: l.image_url,
-      data: l
-    }));
+    // Localities (Visible only at LOW zoom, hide when businesses appear)
+    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD)
+      ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
+        id: l.id,
+        lat: l.latitude!,
+        lng: l.longitude!,
+        title: l.name,
+        type: 'locality',
+        color: '#8e44ad', // Purple
+        icon: l.image_url,
+        data: l
+      }))
+      : [];
 
     // Attractions (Always visible now, as requested)
     const attractionMarkers = allAttractions.filter(a => a.latitude && a.longitude).map(a => ({
@@ -165,7 +179,8 @@ const TouristMapScreen: React.FC = () => {
     }));
 
 
-    const allMarkers = [...businessMarkers, ...localityMarkers, ...attractionMarkers];
+    // Combine markers: Businesses first (bottom layer), then attractions, then localities (top layer)
+    const allMarkers = [...businessMarkers, ...attractionMarkers, ...localityMarkers];
 
     // --- 2. Cleanup ---
     Object.keys(markersRef.current).forEach(id => {

@@ -42,7 +42,7 @@ export interface Attraction {
 
 export interface Company {
   id: string;
-  owner_id?: string; // ID del dueño en user_profiles
+  owner_id?: string; // ID del dueño en users (auth)
   name: string;
   description?: string;
   logo_url?: string;
