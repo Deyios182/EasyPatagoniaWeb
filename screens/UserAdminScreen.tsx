@@ -259,14 +259,26 @@ const UserAdminScreen: React.FC = () => {
   };
 
   const updateRole = async (userId: string, newRole: string) => {
-    // Optimistic logic similar to previous implementation
-    const { data: rData } = await supabase.from('roles').select('id').eq('name', newRole).single();
-    if (!rData) return;
+    // 2025-12-23: MIGRATED TO UPDATE 'profiles' TABLE DIRECTLY
+    console.log('🔄 [ADMIN] Updating role for user:', userId, 'to:', newRole);
 
-    await supabase.from('user_roles').delete().eq('user_id', userId);
-    await supabase.from('user_roles').insert([{ user_id: userId, role_id: rData.id }]);
-
+    // Optimistic UI update
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+
+    // Update in database
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('❌ [ADMIN] Error updating role:', error);
+      alert('Error al actualizar rol: ' + error.message);
+      // Revert optimistic update on error
+      fetchUsers();
+    } else {
+      console.log('✅ [ADMIN] Role updated successfully');
+    }
   };
 
 
