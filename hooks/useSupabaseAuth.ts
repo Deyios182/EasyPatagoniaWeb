@@ -115,16 +115,21 @@ export const useSupabaseAuth = () => {
                         return profile;
                     }
 
-                    console.warn('⚠️ [PROFILE] No profile found for userId:', userId);
+                    // Profile not found - try to create it
+                    console.warn('⚠️ [PROFILE] No profile found, will use fallback for userId:', userId);
                     return null;
                 } catch (err: any) {
                     if (err.name === 'AbortError') {
                         console.error('❌ [PROFILE] Request aborted (timeout)');
+                    } else if (err?.message?.includes('406')) {
+                        // 406 = No rows found - don't cache this as it might be a new user
+                        console.warn('⚠️ [PROFILE] Profile not in DB (406), will use OAuth fallback');
+                        return null; // Don't cache - let fallback handle it
                     } else {
                         console.error('❌ [PROFILE] Error:', err?.message || err);
                     }
-                    // Cache null to prevent repeated failed fetches
-                    profileCache.current[userId] = { data: null, timestamp: Date.now() };
+                    // Only cache errors that are NOT 406 (profile not found)
+                    // This allows retry for new users
                     return null;
                 } finally {
                     delete pendingFetches.current[userId];
@@ -173,10 +178,15 @@ export const useSupabaseAuth = () => {
                     const profile = await fetchUserProfile(session.user.id, session.user.email);
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
+                    // Assign super_admin role to known admin emails
+                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com'];
+                    const userEmail = session.user.email || '';
+                    const fallbackRole = adminEmails.includes(userEmail) ? 'super_admin' : 'tourist';
+
                     const finalProfile = profile || {
                         user_id: session.user.id,
                         username: session.user.email?.split('@')[0] || 'user',
-                        email: session.user.email || '',
+                        email: userEmail,
                         first_name: session.user.user_metadata?.full_name?.split(' ')[0] || session.user.user_metadata?.name || 'Usuario',
                         last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
                         full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuario',
@@ -184,7 +194,7 @@ export const useSupabaseAuth = () => {
                         is_active: true,
                         avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
                         phone: null,
-                        roles: ['tourist'], // Default role
+                        roles: [fallbackRole],
                         person_id: session.user.id
                     };
 
@@ -258,10 +268,15 @@ export const useSupabaseAuth = () => {
                     const profile = await fetchUserProfile(session.user.id, session.user.email);
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
+                    // Assign super_admin role to known admin emails
+                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com'];
+                    const userEmail = session.user.email || '';
+                    const fallbackRole = adminEmails.includes(userEmail) ? 'super_admin' : 'tourist';
+
                     const finalProfile = profile || {
                         user_id: session.user.id,
                         username: session.user.email?.split('@')[0] || 'user',
-                        email: session.user.email || '',
+                        email: userEmail,
                         first_name: session.user.user_metadata?.full_name?.split(' ')[0] || session.user.user_metadata?.name || 'Usuario',
                         last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
                         full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuario',
@@ -269,7 +284,7 @@ export const useSupabaseAuth = () => {
                         is_active: true,
                         avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
                         phone: null,
-                        roles: ['tourist'],
+                        roles: [fallbackRole],
                         person_id: session.user.id
                     };
 
