@@ -179,7 +179,7 @@ export const useSupabaseAuth = () => {
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
                     // Assign super_admin role to known admin emails
-                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com'];
+                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com', 'fel.ramirez.fig@gmail.com'];
                     const userEmail = session.user.email || '';
                     const fallbackRole = adminEmails.includes(userEmail) ? 'super_admin' : 'tourist';
 
@@ -269,7 +269,7 @@ export const useSupabaseAuth = () => {
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
                     // Assign super_admin role to known admin emails
-                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com'];
+                    const adminEmails = ['thejozx.182@gmail.com', 'fco.tejos.c@gmail.com', 'fel.ramirez.fig@gmail.com'];
                     const userEmail = session.user.email || '';
                     const fallbackRole = adminEmails.includes(userEmail) ? 'super_admin' : 'tourist';
 
