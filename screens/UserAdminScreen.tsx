@@ -83,37 +83,30 @@ const UserAdminScreen: React.FC = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+    // 2025-12-23: MIGRATED TO USE 'profiles' TABLE
     const { data, error } = await supabase
-      .from('users')
-      .select(`
-        id, username, is_active, last_login, created_at,
-        persons ( email, first_name, last_name, avatar_url, phone, bio ),
-        user_roles ( roles ( name ) )
-      `)
+      .from('profiles')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) console.error('Error fetching users:', error);
+    if (error) console.error('Error fetching users from profiles:', error);
 
     if (data) {
-      const mapped = data.map((u: any) => {
-        const rolesList = u.user_roles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
-        const p = Array.isArray(u.persons) ? u.persons[0] : u.persons;
-        return {
-          id: u.id,
-          username: u.username,
-          is_active: u.is_active,
-          last_login: u.last_login,
-          created_at: u.created_at,
-          email: p?.email || 'Sin email',
-          first_name: p?.first_name || '',
-          last_name: p?.last_name || '',
-          name: p ? `${p.first_name || ''} ${p.last_name || ''}`.trim() : 'Usuario',
-          avatar: p?.avatar_url,
-          phone: p?.phone,
-          bio: p?.bio,
-          role: rolesList[0] || 'tourist'
-        };
-      });
+      const mapped = data.map((p: any) => ({
+        id: p.id,
+        username: p.email?.split('@')[0] || 'user',
+        is_active: p.is_active ?? true,
+        last_login: p.last_sign_in_at,
+        created_at: p.created_at,
+        email: p.email || 'Sin email',
+        first_name: p.first_name || '',
+        last_name: p.last_name || '',
+        name: p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Usuario',
+        avatar: p.avatar_url,
+        phone: p.phone,
+        bio: p.bio,
+        role: p.role || 'tourist'
+      }));
       setUsers(mapped);
     }
     setLoading(false);
