@@ -194,41 +194,85 @@ const TouristMapScreen: React.FC = () => {
     allMarkers.forEach(item => {
       const isActive = selectedBusiness?.id === item.id || selectedAttraction?.id === item.id;
 
-      // Custom Icon Logic
-      let innerHtml = '';
-      if (item.type === 'business') {
-        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                      <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
-      } else if (item.type === 'locality') {
-        innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">location_city</span></div>`;
-      } else if (item.type === 'attraction') {
-        innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">photo_camera</span></div>`;
-      }
+      // Custom Icon Logic - LOCALIDADES tienen diseño especial de LABEL
+      let customIcon;
 
-      const customIcon = L.divIcon({
-        className: "",
-        html: `
-          <div style="
-            position: relative;
-            width: ${isActive ? '56px' : '40px'}; 
-            height: ${isActive ? '56px' : '40px'}; 
-            border-radius: 50%; 
-            border: ${isActive ? '3px' : '2px'} solid white; 
-            background-color: ${item.color}; 
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-            z-index: ${isActive ? 1000 : 1};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            ${innerHtml}
-          </div>
-        `,
-        iconSize: isActive ? [56, 56] : [40, 40],
-        iconAnchor: isActive ? [28, 28] : [20, 20]
-      });
+      if (item.type === 'locality') {
+        // LOCALIDADES: Mostrar como LABEL con nombre grande
+        customIcon = L.divIcon({
+          className: "",
+          html: `
+            <div style="
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              transform: translateX(-50%);
+            ">
+              <div style="
+                background: linear-gradient(135deg, #8e44ad, #9b59b6);
+                color: white;
+                font-size: 14px;
+                font-weight: 900;
+                padding: 8px 16px;
+                border-radius: 20px;
+                white-space: nowrap;
+                box-shadow: 0 4px 20px rgba(142, 68, 173, 0.5);
+                border: 2px solid rgba(255,255,255,0.3);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                z-index: 1000;
+              ">
+                📍 ${item.title}
+              </div>
+              <div style="
+                width: 0;
+                height: 0;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 8px solid #8e44ad;
+              "></div>
+            </div>
+          `,
+          iconSize: [150, 50],
+          iconAnchor: [75, 50]
+        });
+      } else {
+        // NEGOCIOS y ATRACTIVOS: Mantienen el diseño circular
+        let innerHtml = '';
+        if (item.type === 'business') {
+          innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
+        } else if (item.type === 'attraction') {
+          innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">photo_camera</span></div>`;
+        }
+
+        customIcon = L.divIcon({
+          className: "",
+          html: `
+            <div style="
+              position: relative;
+              width: ${isActive ? '56px' : '40px'}; 
+              height: ${isActive ? '56px' : '40px'}; 
+              border-radius: 50%; 
+              border: ${isActive ? '3px' : '2px'} solid white; 
+              background-color: ${item.color}; 
+              overflow: hidden;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+              transition: all 0.3s ease;
+              z-index: ${isActive ? 1000 : 1};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              ${innerHtml}
+            </div>
+          `,
+          iconSize: isActive ? [56, 56] : [40, 40],
+          iconAnchor: isActive ? [28, 28] : [20, 20]
+        });
+      }
 
       if (markersRef.current[item.id]) {
         const m = markersRef.current[item.id];
