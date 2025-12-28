@@ -198,7 +198,7 @@ const TouristMapScreen: React.FC = () => {
       let customIcon;
 
       if (item.type === 'locality') {
-        // LOCALIDADES: Mostrar como LABEL con nombre grande
+        // LOCALIDADES: Mostrar como LABEL compacto
         customIcon = L.divIcon({
           className: "",
           html: `
@@ -207,36 +207,35 @@ const TouristMapScreen: React.FC = () => {
               display: flex;
               flex-direction: column;
               align-items: center;
-              gap: 4px;
+              gap: 2px;
               transform: translateX(-50%);
             ">
               <div style="
                 background: linear-gradient(135deg, #8e44ad, #9b59b6);
                 color: white;
-                font-size: 14px;
-                font-weight: 900;
-                padding: 8px 16px;
-                border-radius: 20px;
+                font-size: 10px;
+                font-weight: 800;
+                padding: 4px 10px;
+                border-radius: 12px;
                 white-space: nowrap;
-                box-shadow: 0 4px 20px rgba(142, 68, 173, 0.5);
-                border: 2px solid rgba(255,255,255,0.3);
+                box-shadow: 0 2px 10px rgba(142, 68, 173, 0.4);
+                border: 1px solid rgba(255,255,255,0.2);
                 text-transform: uppercase;
-                letter-spacing: 1px;
-                z-index: 1000;
+                letter-spacing: 0.5px;
               ">
-                📍 ${item.title}
+                ${item.title}
               </div>
               <div style="
                 width: 0;
                 height: 0;
-                border-left: 8px solid transparent;
-                border-right: 8px solid transparent;
-                border-top: 8px solid #8e44ad;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #8e44ad;
               "></div>
             </div>
           `,
-          iconSize: [150, 50],
-          iconAnchor: [75, 50]
+          iconSize: [120, 30],
+          iconAnchor: [60, 30]
         });
       } else {
         // NEGOCIOS y ATRACTIVOS: Mantienen el diseño circular
