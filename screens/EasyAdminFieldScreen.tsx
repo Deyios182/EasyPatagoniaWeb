@@ -265,6 +265,72 @@ const EasyAdminFieldScreen: React.FC = () => {
         }
     };
 
+    // --- FUNCIONES DE ELIMINACIÓN (con doble confirmación) ---
+    const deleteLocality = async (id: string, name: string) => {
+        const firstConfirm = confirm(`⚠️ ¿Estás seguro de eliminar la localidad "${name}"?`);
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm(`🚨 CONFIRMAR: Esta acción es IRREVERSIBLE. ¿Eliminar "${name}" permanentemente?`);
+        if (!secondConfirm) return;
+
+        console.log('🗑️ [DELETE] Eliminando localidad:', id);
+        const { error } = await supabase.from('localities').delete().eq('id', id);
+
+        if (error) {
+            console.error('❌ [DELETE] Error:', error);
+            alert('Error al eliminar: ' + error.message);
+        } else {
+            console.log('✅ [DELETE] Localidad eliminada');
+            alert('✅ Localidad eliminada correctamente');
+            fetchData();
+        }
+    };
+
+    const deleteAttraction = async (id: string, name: string) => {
+        const firstConfirm = confirm(`⚠️ ¿Estás seguro de eliminar el atractivo "${name}"?`);
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm(`🚨 CONFIRMAR: Esta acción es IRREVERSIBLE. ¿Eliminar "${name}" permanentemente?`);
+        if (!secondConfirm) return;
+
+        console.log('🗑️ [DELETE] Eliminando atractivo:', id);
+        const { error } = await supabase.from('attractions').delete().eq('id', id);
+
+        if (error) {
+            console.error('❌ [DELETE] Error:', error);
+            alert('Error al eliminar: ' + error.message);
+        } else {
+            console.log('✅ [DELETE] Atractivo eliminado');
+            alert('✅ Atractivo eliminado correctamente');
+            fetchData();
+        }
+    };
+
+    const deleteCompany = async (id: string, name: string) => {
+        const firstConfirm = confirm(`⚠️ ¿Estás seguro de eliminar la empresa "${name}"?`);
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm(`🚨 CONFIRMAR: Esta acción es IRREVERSIBLE. Esto también eliminará todos los servicios asociados. ¿Eliminar "${name}" permanentemente?`);
+        if (!secondConfirm) return;
+
+        console.log('🗑️ [DELETE] Eliminando empresa y sus servicios:', id);
+
+        // Primero eliminar servicios asociados
+        await supabase.from('services').delete().eq('company_id', id);
+
+        // Luego eliminar la empresa
+        const { error } = await supabase.from('companies').delete().eq('id', id);
+
+        if (error) {
+            console.error('❌ [DELETE] Error:', error);
+            alert('Error al eliminar: ' + error.message);
+        } else {
+            console.log('✅ [DELETE] Empresa eliminada');
+            alert('✅ Empresa y servicios eliminados correctamente');
+            fetchData();
+        }
+    };
+
     // --- SERVICIOS ---
     const openServiceManager = async (company: Company) => {
         setShowServiceModal(company);
@@ -410,9 +476,17 @@ const EasyAdminFieldScreen: React.FC = () => {
                         </button>
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {localities.map(loc => (
-                                <div key={loc.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 cursor-pointer transition-all hover:shadow-xl group" onClick={() => setEditingLocality(loc)}>
-                                    <img src={loc.image_url || 'https://via.placeholder.com/300x200'} className="w-full h-36 object-cover rounded-2xl mb-4 bg-white/5 group-hover:scale-[1.02] transition-transform" />
-                                    <h3 className="font-bold text-lg text-white">{loc.name}</h3>
+                                <div key={loc.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all hover:shadow-xl group relative">
+                                    <img src={loc.image_url || 'https://via.placeholder.com/300x200'} className="w-full h-36 object-cover rounded-2xl mb-4 bg-white/5 cursor-pointer" onClick={() => setEditingLocality(loc)} />
+                                    <h3 className="font-bold text-lg text-white cursor-pointer" onClick={() => setEditingLocality(loc)}>{loc.name}</h3>
+                                    <div className="flex gap-2 mt-3">
+                                        <button onClick={() => setEditingLocality(loc)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
+                                            <span className="material-symbols-outlined text-sm">edit</span> Editar
+                                        </button>
+                                        <button onClick={() => deleteLocality(loc.id, loc.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -456,13 +530,23 @@ const EasyAdminFieldScreen: React.FC = () => {
                         </button>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {attractions.map(att => (
-                                <div key={att.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 cursor-pointer flex gap-4 transition-all group" onClick={() => setEditingAttraction(att)}>
-                                    <img src={att.main_image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-2xl bg-white/5 group-hover:scale-[1.02] transition-transform" />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-lg text-white leading-tight mb-2">{att.name}</h3>
-                                        {/* @ts-ignore */}
-                                        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
-                                        <p className="text-xs text-slate-400 mt-2 line-clamp-2">{att.short_description}</p>
+                                <div key={att.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all group">
+                                    <div className="flex gap-4 cursor-pointer" onClick={() => setEditingAttraction(att)}>
+                                        <img src={att.main_image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-2xl bg-white/5" />
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-lg text-white leading-tight mb-2">{att.name}</h3>
+                                            {/* @ts-ignore */}
+                                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
+                                            <p className="text-xs text-slate-400 mt-2 line-clamp-2">{att.short_description}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
+                                        <button onClick={() => setEditingAttraction(att)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
+                                            <span className="material-symbols-outlined text-sm">edit</span> Editar
+                                        </button>
+                                        <button onClick={() => deleteAttraction(att.id, att.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -529,13 +613,27 @@ const EasyAdminFieldScreen: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
-                                        className="mt-4 md:mt-0 bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">inventory_2</span>
-                                        Gestionar Servicios
-                                    </button>
+                                    <div className="flex gap-2 mt-4 md:mt-0">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
+                                            className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">inventory_2</span>
+                                            Servicios
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); }}
+                                            className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">edit</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
+                                            className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
