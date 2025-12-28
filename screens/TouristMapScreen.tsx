@@ -37,7 +37,7 @@ const TouristMapScreen: React.FC = () => {
   }, []);
 
   const localTransfers = useMemo(() =>
-    allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios.some(s => s.nombre.toLowerCase().includes('traslado') || s.nombre.toLowerCase().includes('aeropuerto'))),
+    allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios?.some(s => (s.nombre || '').toLowerCase().includes('traslado') || (s.nombre || '').toLowerCase().includes('aeropuerto'))),
     [allBusinesses]
   );
 
@@ -75,8 +75,8 @@ const TouristMapScreen: React.FC = () => {
       const matchesPriority = true; // FORCE SHOW ALL
 
       const matchesSearch = serviceSearch === '' ||
-        b.servicios.some(s => s.nombre.toLowerCase().includes(serviceSearch.toLowerCase())) ||
-        b.nombre.toLowerCase().includes(serviceSearch.toLowerCase());
+        b.servicios?.some(s => (s.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase())) ||
+        (b.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase());
 
       return matchesFilter && matchesPriority && matchesSearch;
     });

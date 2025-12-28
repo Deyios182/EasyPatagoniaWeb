@@ -27,9 +27,9 @@ const BusinessDirectoryScreen: React.FC = () => {
         matchesFilter = b.categoria === filter;
       }
 
-      const matchesSearch = b.nombre.toLowerCase().includes(query.toLowerCase()) ||
-        b.servicios.some(s => s.nombre.toLowerCase().includes(query.toLowerCase())) ||
-        b.info.descripcion.toLowerCase().includes(query.toLowerCase());
+      const matchesSearch = (b.nombre || '').toLowerCase().includes(query.toLowerCase()) ||
+        b.servicios?.some(s => (s.nombre || '').toLowerCase().includes(query.toLowerCase())) ||
+        (b.info?.descripcion || '').toLowerCase().includes(query.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [allBusinesses, filter, query]);

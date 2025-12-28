@@ -35,9 +35,9 @@ const DiscoveryScreen: React.FC = () => {
 
     return allBusinesses.filter(biz =>
       keywords.some((k: string) =>
-        biz.nombre.toLowerCase().includes(k.toLowerCase()) ||
-        biz.info.descripcion.toLowerCase().includes(k.toLowerCase()) ||
-        biz.servicios.some((s: any) => s.nombre.toLowerCase().includes(k.toLowerCase()))
+        (biz.nombre || '').toLowerCase().includes(k.toLowerCase()) ||
+        (biz.info?.descripcion || '').toLowerCase().includes(k.toLowerCase()) ||
+        biz.servicios?.some((s: any) => (s.nombre || '').toLowerCase().includes(k.toLowerCase()))
       )
     ).slice(0, 6);
   };
