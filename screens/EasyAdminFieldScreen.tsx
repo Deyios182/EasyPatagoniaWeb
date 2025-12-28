@@ -115,7 +115,12 @@ const EasyAdminFieldScreen: React.FC = () => {
     // --- LOCALIDADES ---
     const saveLocality = async () => {
         if (!editingLocality?.name) return;
+
+        // Generar UUID para nueva localidad
+        const localityId = editingLocality.id || crypto.randomUUID();
+
         const payload = {
+            id: localityId,
             name: editingLocality.name,
             image_url: editingLocality.image_url,
             is_active: true,
@@ -123,7 +128,7 @@ const EasyAdminFieldScreen: React.FC = () => {
             longitude: editingLocality.longitude || null
         };
 
-        console.log('💾 [LOCALITY] ID de localidad:', editingLocality.id);
+        console.log('💾 [LOCALITY] ID de localidad:', localityId);
         console.log('💾 [LOCALITY] Guardando localidad...', payload);
         console.log('💾 [LOCALITY] URL de imagen:', editingLocality.image_url);
 
@@ -155,7 +160,12 @@ const EasyAdminFieldScreen: React.FC = () => {
     // --- ATRACTIVOS ---
     const saveAttraction = async () => {
         if (!editingAttraction?.name || !editingAttraction.locality_id) { alert("Nombre y Localidad requeridos"); return; }
+
+        // Generar UUID para nuevo atractivo
+        const attractionId = editingAttraction.id || crypto.randomUUID();
+
         const payload = {
+            id: attractionId,
             name: editingAttraction.name,
             short_description: editingAttraction.short_description,
             locality_id: editingAttraction.locality_id,
@@ -164,6 +174,7 @@ const EasyAdminFieldScreen: React.FC = () => {
             longitude: editingAttraction.longitude || null
         };
 
+        console.log('💾 [ATTRACTION] ID de atractivo:', attractionId);
         console.log('💾 [ATTRACTION] Guardando atractivo...', payload);
         console.log('💾 [ATTRACTION] URL de imagen:', editingAttraction.main_image_url);
 
