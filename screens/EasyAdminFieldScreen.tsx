@@ -122,6 +122,7 @@ const EasyAdminFieldScreen: React.FC = () => {
         const payload = {
             id: localityId,
             name: editingLocality.name,
+            description: editingLocality.description || null,
             image_url: editingLocality.image_url,
             is_active: true,
             latitude: editingLocality.latitude || null,
@@ -421,6 +422,9 @@ const EasyAdminFieldScreen: React.FC = () => {
                                     <h3 className="text-xl font-black mb-6 text-white">{editingLocality.id ? 'Editar Localidad' : 'Nueva Localidad'}</h3>
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nombre</label>
                                     <input type="text" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 font-bold focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" value={editingLocality.name || ''} onChange={e => setEditingLocality({ ...editingLocality, name: e.target.value })} />
+
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción</label>
+                                    <textarea className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 resize-none focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" rows={3} placeholder="Breve descripción de la localidad..." value={editingLocality.description || ''} onChange={e => setEditingLocality({ ...editingLocality, description: e.target.value })} />
 
                                     <ImageUploader label="Imagen de Portada" currentImage={editingLocality.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingLocality({ ...editingLocality, image_url: url }))} />
 
