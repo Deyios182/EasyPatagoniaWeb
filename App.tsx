@@ -439,6 +439,15 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
         <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
         <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
+
+        {/* SECCIÓN MI EMPRESA - Solo para DueñoEmpresa y SuperAdmin */}
+        {(displayRole === 'DueñoEmpresa' || displayRole === 'SuperAdmin') && (
+          <>
+            <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
+            {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Mi Negocio</p>}
+            <NavItem to="/portal" icon="storefront" label="Mi Empresa" />
+          </>
+        )}
       </div>
       <div className="mt-auto pt-6 border-t border-slate-300 dark:border-white/5 shrink-0">
         <Link to="/profile" className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline ${location.pathname === '/profile' ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'justify-center' : ''}`}>
