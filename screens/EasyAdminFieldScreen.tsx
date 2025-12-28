@@ -346,34 +346,28 @@ const EasyAdminFieldScreen: React.FC = () => {
         setMapTarget(null);
     };
     const searchOwner = async () => {
-        // 1. Buscar en tabla Persons por email
-        const { data: personData, error: personError } = await supabase
-            .from('persons')
-            .select('id, email')
+        // 2024-12-28: MIGRATED TO search in 'profiles' table directly
+        console.log('🔍 [OWNER] Buscando usuario por email:', ownerEmailSearch);
+
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, email, first_name, last_name')
             .eq('email', ownerEmailSearch)
             .single();
 
-        if (personError || !personData) {
-            alert('Usuario no encontrado en la base de datos de personas.');
+        if (profileError || !profileData) {
+            console.error('❌ [OWNER] Usuario no encontrado:', profileError);
+            alert('Usuario no encontrado. Asegúrate de que el usuario haya iniciado sesión al menos una vez.');
             return;
         }
 
-        // 2. Buscar Usuario asociado a esa persona
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('person_id', personData.id)
-            .single();
+        console.log('✅ [OWNER] Usuario encontrado:', profileData);
 
-        if (userError || !userData) {
-            alert('Persona encontrada, pero no tiene cuenta de usuario activa.');
-            return;
-        }
-
-        // Éxito: Guardamos ID de users (que es el ID real de auth)
+        // Éxito: Guardamos ID del profile (que es el mismo ID de auth.users)
         setOwnerSearchResult({
-            clerk_user_id: userData.id, // Mantenemos nombre clave para compatibilidad con resto del código
-            email: personData.email
+            clerk_user_id: profileData.id, // Este ID se usará como owner_id en companies
+            email: profileData.email,
+            name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
         });
     };
 
