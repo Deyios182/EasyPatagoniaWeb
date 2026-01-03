@@ -77,6 +77,7 @@ const EasyAdminFieldScreen: React.FC = () => {
     const [mapTarget, setMapTarget] = useState<'locality' | 'attraction' | 'company' | null>(null); // New state to know what we are editing
     const [ownerEmailSearch, setOwnerEmailSearch] = useState('');
     const [ownerSearchResult, setOwnerSearchResult] = useState<any>(null);
+    const [companyOwners, setCompanyOwners] = useState<any[]>([]); // Lista de dueños de la empresa actual
 
     useEffect(() => { fetchData(); }, []);
 
@@ -438,6 +439,80 @@ const EasyAdminFieldScreen: React.FC = () => {
         });
     };
 
+    // Cargar dueños de una empresa
+    const loadCompanyOwners = async (companyId: string) => {
+        console.log('🔵 [OWNERS] Cargando dueños para empresa:', companyId);
+        const { data, error } = await supabase
+            .from('company_owners')
+            .select(`
+                owner_id,
+                profiles (id, email, full_name, first_name, last_name)
+            `)
+            .eq('company_id', companyId);
+
+        if (error) {
+            console.error('❌ [OWNERS] Error al cargar dueños:', error);
+            return;
+        }
+
+        console.log('✅ [OWNERS] Dueños cargados:', data?.length || 0);
+        setCompanyOwners(data || []);
+    };
+
+    // Agregar dueño a la empresa
+    const addOwnerToCompany = async () => {
+        if (!editingCompany?.id || !ownerSearchResult) return;
+
+        console.log('🔵 [OWNERS] Agregando dueño:', ownerSearchResult.clerk_user_id);
+
+        const { error } = await supabase
+            .from('company_owners')
+            .insert([{
+                company_id: editingCompany.id,
+                owner_id: ownerSearchResult.clerk_user_id
+            }]);
+
+        if (error) {
+            if (error.code === '23505') { // Unique violation
+                alert('Este usuario ya es dueño de esta empresa');
+            } else {
+                console.error('❌ [OWNERS] Error al agregar dueño:', error);
+                alert('Error al agregar dueño: ' + error.message);
+            }
+            return;
+        }
+
+        console.log('✅ [OWNERS] Dueño agregado correctamente');
+        setOwnerSearchResult(null);
+        setOwnerEmailSearch('');
+        loadCompanyOwners(editingCompany.id);
+    };
+
+    // Quitar dueño de la empresa
+    const removeOwnerFromCompany = async (ownerId: string) => {
+        if (!editingCompany?.id) return;
+
+        const confirm2 = window.confirm('¿Seguro que deseas quitar este dueño de la empresa?');
+        if (!confirm2) return;
+
+        console.log('🔵 [OWNERS] Quitando dueño:', ownerId);
+
+        const { error } = await supabase
+            .from('company_owners')
+            .delete()
+            .eq('company_id', editingCompany.id)
+            .eq('owner_id', ownerId);
+
+        if (error) {
+            console.error('❌ [OWNERS] Error al quitar dueño:', error);
+            alert('Error al quitar dueño: ' + error.message);
+            return;
+        }
+
+        console.log('✅ [OWNERS] Dueño quitado correctamente');
+        loadCompanyOwners(editingCompany.id);
+    };
+
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark font-body text-white">
 
@@ -603,7 +678,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                         <div className="space-y-4">
                             {companies.map(comp => (
                                 <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-primary/50 transition-all group">
-                                    <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); }}>
+                                    <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
                                         <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
                                         <div>
                                             <h3 className="font-bold text-white text-lg">{comp.name}</h3>
@@ -622,7 +697,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                             Servicios
                                         </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); }}
+                                            onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
                                             className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-sm">edit</span>
@@ -689,13 +764,71 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div className="bg-orange-500/10 p-3 rounded-xl border border-orange-500/30">
-                                                <label className="text-xs font-bold text-orange-400 uppercase tracking-wider block mb-2">Asignar Dueño (Email)</label>
-                                                <div className="flex gap-2">
-                                                    <input type="text" className="flex-1 bg-white/5 border border-white/10 p-2 rounded-lg text-sm text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-400" value={ownerEmailSearch} onChange={e => setOwnerEmailSearch(e.target.value)} />
-                                                    <button onClick={searchOwner} className="bg-orange-500 text-white px-3 rounded-lg font-bold text-xs hover:bg-orange-600 transition-colors">Buscar</button>
+                                            <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/30">
+                                                <label className="text-xs font-bold text-orange-400 uppercase tracking-wider block mb-3">Dueños de la Empresa</label>
+
+                                                {/* Lista de dueños actuales */}
+                                                {companyOwners.length > 0 ? (
+                                                    <div className="space-y-2 mb-4">
+                                                        {companyOwners.map((owner: any) => (
+                                                            <div key={owner.owner_id} className="flex items-center justify-between bg-white/5 p-2 rounded-lg group">
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm text-white font-bold">
+                                                                        {owner.profiles?.full_name ||
+                                                                            `${owner.profiles?.first_name || ''} ${owner.profiles?.last_name || ''}`.trim() ||
+                                                                            'Sin nombre'}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-slate-400">{owner.profiles?.email}</p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => removeOwnerFromCompany(owner.owner_id)}
+                                                                    className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                                                    title="Quitar dueño"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-sm">close</span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400 mb-3 italic">No hay dueños asignados a esta empresa</p>
+                                                )}
+
+                                                {/* Buscar y agregar nuevo dueño */}
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Agregar Nuevo Dueño</p>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Email del dueño..."
+                                                            className="flex-1 bg-white/5 border border-white/10 p-2 rounded-lg text-sm text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-400"
+                                                            value={ownerEmailSearch}
+                                                            onChange={e => setOwnerEmailSearch(e.target.value)}
+                                                        />
+                                                        <button
+                                                            onClick={searchOwner}
+                                                            className="bg-orange-500 text-white px-3 py-2 rounded-lg font-bold text-xs hover:bg-orange-600 transition-colors"
+                                                        >
+                                                            Buscar
+                                                        </button>
+                                                    </div>
+
+                                                    {ownerSearchResult && (
+                                                        <div className="flex items-center justify-between bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/30">
+                                                            <div className="flex-1">
+                                                                <p className="text-xs text-emerald-400 font-bold">✓ {ownerSearchResult.email}</p>
+                                                                <p className="text-[10px] text-slate-400">{ownerSearchResult.name}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={addOwnerToCompany}
+                                                                className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-600 transition-colors flex items-center gap-1"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">add</span>
+                                                                Agregar
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {ownerSearchResult && <p className="text-[10px] text-emerald-400 mt-1 font-bold">✓ {ownerSearchResult.email}</p>}
                                             </div>
                                         </div>
                                     </div>
