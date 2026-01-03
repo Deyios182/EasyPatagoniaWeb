@@ -109,6 +109,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (companies) {
         console.log('📊 [APP] Raw companies data sample:', companies.slice(0, 2).map(c => ({
           name: c.name,
+          locality_id: c.locality_id,
           gallery_urls: c.gallery_urls,
           logo_url: c.logo_url
         })));
