@@ -54,51 +54,51 @@ const BusinessDirectoryScreen: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-hidden">
-      <div className="sticky top-0 p-6 md:p-12 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-xl z-50 border-b border-white/10">
-        <div className="max-w-6xl mx-auto space-y-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={() => navigate('/map')}
-                className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-slate-200 dark:border-white/10"
-              >
-                <span className="material-symbols-outlined text-3xl">arrow_back</span>
-              </button>
-              <div>
-                <h1 className="text-4xl md:text-5xl font-black dark:text-white leading-none tracking-tighter uppercase italic">{t('directory_title')}</h1>
-                <p className="text-xs text-primary font-black uppercase tracking-[0.4em] mt-2">{t('discovery_subtitle')}</p>
-              </div>
-            </div>
-            <div className="flex-1 md:max-w-md">
-              <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-8 py-5 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner">
-                <span className="material-symbols-outlined text-primary">place</span>
-                <select
-                  value={localityFilter}
-                  onChange={e => setLocalityFilter(e.target.value)}
-                  className="bg-transparent border-none focus:ring-0 text-base dark:text-white w-full font-bold cursor-pointer"
-                >
-                  <option value="all" className="bg-slate-800">Todas las localidades</option>
-                  {localities.map(loc => (
-                    <option key={loc.id} value={loc.id} className="bg-slate-800">{loc.name}</option>
-                  ))}
-                </select>
-              </div>
+      <div className="sticky top-0 p-6 md:p-10 flex flex-col gap-6 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-xl z-50 border-b border-white/10">
+
+        {/* Header Row: Back + Title + Locality Select (Now inline or stacked naturally) */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => navigate('/map')}
+              className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-slate-200 dark:border-white/10 shrink-0"
+            >
+              <span className="material-symbols-outlined text-3xl">arrow_back</span>
+            </button>
+            <div>
+              <h1 className="text-3xl md:text-5xl font-black dark:text-white leading-none tracking-tighter uppercase italic">{t('directory_title')}</h1>
+              <p className="text-[10px] md:text-xs text-primary font-black uppercase tracking-[0.4em] mt-2">{t('discovery_subtitle')}</p>
             </div>
           </div>
 
-          <div className="relative">
-            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 scroll-smooth">
-              {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat as any)}
-                  className={`whitespace-nowrap px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.25em] transition-all border ${filter === cat ? 'bg-primary border-primary text-white shadow-xl shadow-primary/30 scale-105' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:border-primary/50'}`}
-                >
-                  {cat === 'All' ? t('all') : t(cat.toLowerCase())}
-                </button>
-              ))}
+          <div className="w-full md:w-auto md:min-w-[300px]">
+            <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-6 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-primary">place</span>
+              <select
+                value={localityFilter}
+                onChange={e => setLocalityFilter(e.target.value)}
+                className="bg-transparent border-none focus:ring-0 text-sm font-bold dark:text-white w-full cursor-pointer uppercase tracking-wider"
+              >
+                <option value="all" className="bg-slate-800">Todas las localidades</option>
+                {localities.map(loc => (
+                  <option key={loc.id} value={loc.id} className="bg-slate-800">{loc.name}</option>
+                ))}
+              </select>
             </div>
           </div>
+        </div>
+
+        {/* Categories Scroller */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 scroll-smooth">
+          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat as any)}
+              className={`whitespace-nowrap px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${filter === cat ? 'bg-primary border-primary text-white scale-105 shadow-lg' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+            >
+              {cat === 'All' ? t('all') : t(cat.toLowerCase())}
+            </button>
+          ))}
         </div>
       </div>
 
