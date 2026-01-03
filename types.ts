@@ -114,3 +114,13 @@ export interface SavedItinerary {
   categories: string[];
   plan: ItineraryDay[];
 }
+
+// Galería personal de usuario
+export interface UserImage {
+  id: string;
+  owner_id: string;
+  image_url: string;
+  image_type: 'logo' | 'gallery' | 'service';
+  name?: string;
+  uploaded_at: string;
+}

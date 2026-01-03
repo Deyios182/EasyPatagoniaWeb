@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
-import { Company, Service } from '../types';
+import { Company, Service, UserImage } from '../types';
 import { uploadImage } from './imageHandler';
+import ImageSelectorModal from '../components/ImageSelectorModal';
 
 const BusinessPortalScreen: React.FC = () => {
   const { user } = useAppAuth();
@@ -12,6 +13,7 @@ const BusinessPortalScreen: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [editedCompany, setEditedCompany] = useState<Company | null>(null); // Estado local para edición
   const [services, setServices] = useState<Service[]>([]);
+  const [userGallery, setUserGallery] = useState<UserImage[]>([]); // Galería personal del usuario
 
   // Estados de UI
   const [loading, setLoading] = useState(true);
@@ -19,11 +21,13 @@ const BusinessPortalScreen: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'servicios' | 'galeria'>('info');
+  const [showImageSelector, setShowImageSelector] = useState<'logo' | 'gallery' | 'service' | null>(null);
 
-  // 1. Cargar Empresas del Dueño
+  // 1. Cargar Empresas del Dueño y Galería Personal
   useEffect(() => {
     if (!user) return;
     fetchMyCompanies();
+    loadUserGallery(); // Cargar galería personal al montar
   }, [user]);
 
   const fetchMyCompanies = async () => {
@@ -52,6 +56,52 @@ const BusinessPortalScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 1.5. Cargar Galería Personal del Usuario
+  const loadUserGallery = async () => {
+    if (!user?.uid) return;
+    console.log('🔵 [GALLERY] Cargando galería personal...');
+
+    const { data, error } = await supabase
+      .from('user_gallery')
+      .select('*')
+      .eq('owner_id', user.uid)
+      .order('uploaded_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ [GALLERY] Error al cargar galería:', error);
+    } else {
+      console.log('✅ [GALLERY] Imágenes cargadas:', data?.length || 0);
+      setUserGallery(data || []);
+    }
+  };
+
+  // 1.6. Subir imagen a galería personal
+  const handleUploadToGallery = async (file: File, type: 'logo' | 'gallery' | 'service'): Promise<string | null> => {
+    const folder = type === 'logo' ? 'logos' : type === 'gallery' ? 'galleries' : 'services';
+    const url = await uploadImage(file, folder);
+
+    if (url && user?.uid) {
+      // Guardar en user_gallery
+      const { error } = await supabase
+        .from('user_gallery')
+        .insert([{
+          owner_id: user.uid,
+          image_url: url,
+          image_type: type,
+          name: file.name
+        }]);
+
+      if (error) {
+        console.error('❌ [GALLERY] Error al guardar en galería:', error);
+      } else {
+        console.log('✅ [GALLERY] Imagen guardada en galería personal');
+        loadUserGallery(); // Recargar galería
+      }
+    }
+
+    return url;
   };
 
   // 2. Cargar Servicios de la Empresa Seleccionada
@@ -182,6 +232,49 @@ const BusinessPortalScreen: React.FC = () => {
     }
   };
 
+  // 7. Manejar selección de imagen desde galería personal
+  const handleSelectImageFromGallery = async (imageUrl: string) => {
+    if (!selectedCompany || !showImageSelector) return;
+
+    if (showImageSelector === 'logo') {
+      const { error } = await supabase.from('companies').update({ logo_url: imageUrl }).eq('id', selectedCompany.id);
+      if (!error) {
+        setSelectedCompany({ ...selectedCompany, logo_url: imageUrl });
+        setEditedCompany(prev => prev ? { ...prev, logo_url: imageUrl } : null);
+      }
+    } else if (showImageSelector === 'gallery') {
+      const newGallery = [...(selectedCompany.gallery_urls || []), imageUrl];
+      const { error } = await supabase.from('companies').update({ gallery_urls: newGallery }).eq('id', selectedCompany.id);
+      if (!error) {
+        setSelectedCompany({ ...selectedCompany, gallery_urls: newGallery });
+        setEditedCompany(prev => prev ? { ...prev, gallery_urls: newGallery } : null);
+      }
+    }
+  };
+
+  // 8. Subir nueva imagen desde modal
+  const handleUploadNewImage = async (file: File, type: 'logo' | 'gallery' | 'service') => {
+    const url = await handleUploadToGallery(file, type);
+    if (url && selectedCompany) {
+      // Asignar la imagen subida según el tipo
+      if (type === 'logo') {
+        const { error } = await supabase.from('companies').update({ logo_url: url }).eq('id', selectedCompany.id);
+        if (!error) {
+          setSelectedCompany({ ...selectedCompany, logo_url: url });
+          setEditedCompany(prev => prev ? { ...prev, logo_url: url } : null);
+        }
+      } else if (type === 'gallery') {
+        const newGallery = [...(selectedCompany.gallery_urls || []), url];
+        const { error } = await supabase.from('companies').update({ gallery_urls: newGallery }).eq('id', selectedCompany.id);
+        if (!error) {
+          setSelectedCompany({ ...selectedCompany, gallery_urls: newGallery });
+          setEditedCompany(prev => prev ? { ...prev, gallery_urls: newGallery } : null);
+        }
+      }
+      setShowImageSelector(null); // Cerrar modal
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background-dark flex items-center justify-center">
@@ -262,11 +355,13 @@ const BusinessPortalScreen: React.FC = () => {
                       alt="Logo"
                       className="w-full h-full object-cover"
                     />
-                    <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <button
+                      onClick={() => setShowImageSelector('logo')}
+                      className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                    >
                       <span className="material-symbols-outlined text-white mb-1">photo_camera</span>
                       <span className="text-xs font-bold text-white">Cambiar</span>
-                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'logo')} />
-                    </label>
+                    </button>
                   </div>
                   {uploading && <p className="text-center text-xs text-primary mb-2 animate-pulse">Subiendo imagen...</p>}
 
@@ -414,11 +509,13 @@ const BusinessPortalScreen: React.FC = () => {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-white">Galería de Fotos</h2>
-                  <label className="bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer">
+                  <button
+                    onClick={() => setShowImageSelector('gallery')}
+                    className="bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer"
+                  >
                     <span className="material-symbols-outlined">add_photo_alternate</span>
                     Agregar Foto
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'gallery')} />
-                  </label>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -498,6 +595,17 @@ const BusinessPortalScreen: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Selector de Imágenes */}
+      {showImageSelector && (
+        <ImageSelectorModal
+          userGallery={userGallery}
+          onSelect={handleSelectImageFromGallery}
+          onUploadNew={handleUploadNewImage}
+          onClose={() => setShowImageSelector(null)}
+          imageType={showImageSelector}
+        />
       )}
     </div>
   );
