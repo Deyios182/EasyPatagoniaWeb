@@ -43,7 +43,7 @@ USING (
   EXISTS (
     SELECT 1 FROM profiles 
     WHERE profiles.id = auth.uid() 
-    AND 'super_admin' = ANY(profiles.roles)
+    AND profiles.role = 'super_admin'
   )
 );
 
@@ -56,7 +56,7 @@ WITH CHECK (
   EXISTS (
     SELECT 1 FROM profiles 
     WHERE profiles.id = auth.uid() 
-    AND 'super_admin' = ANY(profiles.roles)
+    AND profiles.role = 'super_admin'
   )
 );
 
@@ -69,7 +69,7 @@ USING (
   EXISTS (
     SELECT 1 FROM profiles 
     WHERE profiles.id = auth.uid() 
-    AND 'super_admin' = ANY(profiles.roles)
+    AND profiles.role = 'super_admin'
   )
 );
 
@@ -98,7 +98,7 @@ USING (
   EXISTS (
     SELECT 1 FROM profiles 
     WHERE profiles.id = auth.uid() 
-    AND 'super_admin' = ANY(profiles.roles)
+    AND profiles.role = 'super_admin'
   )
 );
 
@@ -116,7 +116,7 @@ USING (
   EXISTS (
     SELECT 1 FROM profiles 
     WHERE profiles.id = auth.uid() 
-    AND 'super_admin' = ANY(profiles.roles)
+    AND profiles.role = 'super_admin'
   )
 );
 
