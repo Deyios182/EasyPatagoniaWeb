@@ -1,14 +1,25 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import { Category } from '../types';
+import { supabase } from '../supabaseClient';
 
 const BusinessDirectoryScreen: React.FC = () => {
   const navigate = useNavigate();
   const { allBusinesses, t } = useAppAuth();
   const [filter, setFilter] = useState<Category | 'All'>('All');
-  const [query, setQuery] = useState('');
+  const [localityFilter, setLocalityFilter] = useState<string>('all'); // Filtro por localidad
+  const [localities, setLocalities] = useState<any[]>([]); // Lista de localidades
+
+  // Cargar localidades al montar
+  useEffect(() => {
+    const loadLocalities = async () => {
+      const { data } = await supabase.from('localities').select('*').order('name');
+      setLocalities(data || []);
+    };
+    loadLocalities();
+  }, []);
 
   const filtered = useMemo(() => {
     return allBusinesses.filter(b => {
@@ -27,12 +38,12 @@ const BusinessDirectoryScreen: React.FC = () => {
         matchesFilter = b.categoria === filter;
       }
 
-      const matchesSearch = (b.nombre || '').toLowerCase().includes(query.toLowerCase()) ||
-        b.servicios?.some(s => (s.nombre || '').toLowerCase().includes(query.toLowerCase())) ||
-        (b.info?.descripcion || '').toLowerCase().includes(query.toLowerCase());
-      return matchesFilter && matchesSearch;
+      // Filtro por localidad
+      const matchesLocality = localityFilter === 'all' || b.info?.localidad_id === localityFilter;
+
+      return matchesFilter && matchesLocality;
     });
-  }, [allBusinesses, filter, query]);
+  }, [allBusinesses, filter, localityFilter]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-hidden">
@@ -52,15 +63,18 @@ const BusinessDirectoryScreen: React.FC = () => {
               </div>
             </div>
             <div className="flex-1 md:max-w-md">
-              <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-8 py-5 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner group">
-                <span className="material-symbols-outlined text-primary group-focus-within:scale-110 transition-transform">search</span>
-                <input
-                  type="text"
-                  placeholder={t('search_placeholder')}
-                  className="bg-transparent border-none focus:ring-0 text-base dark:text-white w-full placeholder:text-slate-400 font-bold"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                />
+              <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-8 py-5 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner">
+                <span className="material-symbols-outlined text-primary">place</span>
+                <select
+                  value={localityFilter}
+                  onChange={e => setLocalityFilter(e.target.value)}
+                  className="bg-transparent border-none focus:ring-0 text-base dark:text-white w-full font-bold cursor-pointer"
+                >
+                  <option value="all" className="bg-slate-800">Todas las localidades</option>
+                  {localities.map(loc => (
+                    <option key={loc.id} value={loc.id} className="bg-slate-800">{loc.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
