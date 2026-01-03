@@ -99,7 +99,10 @@ const EasyAdminFieldScreen: React.FC = () => {
         }
 
         // 3. Cargar Empresas
-        const { data: comps } = await supabase.from('companies').select('*').order('name');
+        const { data: comps } = await supabase
+            .from('companies')
+            .select('id, name, description, logo_url, category, address, whatsapp, latitude, longitude, gallery_urls, locality_id, owner_id, is_active')
+            .order('name');
         if (comps) {
             setCompanies(comps.map(c => ({ ...c, owner_email: '' })));
         }
