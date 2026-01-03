@@ -117,6 +117,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           id: c.id,
           name: c.name,
           nombre: c.name, // Legacy
+          locality_id: c.locality_id, // Necesario para filtro de localidad
           categoria: c.category,
           description: c.description,
 
