@@ -39,7 +39,7 @@ const BusinessDirectoryScreen: React.FC = () => {
       }
 
       // Filtro por localidad
-      const matchesLocality = localityFilter === 'all' || b.info?.localidad_id === localityFilter;
+      const matchesLocality = localityFilter === 'all' || b.locality_id === localityFilter;
 
       return matchesFilter && matchesLocality;
     });
