@@ -73,6 +73,7 @@ export interface Service {
 // Interfaz legacy para compatibilidad con componentes viejos (si quedan)
 export interface Business extends Company {
   nombre: string; // Legacy support
+  locality_name?: string; // Nombre de localidad para UI
   categoria?: string;
   priority?: any;
   gps?: { lat: number, lng: number };
