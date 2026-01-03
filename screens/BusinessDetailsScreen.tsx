@@ -224,7 +224,7 @@ const BusinessDetailsScreen: React.FC = () => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1 leading-none">{t('location_label')}</p>
-              <p className="text-lg font-bold dark:text-white leading-tight break-words">{business.info.direccion}</p>
+              <p className="text-lg font-bold dark:text-white leading-tight break-words line-clamp-3">{business.info.direccion || 'Dirección no disponible'}</p>
             </div>
           </div>
         </div>
