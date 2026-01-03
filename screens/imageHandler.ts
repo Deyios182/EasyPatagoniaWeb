@@ -1,13 +1,15 @@
 import { supabase } from '../supabaseClient';
 
 // --- 1. SUBIR IMAGEN ---
-export const uploadImage = async (file: File, bucketName: string = 'uploads'): Promise<string | null> => {
+export const uploadImage = async (file: File, folder: string = ''): Promise<string | null> => {
   try {
+    const bucketName = 'uploads'; // SIEMPRE usar el bucket uploads
     console.log('🔵 [UPLOAD] Iniciando subida de imagen...', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      bucket: bucketName
+      bucket: bucketName,
+      folder: folder
     });
 
     // Validar tamaño (max 5MB)
@@ -29,7 +31,9 @@ export const uploadImage = async (file: File, bucketName: string = 'uploads'): P
     // Generar nombre único
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${fileName}`;
+
+    // Construir ruta con folder opcional
+    const filePath = folder ? `${folder}/${fileName}` : fileName;
 
     console.log('🔵 [UPLOAD] Intentando subir a bucket:', bucketName, 'con ruta:', filePath);
 

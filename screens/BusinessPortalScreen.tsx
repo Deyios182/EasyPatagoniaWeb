@@ -144,6 +144,7 @@ const BusinessPortalScreen: React.FC = () => {
     if (!file) return;
     setUploading(true);
 
+    // Usar subcarpetas en el bucket uploads
     const folder = target === 'logo' ? 'logos' : target === 'gallery' ? 'galleries' : 'services';
     const url = await uploadImage(file, folder);
 
