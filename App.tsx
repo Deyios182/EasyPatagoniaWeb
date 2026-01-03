@@ -96,7 +96,8 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
         .select(`
                 id, name, description, logo_url, category, address, whatsapp, 
                 latitude, longitude, gallery_urls, locality_id, owner_id, is_active, created_at,
-                services (*)
+                services (*),
+                localities (name)
             `)
         .eq('is_active', true);
 
@@ -110,6 +111,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.log('📊 [APP] Raw companies data sample:', companies.slice(0, 2).map(c => ({
           name: c.name,
           locality_id: c.locality_id,
+          locality_name: c.localities?.name,
           gallery_urls: c.gallery_urls,
           logo_url: c.logo_url
         })));
@@ -118,6 +120,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           name: c.name,
           nombre: c.name, // Legacy
           locality_id: c.locality_id, // Necesario para filtro de localidad
+          locality_name: c.localities?.name, // Nombre para UI
           categoria: c.category,
           description: c.description,
 
