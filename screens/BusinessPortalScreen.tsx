@@ -10,12 +10,14 @@ const BusinessPortalScreen: React.FC = () => {
   // Estados de datos
   const [myCompanies, setMyCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [editedCompany, setEditedCompany] = useState<Company | null>(null); // Estado local para edición
   const [services, setServices] = useState<Service[]>([]);
 
   // Estados de UI
   const [loading, setLoading] = useState(true);
   const [isEditingService, setIsEditingService] = useState<Partial<Service> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'servicios' | 'galeria'>('info');
 
   // 1. Cargar Empresas del Dueño
@@ -55,6 +57,7 @@ const BusinessPortalScreen: React.FC = () => {
   // 2. Cargar Servicios de la Empresa Seleccionada
   const handleSelectCompany = async (company: Company) => {
     setSelectedCompany(company);
+    setEditedCompany(company); // Inicializar estado de edición
     const { data } = await supabase
       .from('services')
       .select('*')
@@ -62,25 +65,34 @@ const BusinessPortalScreen: React.FC = () => {
     setServices(data || []);
   };
 
-  // 3. Guardar cambios de Empresa
-  const handleUpdateCompany = async (field: keyof Company, value: any) => {
-    if (!selectedCompany) return;
+  // 3. Guardar cambios de Empresa (solo cuando se presiona el botón)
+  const handleSaveCompanyChanges = async () => {
+    if (!editedCompany || !selectedCompany) return;
 
-    console.log('💾 [PORTAL] Actualizando', field, ':', value);
+    setSaving(true);
+    console.log('💾 [PORTAL] Guardando cambios de empresa...');
 
     const { error } = await supabase
       .from('companies')
-      .update({ [field]: value })
+      .update({
+        name: editedCompany.name,
+        category: editedCompany.category,
+        whatsapp: editedCompany.whatsapp,
+        address: editedCompany.address,
+        description: editedCompany.description
+      })
       .eq('id', selectedCompany.id);
 
     if (!error) {
-      setSelectedCompany({ ...selectedCompany, [field]: value });
-      setMyCompanies(prev => prev.map(c => c.id === selectedCompany.id ? { ...c, [field]: value } : c));
+      setSelectedCompany(editedCompany);
+      setMyCompanies(prev => prev.map(c => c.id === selectedCompany.id ? editedCompany : c));
       console.log('✅ [PORTAL] Guardado exitosamente');
+      alert('✅ Cambios guardados correctamente');
     } else {
       console.error('❌ [PORTAL] Error al guardar:', error);
       alert('Error al guardar: ' + error.message);
     }
+    setSaving(false);
   };
 
   // 4. Lógica de Servicios (Crear/Editar)
@@ -126,7 +138,7 @@ const BusinessPortalScreen: React.FC = () => {
     setServices(prev => prev.filter(s => s.id !== id));
   };
 
-  // 5. Subida de imágenes
+  // 5. Subida de imágenes (guarda directamente en BD)
   const handleImageUpload = async (e: any, target: 'logo' | 'service' | 'gallery') => {
     const file = e.target.files[0];
     if (!file) return;
@@ -136,11 +148,21 @@ const BusinessPortalScreen: React.FC = () => {
     const url = await uploadImage(file, folder);
 
     if (url) {
-      if (target === 'logo') {
-        handleUpdateCompany('logo_url', url);
+      if (target === 'logo' && selectedCompany) {
+        // Guardar logo directamente
+        const { error } = await supabase.from('companies').update({ logo_url: url }).eq('id', selectedCompany.id);
+        if (!error) {
+          setSelectedCompany({ ...selectedCompany, logo_url: url });
+          setEditedCompany(prev => prev ? { ...prev, logo_url: url } : null);
+        }
       } else if (target === 'gallery' && selectedCompany) {
+        // Guardar galería directamente
         const newGallery = [...(selectedCompany.gallery_urls || []), url];
-        handleUpdateCompany('gallery_urls', newGallery);
+        const { error } = await supabase.from('companies').update({ gallery_urls: newGallery }).eq('id', selectedCompany.id);
+        if (!error) {
+          setSelectedCompany({ ...selectedCompany, gallery_urls: newGallery });
+          setEditedCompany(prev => prev ? { ...prev, gallery_urls: newGallery } : null);
+        }
       } else {
         setIsEditingService(prev => ({ ...prev, image_url: url }));
       }
@@ -148,11 +170,15 @@ const BusinessPortalScreen: React.FC = () => {
     setUploading(false);
   };
 
-  // 6. Eliminar foto de galería
-  const handleRemoveGalleryImage = (index: number) => {
+  // 6. Eliminar foto de galería (guarda directamente)
+  const handleRemoveGalleryImage = async (index: number) => {
     if (!selectedCompany) return;
     const newGallery = selectedCompany.gallery_urls?.filter((_, i) => i !== index) || [];
-    handleUpdateCompany('gallery_urls', newGallery);
+    const { error } = await supabase.from('companies').update({ gallery_urls: newGallery }).eq('id', selectedCompany.id);
+    if (!error) {
+      setSelectedCompany({ ...selectedCompany, gallery_urls: newGallery });
+      setEditedCompany(prev => prev ? { ...prev, gallery_urls: newGallery } : null);
+    }
   };
 
   if (loading) {
@@ -192,8 +218,8 @@ const BusinessPortalScreen: React.FC = () => {
                 key={comp.id}
                 onClick={() => handleSelectCompany(comp)}
                 className={`px-6 py-3 rounded-2xl font-bold transition-all border ${selectedCompany?.id === comp.id
-                    ? 'bg-gradient-to-r from-primary to-orange-600 text-white border-primary shadow-lg shadow-primary/30'
-                    : 'bg-white/5 text-slate-400 hover:bg-white/10 border-white/10'
+                  ? 'bg-gradient-to-r from-primary to-orange-600 text-white border-primary shadow-lg shadow-primary/30'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 border-white/10'
                   }`}
               >
                 {comp.name}
@@ -248,16 +274,16 @@ const BusinessPortalScreen: React.FC = () => {
                       <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nombre</label>
                       <input
                         type="text"
-                        value={selectedCompany.name}
-                        onChange={(e) => handleUpdateCompany('name', e.target.value)}
+                        value={editedCompany?.name || ''}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, name: e.target.value } : null)}
                         className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                       />
                     </div>
                     <div>
                       <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Categoría</label>
                       <select
-                        value={selectedCompany.category || 'Actividad'}
-                        onChange={(e) => handleUpdateCompany('category', e.target.value)}
+                        value={editedCompany?.category || 'Actividad'}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, category: e.target.value } : null)}
                         className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none"
                       >
                         <option value="Actividad" className="bg-slate-900">Actividad / Tour</option>
@@ -281,8 +307,8 @@ const BusinessPortalScreen: React.FC = () => {
                       <input
                         type="text"
                         placeholder="+56 9 1234 5678"
-                        value={selectedCompany.whatsapp || ''}
-                        onChange={(e) => handleUpdateCompany('whatsapp', e.target.value)}
+                        value={editedCompany?.whatsapp || ''}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, whatsapp: e.target.value } : null)}
                         className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500"
                       />
                     </div>
@@ -291,8 +317,8 @@ const BusinessPortalScreen: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Calle Principal 123, Puerto Río Tranquilo"
-                        value={selectedCompany.address || ''}
-                        onChange={(e) => handleUpdateCompany('address', e.target.value)}
+                        value={editedCompany?.address || ''}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, address: e.target.value } : null)}
                         className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500"
                       />
                     </div>
@@ -307,10 +333,31 @@ const BusinessPortalScreen: React.FC = () => {
                   </h2>
                   <textarea
                     placeholder="Describe tu negocio, qué ofreces, qué te hace único..."
-                    value={selectedCompany.description || ''}
-                    onChange={(e) => handleUpdateCompany('description', e.target.value)}
+                    value={editedCompany?.description || ''}
+                    onChange={(e) => setEditedCompany(prev => prev ? { ...prev, description: e.target.value } : null)}
                     className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 resize-none focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500 h-40"
                   />
+                </div>
+
+                {/* BOTÓN GUARDAR CAMBIOS */}
+                <div className="lg:col-span-3">
+                  <button
+                    onClick={handleSaveCompanyChanges}
+                    disabled={saving}
+                    className="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/30 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined">save</span>
+                        Guardar Cambios
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
