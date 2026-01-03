@@ -232,6 +232,8 @@ const EasyAdminFieldScreen: React.FC = () => {
             owner_id: finalOwnerId
         };
 
+        console.log("🔵 [SAVE] editingCompany.locality_id:", editingCompany.locality_id);
+        console.log("🔵 [SAVE] Payload completo:", payload);
         console.log("Intentando guardar Dueño ID:", finalOwnerId);
 
         try {
