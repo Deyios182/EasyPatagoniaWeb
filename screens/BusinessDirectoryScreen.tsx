@@ -22,7 +22,9 @@ const BusinessDirectoryScreen: React.FC = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    return allBusinesses.filter(b => {
+    console.log('🔍 [FILTER] localityFilter:', localityFilter, 'filter:', filter);
+
+    const result = allBusinesses.filter(b => {
       let matchesFilter = false;
       if (filter === 'All') {
         matchesFilter = true;
@@ -41,8 +43,13 @@ const BusinessDirectoryScreen: React.FC = () => {
       // Filtro por localidad
       const matchesLocality = localityFilter === 'all' || b.locality_id === localityFilter;
 
+      console.log(`  ${b.nombre}: locality_id=${b.locality_id} matchesLocality=${matchesLocality}`);
+
       return matchesFilter && matchesLocality;
     });
+
+    console.log('✅ [FILTER] Resultado:', result.length, 'empresas');
+    return result;
   }, [allBusinesses, filter, localityFilter]);
 
   return (
