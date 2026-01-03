@@ -442,21 +442,46 @@ const EasyAdminFieldScreen: React.FC = () => {
     // Cargar dueños de una empresa
     const loadCompanyOwners = async (companyId: string) => {
         console.log('🔵 [OWNERS] Cargando dueños para empresa:', companyId);
-        const { data, error } = await supabase
+
+        // 1. Cargar las relaciones company_owners
+        const { data: relations, error: relError } = await supabase
             .from('company_owners')
-            .select(`
-                owner_id,
-                profiles (id, email, full_name, first_name, last_name)
-            `)
+            .select('owner_id')
             .eq('company_id', companyId);
 
-        if (error) {
-            console.error('❌ [OWNERS] Error al cargar dueños:', error);
+        if (relError) {
+            console.error('❌ [OWNERS] Error al cargar relaciones:', relError);
+            setCompanyOwners([]);
             return;
         }
 
-        console.log('✅ [OWNERS] Dueños cargados:', data?.length || 0);
-        setCompanyOwners(data || []);
+        if (!relations || relations.length === 0) {
+            console.log('✅ [OWNERS] No hay dueños asignados');
+            setCompanyOwners([]);
+            return;
+        }
+
+        // 2. Cargar los perfiles de los dueños
+        const ownerIds = relations.map(r => r.owner_id);
+        const { data: profiles, error: profError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name, first_name, last_name')
+            .in('id', ownerIds);
+
+        if (profError) {
+            console.error('❌ [OWNERS] Error al cargar perfiles:', profError);
+            setCompanyOwners([]);
+            return;
+        }
+
+        // 3. Combinar datos
+        const ownersWithProfiles = relations.map(rel => ({
+            owner_id: rel.owner_id,
+            profiles: profiles?.find(p => p.id === rel.owner_id)
+        }));
+
+        console.log('✅ [OWNERS] Dueños cargados:', ownersWithProfiles.length);
+        setCompanyOwners(ownersWithProfiles);
     };
 
     // Agregar dueño a la empresa
