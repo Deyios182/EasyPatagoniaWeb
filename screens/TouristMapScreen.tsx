@@ -410,10 +410,10 @@ const TouristMapScreen: React.FC = () => {
             <span className="material-symbols-outlined text-primary leading-none text-xl md:text-2xl">location_on</span>
             <select
               onChange={handleLocalityChange}
-              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none"
+              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none uppercase tracking-wider"
               defaultValue=""
             >
-              <option value="" disabled>📍 Ir a Localidad...</option>
+              <option value="" disabled>📍 Descubre la Patagonia</option>
               {allLocalities.map(loc => (
                 <option key={loc.id} value={loc.id} className="text-slate-800">
                   {loc.name}
