@@ -35,9 +35,13 @@ const BusinessPortalScreen: React.FC = () => {
       setLoading(true);
       console.log('🔵 [PORTAL] Buscando empresas para owner_id:', user?.uid);
 
+      // Cargar empresas desde la tabla de relación company_owners
       const { data, error } = await supabase
-        .from('companies')
-        .select('*')
+        .from('company_owners')
+        .select(`
+          company_id,
+          companies (*)
+        `)
         .eq('owner_id', user?.uid);
 
       if (error) {
@@ -45,11 +49,13 @@ const BusinessPortalScreen: React.FC = () => {
         throw error;
       }
 
-      console.log('✅ [PORTAL] Empresas encontradas:', data?.length || 0);
-      setMyCompanies(data || []);
+      // Extraer las empresas del resultado
+      const companies = (data?.map(item => item.companies).filter(Boolean) || []) as unknown as Company[];
+      console.log('✅ [PORTAL] Empresas encontradas:', companies.length);
+      setMyCompanies(companies);
 
-      if (data && data.length > 0) {
-        handleSelectCompany(data[0]);
+      if (companies.length > 0) {
+        handleSelectCompany(companies[0]);
       }
     } catch (err) {
       console.error("Error cargando empresas:", err);
