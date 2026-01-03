@@ -72,12 +72,12 @@ const BusinessDirectoryScreen: React.FC = () => {
           </div>
 
           <div className="w-full md:w-auto md:min-w-[300px]">
-            <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-6 py-4 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner">
-              <span className="material-symbols-outlined text-primary">place</span>
+            <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-primary text-2xl">place</span>
               <select
                 value={localityFilter}
                 onChange={e => setLocalityFilter(e.target.value)}
-                className="bg-transparent border-none focus:ring-0 text-sm font-bold dark:text-white w-full cursor-pointer uppercase tracking-wider"
+                className="bg-transparent border-none focus:ring-0 text-xs font-black dark:text-white w-full cursor-pointer uppercase tracking-widest"
               >
                 <option value="all" className="bg-slate-800">Todas las localidades</option>
                 {localities.map(loc => (
