@@ -112,7 +112,7 @@ const BusinessDirectoryScreen: React.FC = () => {
                 className="bg-white dark:bg-surface-dark rounded-[4rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all cursor-pointer group animate-in slide-in-from-bottom duration-500"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
-                <div className="relative h-72 overflow-hidden bg-white dark:bg-white/5 flex items-center justify-center p-8 border-b border-slate-100 dark:border-white/5">
+                <div className="relative h-72 overflow-hidden bg-white flex items-center justify-center p-8 border-b border-slate-100">
                   {/* LOGO GIGANTE COMO PROTAGONISTA */}
                   <img
                     src={biz.media.logo_url}
