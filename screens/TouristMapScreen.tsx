@@ -348,7 +348,12 @@ const TouristMapScreen: React.FC = () => {
                     <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Ir a {selectedBusiness?.nombre || 'Destino'}</h3>
                     <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Ubicación Actual</p>
                   </div>
-                  <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none">
+                  <a
+                    href={selectedBusiness?.gps ? `https://www.google.com/maps/dir/?api=1&destination=${selectedBusiness.gps.lat},${selectedBusiness.gps.lng}` : '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none ${!selectedBusiness ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                  >
                     Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
                   </a>
                 </div>
