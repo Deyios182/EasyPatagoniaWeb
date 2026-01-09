@@ -361,7 +361,7 @@ const TouristMapScreen: React.FC = () => {
                     <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Vuelos a Balmaceda</h3>
                     <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Acceso Regional</p>
                   </div>
-                  <a href="http://googleusercontent.com/google.com/travel/flights/11" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 dark:bg-white text-white dark:text-background-dark font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none">
+                  <a href="https://www.google.com/travel/flights?q=Vuelos+a+Balmaceda" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 dark:bg-white text-white dark:text-background-dark font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none">
                     Ver Vuelos <span className="material-symbols-outlined leading-none text-base">open_in_new</span>
                   </a>
                 </div>
