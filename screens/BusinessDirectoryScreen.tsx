@@ -114,8 +114,12 @@ const BusinessDirectoryScreen: React.FC = () => {
               >
                 <div className="relative h-72 overflow-hidden bg-slate-200">
                   <img src={biz.media.fotos_url[0] || biz.media.logo_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[8s]" alt={biz.nombre} />
-                  <div className="absolute top-8 left-8">
-                    <span className="px-6 py-2.5 bg-black/50 backdrop-blur-xl text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/20">
+                  <div className="absolute top-6 left-6 flex items-start gap-4 w-full pr-6">
+                    {/* LOGO EMPRESA */}
+                    <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-xl border border-white/20 shrink-0">
+                      <img src={biz.media.logo_url} className="w-full h-full object-cover rounded-xl" alt="Logo" />
+                    </div>
+                    <span className="px-5 py-2 mt-1 bg-black/60 backdrop-blur-xl text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/10 ml-auto">
                       {t(biz.categoria.toLowerCase())}
                     </span>
                   </div>
