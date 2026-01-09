@@ -177,6 +177,15 @@ const BusinessDetailsScreen: React.FC = () => {
             ))}
           </div>
         )}
+
+        {/* LOGO SUPERPUESTO (Inferior Derecha) */}
+        <div className="absolute bottom-8 right-8 z-40 hidden md:block">
+          <img
+            src={business.media.logo_url}
+            className="w-32 h-32 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+            alt="Logo Empresa"
+          />
+        </div>
       </div>
 
       {/* Contenido */}
@@ -197,15 +206,9 @@ const BusinessDetailsScreen: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {/* LOGO EN DETALLE */}
-            <div className="flex items-center gap-6 mb-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-white p-1.5 shadow-2xl border border-slate-200 dark:border-white/10 shrink-0">
-                <img src={business.media.logo_url} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
-              </div>
-              <h1 className="text-5xl md:text-8xl font-black dark:text-white tracking-tighter leading-[0.85] uppercase italic break-words flex-1">
-                {business.nombre}
-              </h1>
-            </div>
+            <h1 className="text-5xl md:text-8xl font-black dark:text-white tracking-tighter leading-[0.85] uppercase italic break-words flex-1">
+              {business.nombre}
+            </h1>
           </div>
 
           <div className="space-y-4 max-w-4xl">
