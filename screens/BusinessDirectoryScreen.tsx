@@ -112,21 +112,23 @@ const BusinessDirectoryScreen: React.FC = () => {
                 className="bg-white dark:bg-surface-dark rounded-[4rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all cursor-pointer group animate-in slide-in-from-bottom duration-500"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
-                <div className="relative h-72 overflow-hidden bg-slate-200">
-                  <img src={biz.media.fotos_url[0] || biz.media.logo_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[8s]" alt={biz.nombre} />
-                  <div className="absolute top-6 left-6 flex items-start gap-4 w-full pr-6">
-                    {/* LOGO EMPRESA */}
-                    <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-xl border border-white/20 shrink-0">
-                      <img src={biz.media.logo_url} className="w-full h-full object-cover rounded-xl" alt="Logo" />
-                    </div>
-                    <span className="px-5 py-2 mt-1 bg-black/60 backdrop-blur-xl text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/10 ml-auto">
+                <div className="relative h-72 overflow-hidden bg-white dark:bg-white/5 flex items-center justify-center p-8 border-b border-slate-100 dark:border-white/5">
+                  {/* LOGO GIGANTE COMO PROTAGONISTA */}
+                  <img
+                    src={biz.media.logo_url}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-xl"
+                    alt={biz.nombre}
+                  />
+
+                  <div className="absolute top-6 left-6">
+                    <span className="px-5 py-2 bg-slate-900/10 dark:bg-black/50 backdrop-blur-md text-slate-900 dark:text-white text-[9px] font-black uppercase tracking-widest rounded-full border border-white/20">
                       {t(biz.categoria.toLowerCase())}
                     </span>
                   </div>
-                  <div className="absolute bottom-8 right-8">
-                    <div className="bg-white dark:bg-surface-dark px-5 py-2.5 rounded-[1.5rem] flex items-center gap-2 text-primary shadow-2xl border border-white/10">
+                  <div className="absolute bottom-6 right-6">
+                    <div className="bg-white dark:bg-surface-dark px-4 py-2 rounded-full flex items-center gap-1.5 text-primary shadow-lg border border-slate-100 dark:border-white/10">
                       <span className="material-symbols-outlined text-sm">star</span>
-                      <span className="text-sm font-black">{biz.rating}</span>
+                      <span className="text-xs font-black">{biz.rating}</span>
                     </div>
                   </div>
                 </div>
