@@ -206,7 +206,7 @@ const BusinessDetailsScreen: React.FC = () => {
                 {business.nombre}
               </h1>
             </div>
-          </h1>
+          </div>
 
           <div className="space-y-4 max-w-4xl">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{t('business_description_label')}</h3>
