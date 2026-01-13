@@ -179,10 +179,10 @@ const BusinessDetailsScreen: React.FC = () => {
         )}
 
         {/* LOGO SUPERPUESTO (Inferior Derecha) */}
-        <div className="absolute bottom-8 right-8 z-40 hidden md:block">
+        <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-40">
           <img
             src={business.media.logo_url}
-            className="w-32 h-32 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+            className="w-20 h-20 md:w-32 md:h-32 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
             alt="Logo Empresa"
           />
         </div>
