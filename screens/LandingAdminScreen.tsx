@@ -93,13 +93,37 @@ const LandingAdminScreen: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    console.log('🔍 [LANDING ADMIN] Fetching data...');
+
     const [contentRes, settingsRes] = await Promise.all([
       supabase.from('landing_content').select('*').order('key'),
       supabase.from('landing_settings').select('*')
     ]);
 
-    if (contentRes.data) setContent(contentRes.data);
-    if (settingsRes.data) setSettings(settingsRes.data);
+    console.log('📦 [LANDING ADMIN] Content response:', contentRes);
+    console.log('⚙️ [LANDING ADMIN] Settings response:', settingsRes);
+
+    if (contentRes.error) {
+      console.error('❌ [LANDING ADMIN] Content error:', contentRes.error);
+    }
+    if (settingsRes.error) {
+      console.error('❌ [LANDING ADMIN] Settings error:', settingsRes.error);
+    }
+
+    if (contentRes.data) {
+      console.log('✅ [LANDING ADMIN] Setting content:', contentRes.data.length, 'items');
+      setContent(contentRes.data);
+    } else {
+      console.warn('⚠️ [LANDING ADMIN] No content data received');
+    }
+
+    if (settingsRes.data) {
+      console.log('✅ [LANDING ADMIN] Setting settings:', settingsRes.data.length, 'items');
+      setSettings(settingsRes.data);
+    } else {
+      console.warn('⚠️ [LANDING ADMIN] No settings data received');
+    }
+
     setLoading(false);
   };
 
@@ -263,14 +287,19 @@ const LandingAdminScreen: React.FC = () => {
         {/* CONTENT TAB */}
         {activeTab === 'content' && (
           <div className="space-y-8">
-            {/* HERO SECTION */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary text-2xl">view_carousel</span>
-                <h2 className="text-2xl font-black text-white uppercase">Sección Hero (Principal)</h2>
+            {/* Mensaje si no hay datos */}
+            {content.length === 0 && !loading && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
+                <span className="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
+                <h3 className="text-xl font-black text-white mb-2">No hay contenido cargado</h3>
+                <p className="text-slate-400">Ejecuta el script SQL populate-landing-data.sql en Supabase</p>
               </div>
+            )}
+
+            {/* Mostrar todos los items de content */}
+            {content.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {content.filter(item => item.key === 'hero').map(item => (
+                {content.map(item => (
                   <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
@@ -278,7 +307,7 @@ const LandingAdminScreen: React.FC = () => {
                     </div>
 
                     <div className="space-y-4">
-                      {item.title !== null && (
+                      {item.title !== null && item.title !== undefined && (
                         <div>
                           <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
                           <input
@@ -286,56 +315,25 @@ const LandingAdminScreen: React.FC = () => {
                             value={item.title || ''}
                             onChange={(e) => updateContent(item.key, 'title', e.target.value)}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            placeholder="Título..."
                           />
                         </div>
                       )}
 
-                      {item.subtitle !== null && (
+                      {item.subtitle !== null && item.subtitle !== undefined && (
                         <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Slogan/Subtítulo</label>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo/Slogan</label>
                           <input
                             type="text"
                             value={item.subtitle || ''}
                             onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            placeholder="Ej: Menos planificación. Más Patagonia."
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* VISIÓN Y MISIÓN */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary text-2xl">lightbulb</span>
-                <h2 className="text-2xl font-black text-white uppercase">Visión y Misión</h2>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {content.filter(item => item.key === 'vision' || item.key === 'mission').map(item => (
-                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
-                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {item.title !== null && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                          <input
-                            type="text"
-                            value={item.title || ''}
-                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            placeholder="Subtítulo..."
                           />
                         </div>
                       )}
 
-                      {item.body !== null && (
+                      {item.body !== null && item.body !== undefined && (
                         <div>
                           <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
                           <textarea
@@ -343,11 +341,12 @@ const LandingAdminScreen: React.FC = () => {
                             onChange={(e) => updateContent(item.key, 'body', e.target.value)}
                             rows={3}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                            placeholder="Descripción..."
                           />
                         </div>
                       )}
 
-                      {item.image_url !== null && (
+                      {item.image_url !== null && item.image_url !== undefined && (
                         <div>
                           <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
                           <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300 hover:border-primary transition-colors">
@@ -371,99 +370,34 @@ const LandingAdminScreen: React.FC = () => {
                           </div>
                         </div>
                       )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* PILARES */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary text-2xl">category</span>
-                <h2 className="text-2xl font-black text-white uppercase">Pilares (3 Valores)</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {content.filter(item => item.key.startsWith('pillar_')).map(item => (
-                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
-                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {item.title !== null && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                          <input
-                            type="text"
-                            value={item.title || ''}
-                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                        </div>
-                      )}
-
-                      {item.body !== null && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                          <textarea
-                            value={item.body || ''}
-                            onChange={(e) => updateContent(item.key, 'body', e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
-                          />
+                      {item.button_text !== null && item.button_text !== undefined && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Texto Botón</label>
+                            <input
+                              type="text"
+                              value={item.button_text || ''}
+                              onChange={(e) => updateContent(item.key, 'button_text', e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">URL Botón</label>
+                            <input
+                              type="text"
+                              value={item.button_url || ''}
+                              onChange={(e) => updateContent(item.key, 'button_url', e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* CONTACTO */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary text-2xl">mail</span>
-                <h2 className="text-2xl font-black text-white uppercase">Sección Contacto</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-6">
-                {content.filter(item => item.key === 'contact_section').map(item => (
-                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
-                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {item.title !== null && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                          <input
-                            type="text"
-                            value={item.title || ''}
-                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                        </div>
-                      )}
-
-                      {item.subtitle !== null && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo</label>
-                          <input
-                            type="text"
-                            value={item.subtitle || ''}
-                            onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         )}
 
