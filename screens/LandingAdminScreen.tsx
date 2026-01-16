@@ -79,9 +79,10 @@ const THEME_PRESETS: ThemePreset[] = [
 ];
 
 const LandingAdminScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'content' | 'theme' | 'contact' | 'navigation'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'carousel' | 'theme' | 'contact' | 'navigation'>('content');
   const [content, setContent] = useState<LandingContent[]>([]);
   const [settings, setSettings] = useState<LandingSetting[]>([]);
+  const [carousel, setCarousel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customThemeName, setCustomThemeName] = useState('');
@@ -295,20 +296,6 @@ const LandingAdminScreen: React.FC = () => {
               </div>
             )}
 
-            {/* DEBUG PANEL - MOSTRAR DATOS CRUDOS */}
-            {!loading && content.length > 0 && (
-              <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl p-6">
-                <h3 className="text-yellow-500 font-black text-xl mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined">bug_report</span>
-                  DEBUG - Datos Crudos de la BD
-                </h3>
-                <div className="bg-black/50 p-4 rounded-lg overflow-auto max-h-96">
-                  <pre className="text-green-400 text-xs font-mono">{JSON.stringify(content, null, 2)}</pre>
-                </div>
-                <p className="text-yellow-300 text-sm mt-4">👆 Copia este JSON y envíamelo para diagnosticar el problema</p>
-              </div>
-            )}
-
             {!loading && content.length === 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
                 <span className="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
@@ -319,71 +306,206 @@ const LandingAdminScreen: React.FC = () => {
 
             {!loading && content.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {content.map((item, index) => (
-                  <div key={item.key || index} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-black text-white uppercase">{item.key?.replace(/_/g, ' ') || 'Sin Key'}</h3>
-                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {/* TITULO - siempre mostrar */}
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                        <input
-                          type="text"
-                          value={item.title || ''}
-                          onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                          placeholder="Título..."
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.title}" (tipo: {typeof item.title})</p>
+                {content
+                  .sort((a, b) => {
+                    // Orden deseado
+                    const order = ['hero', 'vision', 'mission', 'pillar_1', 'pillar_2', 'pillar_3', 'contact_section'];
+                    return order.indexOf(a.key) - order.indexOf(b.key);
+                  })
+                  .map((item, index) => (
+                    <div key={item.key || index} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-black text-white uppercase">{item.key?.replace(/_/g, ' ') || 'Sin Key'}</h3>
+                        <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
                       </div>
 
-                      {/* SUBTITULO - siempre mostrar */}
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo/Slogan</label>
-                        <input
-                          type="text"
-                          value={item.subtitle || ''}
-                          onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                          placeholder="Subtítulo..."
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.subtitle}" (tipo: {typeof item.subtitle})</p>
-                      </div>
-
-                      {/* BODY - siempre mostrar */}
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                        <textarea
-                          value={item.body || ''}
-                          onChange={(e) => updateContent(item.key, 'body', e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none"
-                          placeholder="Descripción..."
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.body}" (tipo: {typeof item.body})</p>
-                      </div>
-
-                      {/* IMAGEN - solo si tiene URL */}
-                      {item.image_url && (
+                      <div className="space-y-4">
+                        {/* TITULO */}
                         <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
-                          <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
-                            <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm">
-                                Cambiar
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
-                              </label>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                          <input
+                            type="text"
+                            value={item.title || ''}
+                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                            placeholder="Título..."
+                          />
+                        </div>
+
+                        {/* SUBTITULO */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo/Slogan</label>
+                          <input
+                            type="text"
+                            value={item.subtitle || ''}
+                            onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                            placeholder="Subtítulo..."
+                          />
+                        </div>
+
+                        {/* BODY */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
+                          <textarea
+                            value={item.body || ''}
+                            onChange={(e) => updateContent(item.key, 'body', e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none"
+                            placeholder="Descripción..."
+                          />
+                        </div>
+
+                        {/* IMAGEN */}
+                        {item.image_url && (
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
+                            <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
+                              <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm">
+                                  Cambiar
+                                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
+                                </label>
+                              </div>
                             </div>
                           </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CAROUSEL TAB */}
+        {activeTab === 'carousel' && (
+          <div className="space-y-6">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6">
+              <h3 className="text-blue-400 font-black text-xl mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined">info</span>
+                Carrusel Hero - 3 Imágenes
+              </h3>
+              <p className="text-slate-300 text-sm">
+                Sube hasta 3 imágenes para el carrusel principal. Las imágenes se mostrarán en rotación automática.
+              </p>
+            </div>
+
+            {loading && (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-white mt-4">Cargando carrusel...</p>
+              </div>
+            )}
+
+            {!loading && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((position) => {
+                  const carouselItem = carousel.find(c => c.order_position === position);
+                  return (
+                    <div key={position} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-black text-white">Imagen {position}</h3>
+                        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-mono">Posición {position}</span>
+                      </div>
+
+                      {carouselItem?.image_url ? (
+                        <div className="relative h-48 rounded-xl overflow-hidden group border-2 border-white/10">
+                          <img src={carouselItem.image_url} className="w-full h-full object-cover" alt={`Carrusel ${position}`} />
+                          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-3">
+                            <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
+                              Cambiar Imagen
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  formData.append('upload_preset', 'ml_default');
+
+                                  const response = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
+                                    method: 'POST',
+                                    body: formData
+                                  });
+                                  const data = await response.json();
+
+                                  await supabase.from('landing_carousel').upsert({
+                                    order_position: position,
+                                    image_url: data.secure_url,
+                                    alt_text: `Patagonia Imagen ${position}`
+                                  }, { onConflict: 'order_position' });
+
+                                  fetchData();
+                                }}
+                              />
+                            </label>
+                            <button
+                              onClick={async () => {
+                                await supabase.from('landing_carousel').delete().eq('order_position', position);
+                                fetchData();
+                              }}
+                              className="bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer h-48 rounded-xl overflow-hidden border-2 border-dashed border-white/20 hover:border-primary transition-colors flex flex-col items-center justify-center bg-white/5">
+                          <span className="material-symbols-outlined text-white/40 text-6xl mb-3">add_photo_alternate</span>
+                          <span className="text-white/60 font-bold text-sm">Subir Imagen {position}</span>
+                          <span className="text-white/40 text-xs mt-1">Click para seleccionar</span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+
+                              // Por ahora, usa una URL de placeholder
+                              // TODO: Integrar con Cloudinary o tu servicio de imágenes
+                              const reader = new FileReader();
+                              reader.onloadend = async () => {
+                                await supabase.from('landing_carousel').upsert({
+                                  order_position: position,
+                                  image_url: reader.result as string,
+                                  alt_text: `Patagonia Imagen ${position}`
+                                }, { onConflict: 'order_position' });
+
+                                fetchData();
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      )}
+
+                      {carouselItem && (
+                        <div className="mt-4">
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Texto Alternativo</label>
+                          <input
+                            type="text"
+                            value={carouselItem.alt_text || ''}
+                            onChange={async (e) => {
+                              await supabase.from('landing_carousel')
+                                .update({ alt_text: e.target.value })
+                                .eq('order_position', position);
+                              fetchData();
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg text-sm outline-none"
+                            placeholder="Descripción de la imagen..."
+                          />
                         </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
