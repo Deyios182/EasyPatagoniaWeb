@@ -288,7 +288,7 @@ const LandingPage: React.FC = () => {
               <div className="lg:col-span-2">
                 <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x">
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="min-w-[280px] md:min-w-[320px] group relative h-96 rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
+                    <div key={place.id} className="min-w-[280px] md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
@@ -331,26 +331,26 @@ const LandingPage: React.FC = () => {
           <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
 
             {/* Pilares */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-              <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
-                <span className="text-3xl mb-4 block">🧭</span>
-                <h3 className="text-lg font-black uppercase mb-3">Conexión y Autenticidad</h3>
-                <p className="text-sm text-slate-300 leading-relaxed text-left">Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
+                <span className="text-2xl mb-3 block">🧭</span>
+                <h3 className="text-base font-black uppercase mb-2">Conexión y Autenticidad</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.</p>
               </div>
-              <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
-                <span className="text-3xl mb-4 block">💡</span>
-                <h3 className="text-lg font-black uppercase mb-3">Planificación Simple</h3>
-                <p className="text-sm text-slate-300 leading-relaxed text-left">Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.</p>
+              <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
+                <span className="text-2xl mb-3 block">💡</span>
+                <h3 className="text-base font-black uppercase mb-2">Planificación Simple</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.</p>
               </div>
-              <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors">
-                <span className="text-3xl mb-4 block">💚</span>
-                <h3 className="text-lg font-black uppercase mb-3">Turismo Sostenible</h3>
-                <p className="text-sm text-slate-300 leading-relaxed text-left">Promover un turismo responsable que respeta la riqueza natural de la Patagonia.</p>
+              <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
+                <span className="text-2xl mb-3 block">💚</span>
+                <h3 className="text-base font-black uppercase mb-2">Turismo Sostenible</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">Promover un turismo responsable que respeta la riqueza natural de la Patagonia.</p>
               </div>
             </div>
 
             {/* Misión y Visión + Imagen */}
-            <div className="flex flex-col lg:flex-row gap-16 items-center">
+            <div className="flex flex-col lg:flex-row gap-10 items-center">
 
               {/* Columna Texto */}
               <div className="flex-1 space-y-12">
