@@ -454,6 +454,11 @@ const TouristMapScreen: React.FC = () => {
             </select>
           </div>
         </div>
+        {/* BOTÓN PERFIL MÓVIL (Restored) */}
+        <Link to="/profile" className="w-12 h-12 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all">
+          <span className="material-symbols-outlined text-slate-700 dark:text-white">person</span>
+        </Link>
+
 
 
 
@@ -561,28 +566,36 @@ const TouristMapScreen: React.FC = () => {
 
       {/* MENÚ MÓVIL */}
       <div className="md:hidden bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-[110] h-[70px] shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
-        <Link to="/map" className="flex flex-col items-center gap-1 text-primary no-underline w-12">
+
+        {/* 1. IMPERDIBLES (Left) */}
+        <Link to="/highlights" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined text-2xl leading-none">grade</span>
+          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Imperdibles</span>
+        </Link>
+
+        {/* 2. MAPA (Mid-Left) */}
+        <Link to="/map" className="flex flex-col items-center gap-1 text-primary no-underline w-12 text-primary font-bold">
           <span className="material-symbols-outlined font-variation-settings-fill text-2xl leading-none">map</span>
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">{t('map')}</span>
         </Link>
-        <Link to="/directory" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-2xl leading-none">list_alt</span>
-          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">{t('list')}</span>
-        </Link>
 
+        {/* 3. CHAT/AI (Center) */}
         <div className="-mt-8">
           <Link to="/chat" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-transform">
             <span className="material-symbols-outlined text-2xl">smart_toy</span>
           </Link>
         </div>
 
-        <Link to="/discover" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-2xl leading-none">explore</span>
-          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Aysén</span>
-        </Link>
+        {/* 4. PLANNER (Mid-Right) */}
         <Link to="/planner" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
           <span className="material-symbols-outlined text-2xl leading-none">auto_awesome</span>
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Plan</span>
+        </Link>
+
+        {/* 5. GUIA/DIRECTORY (Far Right) */}
+        <Link to="/directory" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined text-2xl leading-none">list_alt</span>
+          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Guía</span>
         </Link>
       </div>
     </div >
