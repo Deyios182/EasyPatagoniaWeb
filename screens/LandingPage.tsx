@@ -152,7 +152,6 @@ const LandingPage: React.FC = () => {
               <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-                  <p className="text-white text-lg font-bold">Cargando...</p>
                 </div>
               </div>
             ) : carouselImages.length > 0 ? (
@@ -240,7 +239,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* DESTINOS */}
-        <section id="destinos" className="py-20 px-6 md:px-20 bg-[#eaeaea]">
+        <section id="destinos" className="min-h-screen flex flex-col justify-center py-20 px-6 md:px-20 bg-[#eaeaea]">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
@@ -309,7 +308,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* --- SECCIÓN NUESTRA VISIÓN (LIMPIA) --- */}
-        <section id="vision" className="py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
+        <section id="vision" className="min-h-screen flex items-center py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
           <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
 
             {/* Pilares */}
@@ -380,7 +379,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* CONTACTO */}
-        <section id="contacto" className="py-20 bg-[#eaeaea]">
+        <section id="contacto" className="min-h-screen flex flex-col justify-center py-20 bg-[#eaeaea]">
           <div className="max-w-4xl mx-auto px-6 text-center">
             <h2 className="text-[#1a2a30] text-2xl font-black uppercase italic mb-2">¡Únete a la Aventura EasyPatagonia!</h2>
             <p className="text-gray-500 mb-10">Síguenos en nuestras plataformas para no perderte ninguna novedad.</p>
