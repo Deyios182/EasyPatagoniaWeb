@@ -4,11 +4,13 @@ import { Business, Category } from "./types";
 
 // 1. CLAVE API PARA VITE
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+console.log("🤖 [GEMINI SERVICE] API Key Status:", API_KEY ? "Loaded (Starts with " + API_KEY.substring(0, 4) + ")" : "MISSING/EMPTY");
+if (!API_KEY) console.error("❌ [GEMINI CRITICAL] VITE_GEMINI_API_KEY is missing in environment variables. Please restart the dev server.");
 
 /**
  * Función auxiliar para manejar reintentos cuando se acaba la cuota (Error 429)
  */
-async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-1.5-flash') {
+async function safeGenerate(ai: GoogleGenAI, params: any, fallbackModel = 'gemini-1.5-flash-001') {
   try {
     return await ai.models.generateContent(params);
   } catch (error: any) {
@@ -37,7 +39,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     const isMapsRequested = !!(userLat && userLng);
 
     // Intentamos usar el modelo que quieres
-    const preferredModel = isMapsRequested ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
+    const preferredModel = isMapsRequested ? 'gemini-1.5-flash-001' : 'gemini-1.5-flash-001';
 
     if (isMapsRequested) {
       tools.push({ googleMaps: {} });
@@ -64,7 +66,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     };
 
     // Usamos la función segura
-    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash-001');
 
     const text = response.text || "";
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -91,7 +93,7 @@ export async function generateActivityPreview(activityTitle: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: { parts: [{ text: `Professional travel photo of: ${activityTitle} in Aysén, Patagonia.` }] },
       config: {
         // @ts-ignore
@@ -128,7 +130,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
     Genera JSON válido (Array de objetos).`;
 
     const config = {
-      model: 'gemini-1.5-flash', // Tu modelo solicitado
+      model: 'gemini-1.5-flash-001', // Tu modelo solicitado
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -159,7 +161,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
       }
     };
 
-    const response = await safeGenerate(ai, config, 'gemini-1.5-flash');
+    const response = await safeGenerate(ai, config, 'gemini-1.5-flash-001');
     return JSON.parse(response.text || "[]");
 
   } catch (error: any) {
@@ -180,7 +182,7 @@ export async function textToSpeechPatagonia(text: string) {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash-001",
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
