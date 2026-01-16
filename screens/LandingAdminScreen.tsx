@@ -84,6 +84,7 @@ const LandingAdminScreen: React.FC = () => {
   const [settings, setSettings] = useState<LandingSetting[]>([]);
   const [carousel, setCarousel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingPositions, setUploadingPositions] = useState<Record<number, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [customThemeName, setCustomThemeName] = useState('');
   const [showSaveThemeModal, setShowSaveThemeModal] = useState(false);
@@ -371,7 +372,10 @@ const LandingAdminScreen: React.FC = () => {
                             <label className="text-xs font-bold text-slate-500 uppercase block mb-3">Imágenes del Carrusel (Máx 3)</label>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               {[1, 2, 3].map((position) => {
-                                const carouselItem = carousel.find(c => c.order_position === position);
+                                // Robust comparison: use == for potential string/number mismatch
+                                const carouselItem = carousel.find(c => c.order_position == position);
+                                const isUploading = uploadingPositions[position];
+
                                 return (
                                   <div key={position} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
                                     <div className="flex items-center justify-between mb-2">
@@ -379,12 +383,17 @@ const LandingAdminScreen: React.FC = () => {
                                       {carouselItem && <span className="text-[10px] text-green-600 font-bold">ACTIVA</span>}
                                     </div>
 
-                                    {carouselItem ? (
+                                    {isUploading ? (
+                                      <div className="h-24 rounded-lg bg-slate-100 flex flex-col items-center justify-center border-2 border-primary/20">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                                        <span className="text-xs text-primary font-bold animate-pulse">Subiendo...</span>
+                                      </div>
+                                    ) : carouselItem ? (
                                       <div className="space-y-2">
                                         <div className="h-24 rounded-lg overflow-hidden relative group">
                                           <img src={carouselItem.image_url} className="w-full h-full object-cover" alt={`Slide ${position}`} />
                                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                                            <label className="cursor-pointer bg-white text-slate-900 p-1.5 rounded-full hover:bg-slate-100" title="Cambiar">
+                                            <label className="cursor-pointer bg-white text-slate-900 p-1.5 rounded-full hover:bg-slate-100 shadow-lg" title="Cambiar">
                                               <span className="material-symbols-outlined text-sm">edit</span>
                                               <input
                                                 type="file"
@@ -393,24 +402,59 @@ const LandingAdminScreen: React.FC = () => {
                                                 onChange={async (e) => {
                                                   const file = e.target.files?.[0];
                                                   if (!file) return;
+
+                                                  // Start local loading
+                                                  setUploadingPositions(prev => ({ ...prev, [position]: true }));
+
                                                   try {
                                                     const fileExt = file.name.split('.').pop();
                                                     const fileName = `carousel/${Date.now()}.${fileExt}`;
                                                     const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
                                                     if (uploadError) throw uploadError;
+
                                                     const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
-                                                    await supabase.from('landing_carousel').upsert({ order_position: position, image_url: data.publicUrl, alt_text: `Patagonia Imagen ${position}`, is_active: true }, { onConflict: 'order_position' });
-                                                    fetchData();
-                                                  } catch (error: any) { alert(`Error: ${error.message}`); }
+                                                    const newImageUrl = data.publicUrl;
+
+                                                    // Save to DB
+                                                    await supabase.from('landing_carousel').upsert({
+                                                      order_position: position,
+                                                      image_url: newImageUrl,
+                                                      alt_text: `Patagonia Imagen ${position}`,
+                                                      is_active: true
+                                                    }, { onConflict: 'order_position' });
+
+                                                    // Update local state immediately (no global fetch)
+                                                    setCarousel(prev => {
+                                                      const filtered = prev.filter(c => c.order_position != position);
+                                                      return [...filtered, {
+                                                        order_position: position,
+                                                        image_url: newImageUrl,
+                                                        alt_text: `Patagonia Imagen ${position}`,
+                                                        is_active: true
+                                                      }];
+                                                    });
+
+                                                  } catch (error: any) {
+                                                    alert(`Error: ${error.message}`);
+                                                  } finally {
+                                                    // Stop local loading
+                                                    setUploadingPositions(prev => ({ ...prev, [position]: false }));
+                                                  }
                                                 }}
                                               />
                                             </label>
                                             <button
                                               onClick={async () => {
-                                                await supabase.from('landing_carousel').delete().eq('order_position', position);
-                                                fetchData();
+                                                if (!confirm('¿Eliminar esta imagen?')) return;
+                                                setUploadingPositions(prev => ({ ...prev, [position]: true }));
+                                                try {
+                                                  await supabase.from('landing_carousel').delete().eq('order_position', position);
+                                                  setCarousel(prev => prev.filter(c => c.order_position != position));
+                                                } finally {
+                                                  setUploadingPositions(prev => ({ ...prev, [position]: false }));
+                                                }
                                               }}
-                                              className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
+                                              className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 shadow-lg"
                                               title="Eliminar"
                                             >
                                               <span className="material-symbols-outlined text-sm">delete</span>
@@ -419,9 +463,11 @@ const LandingAdminScreen: React.FC = () => {
                                         </div>
                                       </div>
                                     ) : (
-                                      <label className="cursor-pointer h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-primary hover:bg-blue-50 transition-all flex flex-col items-center justify-center">
-                                        <span className="material-symbols-outlined text-slate-400">add</span>
-                                        <span className="text-[10px] text-slate-500 font-bold mt-1">Subir</span>
+                                      <label className="cursor-pointer h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-primary hover:bg-blue-50 transition-all flex flex-col items-center justify-center group">
+                                        <div className="bg-white p-2 rounded-full shadow-sm mb-1 group-hover:scale-110 transition-transform">
+                                          <span className="material-symbols-outlined text-slate-400 text-xl">add_photo_alternate</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 font-bold">Subir Imagen</span>
                                         <input
                                           type="file"
                                           className="hidden"
@@ -429,15 +475,39 @@ const LandingAdminScreen: React.FC = () => {
                                           onChange={async (e) => {
                                             const file = e.target.files?.[0];
                                             if (!file) return;
+
+                                            setUploadingPositions(prev => ({ ...prev, [position]: true }));
+
                                             try {
                                               const fileExt = file.name.split('.').pop();
                                               const fileName = `carousel/${Date.now()}.${fileExt}`;
                                               const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
                                               if (uploadError) throw uploadError;
+
                                               const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
-                                              await supabase.from('landing_carousel').upsert({ order_position: position, image_url: data.publicUrl, alt_text: `Patagonia Imagen ${position}`, is_active: true }, { onConflict: 'order_position' });
-                                              fetchData();
-                                            } catch (error: any) { alert(`Error: ${error.message}`); }
+                                              const newImageUrl = data.publicUrl;
+
+                                              await supabase.from('landing_carousel').upsert({
+                                                order_position: position,
+                                                image_url: newImageUrl,
+                                                alt_text: `Patagonia Imagen ${position}`,
+                                                is_active: true
+                                              }, { onConflict: 'order_position' });
+
+                                              setCarousel(prev => {
+                                                const filtered = prev.filter(c => c.order_position != position);
+                                                return [...filtered, {
+                                                  order_position: position,
+                                                  image_url: newImageUrl,
+                                                  alt_text: `Patagonia Imagen ${position}`,
+                                                  is_active: true
+                                                }];
+                                              });
+                                            } catch (error: any) {
+                                              alert(`Error: ${error.message}`);
+                                            } finally {
+                                              setUploadingPositions(prev => ({ ...prev, [position]: false }));
+                                            }
                                           }}
                                         />
                                       </label>
