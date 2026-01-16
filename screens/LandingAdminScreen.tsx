@@ -152,38 +152,6 @@ const LandingAdminScreen: React.FC = () => {
     setTimeout(() => setSaving(false), 1500);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validar tamaño (máx 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen es muy grande. Máximo 5MB.');
-      return;
-    }
-
-    // Convertir a base64
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result as string;
-
-      // Actualizar en la base de datos
-      await supabase
-        .from('landing_content')
-        .update({ image_url: base64String })
-        .eq('key', key);
-
-      // Actualizar estado local
-      setContent(prev => prev.map(item =>
-        item.key === key ? { ...item, image_url: base64String } : item
-      ));
-
-      showSaveIndicator();
-    };
-
-    reader.readAsDataURL(file);
-  };
-
   const getSetting = (key: string) => settings.find(s => s.key === key)?.value || '';
 
   const applyThemePreset = async (preset: ThemePreset) => {
