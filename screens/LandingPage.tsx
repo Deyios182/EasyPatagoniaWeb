@@ -365,9 +365,9 @@ const LandingPage: React.FC = () => {
                 {/* Imagen principal */}
                 <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
                   <img
-                    src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop"
+                    src={content['vision']?.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop"}
                     className="w-full h-full object-cover"
-                    alt="Patagonia Vision"
+                    alt={content['vision']?.title || "Patagonia Vision"}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/40 to-transparent"></div>
                 </div>
