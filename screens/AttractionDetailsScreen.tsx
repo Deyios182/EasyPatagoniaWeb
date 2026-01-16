@@ -108,13 +108,26 @@ const AttractionDetailsScreen: React.FC = () => {
                                 </h3>
 
                                 {attraction.latitude && attraction.longitude && (
-                                    <button
-                                        onClick={() => navigate('/map', { state: { selectedAttractionId: attraction.id } })}
-                                        className="w-full bg-white dark:bg-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 font-black py-4 rounded-2xl uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-sm border border-slate-200 dark:border-transparent"
-                                    >
-                                        <span className="material-symbols-outlined">map</span>
-                                        Ver en Mapa
-                                    </button>
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() => navigate('/map', { state: { selectedAttractionId: attraction.id } })}
+                                            className="w-full bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-white/20 font-black py-4 rounded-2xl uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-sm border border-slate-200 dark:border-transparent"
+                                        >
+                                            <span className="material-symbols-outlined">map</span>
+                                            Ver en Mapa
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                const url = `https://www.google.com/maps/search/?api=1&query=${attraction.latitude},${attraction.longitude}&query_place_id=${encodeURIComponent(attraction.name)}`;
+                                                window.open(url, '_blank');
+                                            }}
+                                            className="w-full bg-primary text-white hover:bg-primary/90 font-black py-4 rounded-2xl uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-lg shadow-primary/30"
+                                        >
+                                            <span className="material-symbols-outlined">directions</span>
+                                            Cómo llegar
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>

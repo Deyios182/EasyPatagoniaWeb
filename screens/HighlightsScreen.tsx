@@ -146,11 +146,11 @@ const HighlightsScreen: React.FC = () => {
                                         </button>
                                         {place.latitude && place.longitude && (
                                             <button
-                                                onClick={() => navigate('/map', { state: { selectedAttractionId: place.id } })}
+                                                onClick={() => openInGoogleMaps(place.latitude, place.longitude, place.name)}
                                                 className="bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105 flex items-center gap-2"
                                             >
-                                                <span className="material-symbols-outlined text-lg">map</span>
-                                                Ver en Mapa
+                                                <span className="material-symbols-outlined text-lg">directions</span>
+                                                Cómo llegar
                                             </button>
                                         )}
                                     </div>
