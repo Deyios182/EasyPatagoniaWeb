@@ -51,8 +51,8 @@ const HighlightsScreen: React.FC = () => {
                         <button
                             onClick={() => setSelectedLocality('all')}
                             className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === 'all'
-                                    ? 'bg-primary text-white shadow-lg'
-                                    : 'bg-white/50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-white/10'
+                                ? 'bg-primary text-white shadow-lg'
+                                : 'bg-white/50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-white/10'
                                 }`}
                         >
                             Todos
@@ -62,8 +62,8 @@ const HighlightsScreen: React.FC = () => {
                                 key={loc.id}
                                 onClick={() => setSelectedLocality(loc.id)}
                                 className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id
-                                        ? 'bg-primary text-white shadow-lg'
-                                        : 'bg-white/50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-white/10'
+                                    ? 'bg-primary text-white shadow-lg'
+                                    : 'bg-white/50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-white/10'
                                     }`}
                             >
                                 {loc.name}
@@ -139,7 +139,7 @@ const HighlightsScreen: React.FC = () => {
                                     {/* Botones */}
                                     <div className="flex gap-3">
                                         <button
-                                            onClick={() => navigate(`/details/${place.id}`)}
+                                            onClick={() => navigate(`/attraction/${place.id}`)}
                                             className="flex-1 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105"
                                         >
                                             Ver Detalles

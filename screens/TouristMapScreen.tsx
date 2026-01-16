@@ -246,7 +246,7 @@ const TouristMapScreen: React.FC = () => {
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                         <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
         } else if (item.type === 'attraction') {
-          innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">photo_camera</span></div>`;
+          innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">location_on</span></div>`;
         }
 
         customIcon = L.divIcon({
@@ -428,30 +428,20 @@ const TouristMapScreen: React.FC = () => {
               ))}
             </select>
           </div>
-
-          {/* BOTÓN PERFIL (SOLO MÓVIL) */}
-          <div
-            onClick={() => navigate('/profile')}
-            className="md:hidden w-12 h-auto rounded-2xl bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-2xl cursor-pointer active:scale-95 transition-transform"
-          >
-            <img
-              src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"}
-              alt="Perfil"
-              className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
-            />
-          </div>
         </div>
 
-        {/* Toggle Satelital */}
-        <button
-          onClick={() => setMapTheme(mapTheme === 'satellite' ? 'light' : 'satellite')}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all border border-slate-200 dark:border-white/10 ${mapTheme === 'satellite' ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
-          title={mapTheme === 'satellite' ? "Ver Mapa" : "Ver Satélite"}
-        >
-          <span className="material-symbols-outlined text-2xl">{mapTheme === 'satellite' ? 'map' : 'satellite_alt'}</span>
-        </button>
 
 
+        {/* Toggle Satelital - Moved below locality bar */}
+        <div className="absolute top-[80px] left-4 md:left-8 z-[100] pointer-events-auto">
+          <button
+            onClick={() => setMapTheme(mapTheme === 'satellite' ? 'light' : 'satellite')}
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${mapTheme === 'satellite' ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
+            title={mapTheme === 'satellite' ? "Ver Mapa" : "Ver Satélite"}
+          >
+            <span className="material-symbols-outlined text-2xl">{mapTheme === 'satellite' ? 'map' : 'satellite_alt'}</span>
+          </button>
+        </div>
         {/* Filtros */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
           {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
