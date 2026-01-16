@@ -454,9 +454,23 @@ const TouristMapScreen: React.FC = () => {
             </select>
           </div>
         </div>
-        {/* BOTÓN PERFIL MÓVIL (Restored) */}
-        <Link to="/profile" className="w-12 h-12 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all">
-          <span className="material-symbols-outlined text-slate-700 dark:text-white">person</span>
+        {/* BOTÓN PERFIL MÓVIL (Solo visible en MÓVIL) */}
+        <Link to="/profile" className="md:hidden w-12 h-12 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all overflow-hidden relative">
+          <img
+            src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'guest'}`}
+            alt="Perfil"
+            className="w-full h-full object-cover backdrop-blur-sm"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              // Show icon sibling
+              if (target.nextElementSibling) {
+                (target.nextElementSibling as HTMLElement).style.display = 'block';
+              }
+            }}
+          />
+          {/* Fallback Icon if image fails/hidden */}
+          <span className="material-symbols-outlined text-slate-700 dark:text-white absolute inset-0 m-auto flex items-center justify-center pointer-events-none" style={{ display: user?.avatar ? 'none' : 'flex' }}>person</span>
         </Link>
 
 
@@ -573,16 +587,16 @@ const TouristMapScreen: React.FC = () => {
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Imperdibles</span>
         </Link>
 
-        {/* 2. MAPA (Mid-Left) */}
-        <Link to="/map" className="flex flex-col items-center gap-1 text-primary no-underline w-12 text-primary font-bold">
-          <span className="material-symbols-outlined font-variation-settings-fill text-2xl leading-none">map</span>
-          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">{t('map')}</span>
+        {/* 2. GUÍA/COLABORADORES (Mid-Left) */}
+        <Link to="/directory" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined text-2xl leading-none">list_alt</span>
+          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Guía</span>
         </Link>
 
-        {/* 3. CHAT/AI (Center) */}
+        {/* 3. MAPA (CENTER - BIG) */}
         <div className="-mt-8">
-          <Link to="/chat" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-transform">
-            <span className="material-symbols-outlined text-2xl">smart_toy</span>
+          <Link to="/map" className="w-14 h-14 bg-gradient-to-tr from-primary to-orange-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark active:scale-95 transition-all">
+            <span className="material-symbols-outlined text-2xl">map</span>
           </Link>
         </div>
 
@@ -592,10 +606,10 @@ const TouristMapScreen: React.FC = () => {
           <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Plan</span>
         </Link>
 
-        {/* 5. GUIA/DIRECTORY (Far Right) */}
-        <Link to="/directory" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-2xl leading-none">list_alt</span>
-          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Guía</span>
+        {/* 5. IA (Far Right) */}
+        <Link to="/chat" className="flex flex-col items-center gap-1 text-slate-400 no-underline w-12 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined text-2xl leading-none">smart_toy</span>
+          <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">IA</span>
         </Link>
       </div>
     </div >
