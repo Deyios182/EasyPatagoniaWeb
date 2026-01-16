@@ -1,10 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useAppAuth } from '../App';  // Dynamic Data Link
+import { supabase } from '../supabaseClient';
 
+interface LandingContent {
+  key: string;
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  image_url?: string;
+}
 
+interface LandingSettings {
+  key: string;
+  value: string;
+}
+
+interface CarouselImage {
+  id: string;
+  image_url: string;
+  order_position: number;
+  alt_text?: string;
+}
 
 const LandingPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -15,12 +34,72 @@ const LandingPage: React.FC = () => {
   // Default to first active locality or 'tran' if none
   const [selectedLocality, setSelectedLocality] = useState<string>('loc-tranquilo');
 
+  // Dynamic Landing Data
+  const [content, setContent] = useState<Record<string, LandingContent>>({});
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   // Update state when data loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (allLocalities.length > 0 && !allLocalities.find(l => l.id === selectedLocality)) {
       setSelectedLocality(allLocalities[0].id);
     }
   }, [allLocalities]);
+
+  // FETCH LANDING DATA FROM SUPABASE
+  useEffect(() => {
+    const fetchLandingData = async () => {
+      setLoading(true);
+
+      // Fetch content
+      const { data: contentData } = await supabase
+        .from('landing_content')
+        .select('*');
+
+      // Fetch settings
+      const { data: settingsData } = await supabase
+        .from('landing_settings')
+        .select('*');
+
+      // Fetch carousel images
+      const { data: carouselData } = await supabase
+        .from('landing_carousel')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_position');
+
+      // Transform content to object with key as index
+      const contentObj: Record<string, LandingContent> = {};
+      contentData?.forEach(item => {
+        contentObj[item.key] = item;
+      });
+
+      // Transform settings to object with key as index
+      const settingsObj: Record<string, string> = {};
+      settingsData?.forEach(item => {
+        settingsObj[item.key] = item.value;
+      });
+
+      setContent(contentObj);
+      setSettings(settingsObj);
+      setCarouselImages(carouselData || []);
+      setLoading(false);
+    };
+
+    fetchLandingData();
+  }, []);
+
+  // Auto-rotate carousel every 5 seconds
+  useEffect(() => {
+    if (carouselImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentCarouselIndex((prev) => (prev + 1) % carouselImages.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [carouselImages.length]);
 
   const [logoError, setLogoError] = useState(false);
 
@@ -39,7 +118,7 @@ const LandingPage: React.FC = () => {
   const openLink = (url: string) => window.open(url, '_blank');
 
   const handleWhatsApp = () => {
-    const telefono = "56956425005";
+    const telefono = settings['contact_whatsapp'] || "56956425005";
     const mensaje = "¡Hola! Escribo desde la web EasyPatagonia.";
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const url = isMobile ? `whatsapp://send?phone=${telefono}&text=${encodeURIComponent(mensaje)}` : `https://web.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
@@ -47,7 +126,7 @@ const LandingPage: React.FC = () => {
   };
 
   const handleEmail = () => {
-    window.location.href = `mailto:infoeasypatagonia@gmail.com`;
+    window.location.href = `mailto:${settings['contact_email'] || 'infoeasypatagonia@gmail.com'}`;
   };
 
   const scrollToSection = (id: string) => {
@@ -55,23 +134,79 @@ const LandingPage: React.FC = () => {
     if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const openInGoogleMaps = (lat?: number, lng?: number, name?: string) => {
+    if (!lat || !lng) return;
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${encodeURIComponent(name || '')}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <>
       <div className="min-h-screen bg-[#eaeaea] font-body text-[#1a2a30] overflow-x-hidden">
 
-        {/* HERO SECTION */}
+        {/* HERO SECTION WITH CAROUSEL */}
         <div className="relative h-screen w-full overflow-hidden bg-black">
+          {/* Carousel Background */}
           <div className="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070" className="w-full h-full object-cover opacity-60 animate-[pulse_10s_infinite]" alt="Patagonia Background" />
+            {carouselImages.length > 0 ? (
+              carouselImages.map((img, index) => (
+                <div
+                  key={img.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${index === currentCarouselIndex ? 'opacity-60' : 'opacity-0'
+                    }`}
+                >
+                  <img
+                    src={img.image_url}
+                    className="w-full h-full object-cover"
+                    alt={img.alt_text || `Patagonia ${index + 1}`}
+                  />
+                </div>
+              ))
+            ) : (
+              <img
+                src={content['hero']?.image_url || "https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"}
+                className="w-full h-full object-cover opacity-60"
+                alt="Patagonia Background"
+              />
+            )}
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30] via-transparent to-black/30"></div>
+
+          {/* Carousel Indicators */}
+          {carouselImages.length > 1 && (
+            <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-2 z-40">
+              {carouselImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentCarouselIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${index === currentCarouselIndex
+                    ? 'bg-[#dd6e42] w-8'
+                    : 'bg-white/50 hover:bg-white/80'
+                    }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
 
           <nav className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-center z-50">
             <div className="mb-4 md:mb-0 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
               {!logoError ? (
-                <img src="/logo_easy.png" className="h-24 w-auto object-contain hover:scale-105 transition-transform" alt="Easy Patagonia" onError={() => setLogoError(true)} />
+                <img
+                  src={settings['logo_url'] || "/logo_easy.png"}
+                  className="h-24 w-auto object-contain hover:scale-105 transition-transform"
+                  alt={settings['site_name'] || "Easy Patagonia"}
+                  onError={() => setLogoError(true)}
+                />
               ) : (
-                <div className="flex flex-col"><h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">Easy Patagonia</h1><span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">Austral Experience</span></div>
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">
+                    {settings['site_name'] || 'Easy Patagonia'}
+                  </h1>
+                  <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
+                    {settings['site_tagline'] || 'Austral Experience'}
+                  </span>
+                </div>
               )}
             </div>
             <div className="flex gap-6 mb-4 md:mb-0 bg-black/30 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
@@ -83,8 +218,18 @@ const LandingPage: React.FC = () => {
           </nav>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
-            <motion.h1 initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1 }} className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">Patagonia <br /> <span className="text-[#dd6e42]">Sin Límites</span></motion.h1>
-            <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">"Tú Disfruta, Nosotros Resolvemos."</p>
+            <motion.h1
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 1 }}
+              className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none"
+            >
+              {content['hero']?.title || 'Patagonia'} <br />
+              <span className="text-[#dd6e42]">Sin Límites</span>
+            </motion.h1>
+            <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
+              "{content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
+            </p>
           </div>
           <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce"><span className="material-symbols-outlined text-white text-4xl">keyboard_arrow_down</span></div>
         </div>
@@ -120,10 +265,25 @@ const LandingPage: React.FC = () => {
               <div className="lg:col-span-2">
                 <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x">
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="min-w-[280px] md:min-w-[320px] group relative h-96 rounded-[3rem] overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all snap-center" onClick={handleEnterApp}>
+                    <div key={place.id} className="min-w-[280px] md:min-w-[320px] group relative h-96 rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
-                      <div className="absolute bottom-8 left-8 right-8">
+
+                      {/* Google Maps Button */}
+                      {place.latitude && place.longitude && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openInGoogleMaps(place.latitude, place.longitude, place.name);
+                          }}
+                          className="absolute top-4 right-4 bg-white/90 hover:bg-white backdrop-blur-md p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10 group/maps"
+                          title="Ver en Google Maps"
+                        >
+                          <span className="material-symbols-outlined text-[#dd6e42] text-xl">map</span>
+                        </button>
+                      )}
+
+                      <div className="absolute bottom-8 left-8 right-8 cursor-pointer" onClick={handleEnterApp}>
                         <h5 className="text-2xl font-black text-white uppercase italic mb-1 leading-none text-left">{place.name}</h5>
                         <div className="flex gap-2 mt-3 flex-wrap">
                           {place.keywords?.map(tag => (

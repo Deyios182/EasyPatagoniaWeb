@@ -14,6 +14,7 @@ import ItineraryScreen from './screens/ItineraryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ChatBotScreen from './screens/ChatBotScreen';
 import DiscoveryScreen from './screens/DiscoveryScreen';
+import HighlightsScreen from './screens/HighlightsScreen';
 import BusinessPortalScreen from './screens/BusinessPortalScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import EasyAdminFieldScreen from './screens/EasyAdminFieldScreen';
@@ -77,7 +78,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // CONFIGURACIÓN PERSISTENTE
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('ep_language') as Language) || 'ES');
-  const [mapTheme, setMapTheme] = useState<MapTheme>(() => (localStorage.getItem('ep_map_theme') as MapTheme) || 'dark');
+  const [mapTheme, setMapTheme] = useState<MapTheme>(() => (localStorage.getItem('ep_map_theme') as MapTheme) || 'light');
   const [currency, setCurrency] = useState<Currency>(() => (localStorage.getItem('ep_currency') as Currency) || 'CLP');
 
   // const [allBusinesses, setAllBusinesses] = useState<Business[]>(() => getLocalizedBusinesses(language)); // OLD
@@ -157,7 +158,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           })(),
 
           // Contact
-          contacto: { whatsapp: c.whatsapp, email: c.owner_email, web: "" },
+          contacto: { whatsapp: c.whatsapp, email: "", web: "" },
 
           // UI Info
           info: {
@@ -443,6 +444,7 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Navegación</p>}
         <NavItem to="/map" icon="map" label={t('map')} />
         <NavItem to="/discover" icon="explore" label={t('discover')} />
+        <NavItem to="/highlights" icon="grade" label="Imperdibles" />
         <NavItem to="/directory" icon="list_alt" label={t('list')} />
         <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
         {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
@@ -509,6 +511,7 @@ const AuthenticatedApp: React.FC = () => {
           {/* Rutas protegidas - Use isAuthenticated instead of just user */}
           <Route path="/map" element={isAuthenticated ? <TouristMapScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/discover" element={isAuthenticated ? <DiscoveryScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/highlights" element={isAuthenticated ? <HighlightsScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/directory" element={isAuthenticated ? <BusinessDirectoryScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/details/:id" element={isAuthenticated ? <BusinessDetailsScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
