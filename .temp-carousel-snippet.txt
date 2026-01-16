@@ -1,0 +1,7 @@
+
+    if (carouselRes.data) {
+      console.log('✅ [LANDING ADMIN] Setting carousel:', carouselRes.data.length, 'items');
+      setCarousel(carouselRes.data);
+    } else {
+      console.warn('⚠️ [LANDING ADMIN] No carousel data received');
+    }

@@ -96,13 +96,15 @@ const LandingAdminScreen: React.FC = () => {
     setLoading(true);
     console.log('🔍 [LANDING ADMIN] Fetching data...');
 
-    const [contentRes, settingsRes] = await Promise.all([
+    const [contentRes, settingsRes, carouselRes] = await Promise.all([
       supabase.from('landing_content').select('*').order('key'),
-      supabase.from('landing_settings').select('*')
+      supabase.from('landing_settings').select('*'),
+      supabase.from('landing_carousel').select('*').order('order_position')
     ]);
 
     console.log('📦 [LANDING ADMIN] Content response:', contentRes);
     console.log('⚙️ [LANDING ADMIN] Settings response:', settingsRes);
+    console.log('🎠 [LANDING ADMIN] Carousel response:', carouselRes);
 
     if (contentRes.error) {
       console.error('❌ [LANDING ADMIN] Content error:', contentRes.error);
