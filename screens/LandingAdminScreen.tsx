@@ -94,7 +94,7 @@ const LandingAdminScreen: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log('🔍 [LANDING ADMIN] Fetching data...');
+    console.log('🔍 [LANDING ADMIN] Fetching data... (v1.1 - Supabase Storage)');
 
     const [contentRes, settingsRes, carouselRes] = await Promise.all([
       supabase.from('landing_content').select('*').order('key'),
