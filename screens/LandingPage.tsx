@@ -300,7 +300,7 @@ const LandingPage: React.FC = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (isAuthenticated) {
-                            navigate(`/attraction/${place.id}`);
+                            navigate('/discover', { state: { selectedAttractionId: place.id } });
                           } else {
                             navigate('/auth/login');
                           }

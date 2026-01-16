@@ -45,8 +45,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
   const mapThemes = [
     { code: 'dark', label: 'Patagonia Dark', icon: 'dark_mode' },
-    { code: 'light', label: 'Aysén Light', icon: 'light_mode' },
-    { code: 'satellite', label: 'Satélite Pro', icon: 'satellite_alt' }
+    { code: 'light', label: 'Aysén Light', icon: 'light_mode' }
   ];
 
   const currencies = [

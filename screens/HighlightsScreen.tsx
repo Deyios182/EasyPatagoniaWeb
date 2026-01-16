@@ -139,7 +139,7 @@ const HighlightsScreen: React.FC = () => {
                                     {/* Botones */}
                                     <div className="flex gap-3">
                                         <button
-                                            onClick={() => navigate(`/attraction/${place.id}`)}
+                                            onClick={() => navigate('/discover', { state: { selectedAttractionId: place.id } })}
                                             className="flex-1 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105"
                                         >
                                             Ver Detalles
