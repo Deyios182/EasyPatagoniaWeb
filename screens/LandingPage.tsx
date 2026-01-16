@@ -403,27 +403,75 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* CONTACTO */}
-        <section id="contacto" className="min-h-screen flex flex-col justify-center py-20 bg-[#eaeaea]">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-[#1a2a30] text-2xl font-black uppercase italic mb-2">¡Únete a la Aventura EasyPatagonia!</h2>
-            <p className="text-gray-500 mb-10">Síguenos en nuestras plataformas para no perderte ninguna novedad.</p>
-            <div className="flex flex-wrap justify-center gap-6">
-              <button onClick={() => openLink("https://www.instagram.com/easy.patagonia")} className="flex items-center gap-3 px-8 py-4 bg-[#E1306C] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"><span className="font-black uppercase tracking-widest text-xs">Instagram</span></button>
-              <button onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")} className="flex items-center gap-3 px-8 py-4 bg-black text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"><span className="font-black uppercase tracking-widest text-xs">TikTok</span></button>
-              <button onClick={handleWhatsApp} className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"><span className="font-black uppercase tracking-widest text-xs">Soporte WhatsApp</span></button>
-            </div>
-            <div className="mt-12 flex flex-col items-center">
-              <button
-                onClick={handleEnterApp}
-                className="bg-[#dd6e42] text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 hover:bg-[#c95d36] transition-all mb-8 animate-pulse"
-              >
-                Explora el Mapa Interactivo
+        {/* CONTACTO REDESÑADO - WIDER & PREMIUM */}
+        <section id="contacto" className="relative py-24 bg-[#1a2a30] overflow-hidden">
+          {/* Background Decoration */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#dd6e42] rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-[#4f6d7a] rounded-full blur-[120px]"></div>
+          </div>
+
+          <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 text-center">
+            <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
+              ¡Únete a la <span className="text-[#dd6e42]">Aventura</span>!
+            </h2>
+            <p className="text-slate-400 text-lg md:text-xl font-light mb-16 max-w-2xl mx-auto">
+              Síguenos para descubrir rincones secretos, ofertas exclusivas y la magia de la Patagonia al instante.
+            </p>
+
+            {/* Social Grid - Wider & Prettier */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-20">
+              <button onClick={() => openLink("https://www.instagram.com/easy.patagonia")} className="group bg-gradient-to-br from-[#833ab4]/10 to-[#E1306C]/10 border border-white/5 hover:border-[#E1306C]/50 p-8 rounded-[2rem] transition-all hover:scale-105 hover:bg-white/5">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-tr from-[#833ab4] to-[#E1306C] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-[0_0_30px_rgba(225,48,108,0.4)] transition-all">
+                  <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
+                </div>
+                <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">Instagram</h3>
+                <p className="text-xs text-slate-400">Inspiración visual diaria</p>
               </button>
 
-              <div className="pt-8 border-t border-gray-300 w-full">
-                <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
-                <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">contacto@easypatagonia.com</button>
+              <button onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")} className="group bg-white/5 border border-white/5 hover:border-white/20 p-8 rounded-[2rem] transition-all hover:scale-105 hover:bg-white/10">
+                <div className="w-16 h-16 mx-auto mb-4 bg-black border border-white/10 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all">
+                  <span className="material-symbols-outlined text-white text-3xl">movie</span>
+                </div>
+                <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">TikTok</h3>
+                <p className="text-xs text-slate-400">Videos y tendencias</p>
+              </button>
+
+              <button onClick={handleWhatsApp} className="group bg-[#25D366]/5 border border-white/5 hover:border-[#25D366]/50 p-8 rounded-[2rem] transition-all hover:scale-105 hover:bg-white/5">
+                <div className="w-16 h-16 mx-auto mb-4 bg-[#25D366] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-[0_0_30px_rgba(37,211,102,0.4)] transition-all">
+                  <span className="material-symbols-outlined text-white text-3xl">chat</span>
+                </div>
+                <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">WhatsApp</h3>
+                <p className="text-xs text-slate-400">Soporte directo 24/7</p>
+              </button>
+            </div>
+
+            {/* Bottom Actions - Reordered as requested */}
+            <div className="flex flex-col items-center gap-12">
+
+              {/* 1. Contact Info (Now First) */}
+              <div className="space-y-4">
+                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">¿Prefieres escribirnos un correo?</p>
+                <button onClick={handleEmail} className="text-white text-2xl md:text-3xl font-black tracking-tight hover:text-[#dd6e42] transition-colors border-b-2 border-[#dd6e42]/30 hover:border-[#dd6e42] pb-1">
+                  contacto@easypatagonia.com
+                </button>
               </div>
+
+              {/* 2. Map Call to Action (Now Last & Bigger) */}
+              <div className="w-full max-w-2xl border-t border-white/10 pt-12">
+                <button
+                  onClick={handleEnterApp}
+                  className="w-full relative group overflow-hidden bg-[#dd6e42] text-white px-10 py-8 rounded-[2rem] shadow-[0_20px_50px_rgba(221,110,66,0.3)] hover:shadow-[0_30px_60px_rgba(221,110,66,0.5)] transition-all hover:scale-[1.02]"
+                >
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <span className="text-2xl font-black uppercase tracking-[0.2em] italic group-hover:translate-y-[-2px] transition-transform">Explorar Mapa Interactivo</span>
+                    <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">Acceso Inmediato</span>
+                  </div>
+                  {/* Hover Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-[#dd6e42] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+              </div>
+
             </div>
           </div>
         </section>

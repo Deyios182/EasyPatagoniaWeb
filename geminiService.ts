@@ -57,6 +57,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       contents: prompt,
       config: {
         systemInstruction: `Eres un guía experto de Aysén. ${languageContext[language]}
+        IMPORTANTE: SÉ BREVE Y CONCISO. Máximo 2 párrafos. Ve al grano.
         INFORMACIÓN LOCAL (Prioridad):
         ${contextText}
         Si recomiendas algo, menciona si está en la lista local.`,
