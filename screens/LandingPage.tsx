@@ -530,9 +530,12 @@ const LandingPage: React.FC = () => {
               {/* 1. Contact Info (Now First) */}
               <div className="space-y-4">
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">¿Prefieres escribirnos un correo?</p>
-                <button onClick={handleEmail} className="text-white text-2xl md:text-3xl font-black tracking-tight hover:text-[#dd6e42] transition-colors border-b-2 border-[#dd6e42]/30 hover:border-[#dd6e42] pb-1">
+                <a
+                  href="mailto:contacto@easypatagonia.com?subject=Consulta%20desde%20EasyPatagonia&body=Hola%2C%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n."
+                  className="inline-block text-white text-2xl md:text-3xl font-black tracking-tight hover:text-[#dd6e42] transition-colors border-b-2 border-[#dd6e42]/30 hover:border-[#dd6e42] pb-1"
+                >
                   contacto@easypatagonia.com
-                </button>
+                </a>
               </div>
 
               {/* 2. Map Call to Action (Now Last & Bigger) */}

@@ -31,7 +31,7 @@ const LogoTicker: React.FC<LogoTickerProps> = ({ businesses, speed = 40 }) => {
                     {[...validBusinesses, ...validBusinesses].map((business, index) => (
                         <button
                             key={`${business.id}-${index}`}
-                            onClick={() => navigate(`/attraction/${business.id}`)} // Or business details if different
+                            onClick={() => navigate(`/details/${business.id}`)} // Corrected to /details/ for businesses
                             className="group relative flex-shrink-0 grayscale hover:grayscale-0 transition-all duration-500 opacity-50 hover:opacity-100 hover:scale-110"
                             title={business.nombre}
                         >
