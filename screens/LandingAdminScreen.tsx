@@ -262,101 +262,208 @@ const LandingAdminScreen: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* CONTENT TAB */}
         {activeTab === 'content' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {content.map(item => (
-              <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
-                  <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
-                </div>
-
-                <div className="space-y-4">
-                  {item.title !== null && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                      <input
-                        type="text"
-                        value={item.title || ''}
-                        onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                      />
+          <div className="space-y-8">
+            {/* HERO SECTION */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-primary text-2xl">view_carousel</span>
+                <h2 className="text-2xl font-black text-white uppercase">Sección Hero (Principal)</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {content.filter(item => item.key === 'hero').map(item => (
+                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
+                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
                     </div>
-                  )}
 
-                  {item.subtitle !== null && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo</label>
-                      <input
-                        type="text"
-                        value={item.subtitle || ''}
-                        onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                      />
+                    <div className="space-y-4">
+                      {item.title !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                          <input
+                            type="text"
+                            value={item.title || ''}
+                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {item.subtitle !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Slogan/Subtítulo</label>
+                          <input
+                            type="text"
+                            value={item.subtitle || ''}
+                            onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            placeholder="Ej: Menos planificación. Más Patagonia."
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                  {item.body !== null && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                      <textarea
-                        value={item.body || ''}
-                        onChange={(e) => updateContent(item.key, 'body', e.target.value)}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
-                      />
+            {/* VISIÓN Y MISIÓN */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-primary text-2xl">lightbulb</span>
+                <h2 className="text-2xl font-black text-white uppercase">Visión y Misión</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {content.filter(item => item.key === 'vision' || item.key === 'mission').map(item => (
+                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
+                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
                     </div>
-                  )}
 
-                  {item.button_text !== null && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Texto Botón</label>
-                        <input
-                          type="text"
-                          value={item.button_text || ''}
-                          onChange={(e) => updateContent(item.key, 'button_text', e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">URL Botón</label>
-                        <input
-                          type="text"
-                          value={item.button_url || ''}
-                          onChange={(e) => updateContent(item.key, 'button_url', e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    <div className="space-y-4">
+                      {item.title !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                          <input
+                            type="text"
+                            value={item.title || ''}
+                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                          />
+                        </div>
+                      )}
 
-                  {item.image_url !== null && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
-                      <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300 hover:border-primary transition-colors">
-                        {item.image_url ? (
-                          <>
-                            <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
-                                Cambiar
+                      {item.body !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
+                          <textarea
+                            value={item.body || ''}
+                            onChange={(e) => updateContent(item.key, 'body', e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                          />
+                        </div>
+                      )}
+
+                      {item.image_url !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
+                          <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300 hover:border-primary transition-colors">
+                            {item.image_url ? (
+                              <>
+                                <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
+                                    Cambiar
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
+                                  </label>
+                                </div>
+                              </>
+                            ) : (
+                              <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors">
+                                <span className="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
+                                <span className="text-sm font-bold">Subir Imagen</span>
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
                               </label>
-                            </div>
-                          </>
-                        ) : (
-                          <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors">
-                            <span className="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
-                            <span className="text-sm font-bold">Subir Imagen</span>
-                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
-                          </label>
-                        )}
-                      </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* PILARES */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-primary text-2xl">category</span>
+                <h2 className="text-2xl font-black text-white uppercase">Pilares (3 Valores)</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {content.filter(item => item.key.startsWith('pillar_')).map(item => (
+                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
+                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {item.title !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                          <input
+                            type="text"
+                            value={item.title || ''}
+                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {item.body !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
+                          <textarea
+                            value={item.body || ''}
+                            onChange={(e) => updateContent(item.key, 'body', e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CONTACTO */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-primary text-2xl">mail</span>
+                <h2 className="text-2xl font-black text-white uppercase">Sección Contacto</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                {content.filter(item => item.key === 'contact_section').map(item => (
+                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
+                      <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {item.title !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                          <input
+                            type="text"
+                            value={item.title || ''}
+                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {item.subtitle !== null && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo</label>
+                          <input
+                            type="text"
+                            value={item.subtitle || ''}
+                            onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

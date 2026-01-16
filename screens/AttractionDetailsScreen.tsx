@@ -37,6 +37,20 @@ const AttractionDetailsScreen: React.FC = () => {
                     <ArrowLeft size={24} />
                 </button>
 
+                {/* Botón Cómo llegar */}
+                {attraction.latitude && attraction.longitude && (
+                    <button
+                        onClick={() => {
+                            const url = `https://www.google.com/maps/search/?api=1&query=${attraction.latitude},${attraction.longitude}&query_place_id=${encodeURIComponent(attraction.name)}`;
+                            window.open(url, '_blank');
+                        }}
+                        className="absolute top-6 right-6 bg-primary hover:bg-primary/90 backdrop-blur-md px-6 py-3 rounded-full text-white font-black text-sm uppercase tracking-wider transition-all hover:scale-105 flex items-center gap-2 shadow-lg"
+                    >
+                        <span className="material-symbols-outlined">directions</span>
+                        Cómo llegar
+                    </button>
+                )}
+
                 <div className="absolute bottom-6 left-6 right-6">
                     <span className="bg-orange-500 text-white text-[10px] uppercase font-black px-3 py-1 rounded-full mb-3 inline-block tracking-widest">
                         Atractivo Turístico
