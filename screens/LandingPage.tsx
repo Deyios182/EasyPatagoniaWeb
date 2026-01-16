@@ -30,7 +30,7 @@ const LandingPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   // Fetch Real Data
-  const { allLocalities, allAttractions } = useAppAuth();
+  const { allLocalities, allAttractions, allBusinesses } = useAppAuth();
 
   // Default to first active locality or 'tran' if none
   const [selectedLocality, setSelectedLocality] = useState<string>('loc-tranquilo');
@@ -126,6 +126,21 @@ const LandingPage: React.FC = () => {
   const scrollRight = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  // Ref for localities scroll
+  const localitiesScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollLeftLocs = () => {
+    if (localitiesScrollRef.current) {
+      localitiesScrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRightLocs = () => {
+    if (localitiesScrollRef.current) {
+      localitiesScrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
     }
   };
 
@@ -286,16 +301,37 @@ const LandingPage: React.FC = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                {allLocalities.filter(l => l.is_active).map(loc => (
-                  <button
-                    key={loc.id}
-                    onClick={() => setSelectedLocality(loc.id)}
-                    className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
-                  >
-                    {loc.name}
-                  </button>
-                ))}
+              <div className="relative group/locs flex-1 max-w-2xl">
+                {/* Scroll Buttons for Localities */}
+                <button
+                  onClick={scrollLeftLocs}
+                  className="hidden md:flex absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
+                  aria-label="Scroll Left"
+                >
+                  <span className="material-symbols-outlined text-sm">arrow_back</span>
+                </button>
+                <button
+                  onClick={scrollRightLocs}
+                  className="hidden md:flex absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
+                  aria-label="Scroll Right"
+                >
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+
+                <div
+                  ref={localitiesScrollRef}
+                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-2 mask-linear-fade"
+                >
+                  {allLocalities.filter(l => l.is_active).map(loc => (
+                    <button
+                      key={loc.id}
+                      onClick={() => setSelectedLocality(loc.id)}
+                      className={`whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
+                    >
+                      {loc.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -521,7 +557,7 @@ const LandingPage: React.FC = () => {
         {/* LOGO TICKER BANNER */}
         <section className="bg-[#1a2a30] pb-10">
           <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Empresas que confían en nosotros</h3>
-          <LogoTicker businesses={allAttractions as any} speed={60} />
+          <LogoTicker businesses={allBusinesses} speed={60} />
         </section>
 
         <footer className="bg-[#152024] py-12 text-center text-slate-500 text-xs">
