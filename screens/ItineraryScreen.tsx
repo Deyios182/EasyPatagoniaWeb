@@ -104,7 +104,8 @@ const ItineraryScreen: React.FC = () => {
           <div className="absolute left-[27px] top-10 bottom-10 w-[4px] bg-primary/20 rounded-full"></div>
 
           {activeDayPlan?.activities.map((act, idx) => {
-            const bizId = findBusinessId(act.businessName);
+            const business = allBusinesses.find(b => b.name.toLowerCase().includes(act.businessName?.toLowerCase() || '_____'));
+            const bizId = business?.id;
             return (
               <div key={idx} className="flex gap-8 relative group">
                 <div className="flex flex-col items-center">
@@ -143,13 +144,33 @@ const ItineraryScreen: React.FC = () => {
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium italic border-l-2 border-primary/30 pl-6 mb-8">{act.description}</p>
 
-                      {bizId && (
-                        <button
-                          onClick={() => navigate(`/details/${bizId}`)}
-                          className="w-full py-4 bg-slate-100 dark:bg-background-dark text-slate-500 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-primary hover:text-white transition-all"
-                        >
-                          Explorar Aliado Local <span className="material-symbols-outlined text-sm">open_in_new</span>
-                        </button>
+                      {business && (
+                        <div className="flex gap-3 pt-2">
+                          {/* Botón WhatsApp / Contacto */}
+                          {(business.whatsapp || (business as any).contacto) && (
+                            <button
+                              onClick={() => {
+                                const phone = business.whatsapp || (business as any).contacto;
+                                // Simple sanitization
+                                const cleanPhone = phone?.toString().replace(/\D/g, '') || '';
+                                const msg = `Hola, vi su servicio de "${act.title}" en mi itinerario de EasyPatagonia y quisiera consultar disponibilidad.`;
+                                window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                              }}
+                              className="flex-1 py-4 bg-green-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-lg hover:-translate-y-1"
+                            >
+                              <span className="material-symbols-outlined text-lg">chat</span>
+                              Consultar
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => navigate(`/details/${business.id}`)}
+                            className="flex-1 py-4 bg-slate-100 dark:bg-background-dark text-slate-500 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all"
+                          >
+                            <span className="material-symbols-outlined text-lg">visibility</span>
+                            Ver Detalles
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
