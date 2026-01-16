@@ -416,12 +416,14 @@ const LandingAdminScreen: React.FC = () => {
                                                     const newImageUrl = data.publicUrl;
 
                                                     // Save to DB
-                                                    await supabase.from('landing_carousel').upsert({
+                                                    const { error: dbError } = await supabase.from('landing_carousel').upsert({
                                                       order_position: position,
                                                       image_url: newImageUrl,
                                                       alt_text: `Patagonia Imagen ${position}`,
                                                       is_active: true
                                                     }, { onConflict: 'order_position' });
+
+                                                    if (dbError) throw dbError;
 
                                                     // Update local state immediately (no global fetch)
                                                     setCarousel(prev => {
@@ -448,8 +450,11 @@ const LandingAdminScreen: React.FC = () => {
                                                 if (!confirm('¿Eliminar esta imagen?')) return;
                                                 setUploadingPositions(prev => ({ ...prev, [position]: true }));
                                                 try {
-                                                  await supabase.from('landing_carousel').delete().eq('order_position', position);
+                                                  const { error: delError } = await supabase.from('landing_carousel').delete().eq('order_position', position);
+                                                  if (delError) throw delError;
                                                   setCarousel(prev => prev.filter(c => c.order_position != position));
+                                                } catch (error: any) {
+                                                  alert(`Error al eliminar: ${error.message}`);
                                                 } finally {
                                                   setUploadingPositions(prev => ({ ...prev, [position]: false }));
                                                 }
@@ -487,12 +492,14 @@ const LandingAdminScreen: React.FC = () => {
                                               const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
                                               const newImageUrl = data.publicUrl;
 
-                                              await supabase.from('landing_carousel').upsert({
+                                              const { error: dbError } = await supabase.from('landing_carousel').upsert({
                                                 order_position: position,
                                                 image_url: newImageUrl,
                                                 alt_text: `Patagonia Imagen ${position}`,
                                                 is_active: true
                                               }, { onConflict: 'order_position' });
+
+                                              if (dbError) throw dbError;
 
                                               setCarousel(prev => {
                                                 const filtered = prev.filter(c => c.order_position != position);
