@@ -433,23 +433,30 @@ const LandingAdminScreen: React.FC = () => {
                                   const file = e.target.files?.[0];
                                   if (!file) return;
 
-                                  const formData = new FormData();
-                                  formData.append('file', file);
-                                  formData.append('upload_preset', 'ml_default');
+                                  try {
+                                    const fileExt = file.name.split('.').pop();
+                                    const fileName = `carousel/${Date.now()}.${fileExt}`;
 
-                                  const response = await fetch('https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload', {
-                                    method: 'POST',
-                                    body: formData
-                                  });
-                                  const data = await response.json();
+                                    const { error: uploadError } = await supabase.storage
+                                      .from('uploads')
+                                      .upload(fileName, file);
 
-                                  await supabase.from('landing_carousel').upsert({
-                                    order_position: position,
-                                    image_url: data.secure_url,
-                                    alt_text: `Patagonia Imagen ${position}`
-                                  }, { onConflict: 'order_position' });
+                                    if (uploadError) throw uploadError;
 
-                                  fetchData();
+                                    const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+
+                                    await supabase.from('landing_carousel').upsert({
+                                      order_position: position,
+                                      image_url: data.publicUrl,
+                                      alt_text: `Patagonia Imagen ${position}`,
+                                      is_active: true
+                                    }, { onConflict: 'order_position' });
+
+                                    fetchData();
+                                  } catch (error: any) {
+                                    console.error('Error:', error);
+                                    alert(`Error al subir imagen: ${error.message}`);
+                                  }
                                 }}
                               />
                             </label>
@@ -477,20 +484,30 @@ const LandingAdminScreen: React.FC = () => {
                               const file = e.target.files?.[0];
                               if (!file) return;
 
-                              // Por ahora, usa una URL de placeholder
-                              // TODO: Integrar con Cloudinary o tu servicio de imágenes
-                              const reader = new FileReader();
-                              reader.onloadend = async () => {
+                              try {
+                                const fileExt = file.name.split('.').pop();
+                                const fileName = `carousel/${Date.now()}.${fileExt}`;
+
+                                const { error: uploadError } = await supabase.storage
+                                  .from('uploads')
+                                  .upload(fileName, file);
+
+                                if (uploadError) throw uploadError;
+
+                                const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+
                                 await supabase.from('landing_carousel').upsert({
                                   order_position: position,
-                                  image_url: reader.result as string,
+                                  image_url: data.publicUrl,
                                   alt_text: `Patagonia Imagen ${position}`,
                                   is_active: true
                                 }, { onConflict: 'order_position' });
 
                                 fetchData();
-                              };
-                              reader.readAsDataURL(file);
+                              } catch (error: any) {
+                                console.error('Error:', error);
+                                alert(`Error al subir imagen: ${error.message}`);
+                              }
                             }}
                           />
                         </label>
