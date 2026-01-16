@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# EasyPatagoniaWeb
 
-# Run and deploy your AI Studio app
+**EasyPatagoniaWeb** es una plataforma turística integral diseñada para descubrir la Patagonia Aysenina.
 
-This contains everything you need to run your app locally.
+## Características Principales
 
-View your app in AI Studio: https://ai.studio/apps/drive/1BvYWlb_3DiKGPQzfgJ6jblEr-hQRpzQs
+*   **Mapa Interactivo Turístico**: Exploración visual de atractivos, servicios y rutas.
+*   **Directorio de Colaboradores (Easy Colaboradores)**: Guía completa de servicios locales (hospedaje, gastronomía, actividades).
+*   **Asistente IA (Gemini)**: Chatbot inteligente para recomendaciones personalizadas y planificación de viajes.
+*   **Planificador de Viajes**: Herramienta para organizar itinerarios a medida.
+*   **Perfil de Usuario**: Gestión de favoritos y preferencias.
 
-## Run Locally
+## Tecnologías
 
-**Prerequisites:**  Node.js
+Este proyecto está construido con tecnologías modernas:
+*   **Frontend**: React, Vite, TypeScript, Tailwind CSS.
+*   **Mapas**: Leaflet, React-Leaflet.
+*   **Backend / Base de Datos**: Supabase (PostgreSQL, Auth).
+*   **Inteligencia Artificial**: Google Gemini API.
 
+## Ejecución Local
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Para correr el proyecto en tu máquina local:
+
+1.  Instalar dependencias:
+    ```bash
+    npm install
+    ```
+2.  Configurar variables de entorno:
+    Asegúrate de tener un archivo `.env.local` con las claves necesarias (Vite, Supabase, Gemini).
+3.  Iniciar servidor de desarrollo:
+    ```bash
+    npm run dev
+    ```
+
+---
+*Desarrollado con asistencia de IA, pero con visión y ejecución propia.*

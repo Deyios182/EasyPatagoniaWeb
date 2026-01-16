@@ -67,7 +67,7 @@ const BusinessDirectoryScreen: React.FC = () => {
             </button>
             <div>
               <h1 className="text-3xl md:text-5xl font-black dark:text-white leading-none tracking-tighter uppercase italic">{t('directory_title')}</h1>
-              <p className="text-[10px] md:text-xs text-primary font-black uppercase tracking-[0.4em] mt-2">{t('discovery_subtitle')}</p>
+              <p className="text-[10px] md:text-xs text-primary font-black uppercase tracking-[0.4em] mt-2">EASY COLABORADORES</p>
             </div>
           </div>
 
