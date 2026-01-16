@@ -272,7 +272,6 @@ const LandingAdminScreen: React.FC = () => {
           <div className="flex gap-1">
             {[
               { id: 'content', label: 'Contenido', icon: 'article' },
-              { id: 'carousel', label: 'Carrusel Hero', icon: 'view_carousel' },
               { id: 'theme', label: 'Tema', icon: 'palette' },
               { id: 'contact', label: 'Contacto', icon: 'contact_mail' },
               { id: 'navigation', label: 'Navegación', icon: 'menu' }
@@ -365,8 +364,90 @@ const LandingAdminScreen: React.FC = () => {
                           />
                         </div>
 
-                        {/* IMAGEN */}
-                        {item.image_url && (
+
+                        {/* IMAGEN O CARRUSEL */}
+                        {item.key === 'hero' ? (
+                          <div className="mt-4 border-t border-slate-200 pt-4">
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-3">Imágenes del Carrusel (Máx 3)</label>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {[1, 2, 3].map((position) => {
+                                const carouselItem = carousel.find(c => c.order_position === position);
+                                return (
+                                  <div key={position} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="font-bold text-slate-700 text-xs bg-slate-200 px-2 py-1 rounded">Imagen {position}</span>
+                                      {carouselItem && <span className="text-[10px] text-green-600 font-bold">ACTIVA</span>}
+                                    </div>
+
+                                    {carouselItem ? (
+                                      <div className="space-y-2">
+                                        <div className="h-24 rounded-lg overflow-hidden relative group">
+                                          <img src={carouselItem.image_url} className="w-full h-full object-cover" alt={`Slide ${position}`} />
+                                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                                            <label className="cursor-pointer bg-white text-slate-900 p-1.5 rounded-full hover:bg-slate-100" title="Cambiar">
+                                              <span className="material-symbols-outlined text-sm">edit</span>
+                                              <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                  const file = e.target.files?.[0];
+                                                  if (!file) return;
+                                                  try {
+                                                    const fileExt = file.name.split('.').pop();
+                                                    const fileName = `carousel/${Date.now()}.${fileExt}`;
+                                                    const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                                    if (uploadError) throw uploadError;
+                                                    const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                                                    await supabase.from('landing_carousel').upsert({ order_position: position, image_url: data.publicUrl, alt_text: `Patagonia Imagen ${position}`, is_active: true }, { onConflict: 'order_position' });
+                                                    fetchData();
+                                                  } catch (error: any) { alert(`Error: ${error.message}`); }
+                                                }}
+                                              />
+                                            </label>
+                                            <button
+                                              onClick={async () => {
+                                                await supabase.from('landing_carousel').delete().eq('order_position', position);
+                                                fetchData();
+                                              }}
+                                              className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
+                                              title="Eliminar"
+                                            >
+                                              <span className="material-symbols-outlined text-sm">delete</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <label className="cursor-pointer h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-primary hover:bg-blue-50 transition-all flex flex-col items-center justify-center">
+                                        <span className="material-symbols-outlined text-slate-400">add</span>
+                                        <span className="text-[10px] text-slate-500 font-bold mt-1">Subir</span>
+                                        <input
+                                          type="file"
+                                          className="hidden"
+                                          accept="image/*"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            try {
+                                              const fileExt = file.name.split('.').pop();
+                                              const fileName = `carousel/${Date.now()}.${fileExt}`;
+                                              const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                              if (uploadError) throw uploadError;
+                                              const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                                              await supabase.from('landing_carousel').upsert({ order_position: position, image_url: data.publicUrl, alt_text: `Patagonia Imagen ${position}`, is_active: true }, { onConflict: 'order_position' });
+                                              fetchData();
+                                            } catch (error: any) { alert(`Error: ${error.message}`); }
+                                          }}
+                                        />
+                                      </label>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : item.image_url && (
                           <div>
                             <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
                             <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
