@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useAppAuth } from '../App';  // Dynamic Data Link
 import { supabase } from '../supabaseClient';
+import LogoTicker from '../components/LogoTicker';
 
 interface LandingContent {
   key: string;
@@ -113,6 +114,21 @@ const LandingPage: React.FC = () => {
 
   const [logoError, setLogoError] = useState(false);
 
+  // Ref for horizontal scroll
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
   // Filter Highlights based on selection
   const visibleHighlights = React.useMemo(() => {
     return allAttractions.filter(a => a.locality_id === selectedLocality);
@@ -137,10 +153,15 @@ const LandingPage: React.FC = () => {
 
   const handleEmail = () => {
     const email = settings['contact_email'] || 'contacto@easypatagonia.com';
-    const subject = encodeURIComponent("Consulta desde EasyPatagonia");
-    const body = encodeURIComponent("Hola, quisiera más información sobre...");
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    const subject = "Consulta desde EasyPatagonia";
+    const body = "Hola, me gustaría recibir más información.";
+
+    // Attempt standard mailto
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
+
+
+
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -288,8 +309,29 @@ const LandingPage: React.FC = () => {
                   <p className="text-[10px] text-gray-500 font-bold">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
               </div>
-              <div className="lg:col-span-2">
-                <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x">
+              <div className="lg:col-span-2 relative group-hover/section">
+
+                {/* Scroll Buttons (Visible on Desktop) */}
+                <button
+                  onClick={scrollLeft}
+                  className="hidden md:flex absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
+                  aria-label="Scroll Left"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+
+                <button
+                  onClick={scrollRight}
+                  className="hidden md:flex absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
+                  aria-label="Scroll Right"
+                >
+                  <span className="material-symbols-outlined">arrow_forward</span>
+                </button>
+
+                <div
+                  ref={scrollContainerRef}
+                  className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x px-2"
+                >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
                     <div key={place.id} className="min-w-[280px] md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
@@ -474,6 +516,12 @@ const LandingPage: React.FC = () => {
 
             </div>
           </div>
+        </section>
+
+        {/* LOGO TICKER BANNER */}
+        <section className="bg-[#1a2a30] pb-10">
+          <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Empresas que confían en nosotros</h3>
+          <LogoTicker businesses={allAttractions as any} speed={60} />
         </section>
 
         <footer className="bg-[#152024] py-12 text-center text-slate-500 text-xs">
