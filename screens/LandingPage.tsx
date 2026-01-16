@@ -40,6 +40,16 @@ const LandingPage: React.FC = () => {
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll for sticky nav
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Update state when data loads
   useEffect(() => {
@@ -195,33 +205,42 @@ const LandingPage: React.FC = () => {
             </div>
           )}
 
-          <nav className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-center z-50">
-            <div className="mb-4 md:mb-0 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-              {!logoError ? (
-                <img
-                  src={settings['logo_url'] || "/logo_easy.png"}
-                  className="h-24 w-auto object-contain hover:scale-105 transition-transform"
-                  alt={settings['site_name'] || "Easy Patagonia"}
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <div className="flex flex-col">
-                  <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase">
-                    {settings['site_name'] || 'Easy Patagonia'}
-                  </h1>
-                  <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
-                    {settings['site_tagline'] || 'Austral Experience'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-6 mb-4 md:mb-0 bg-black/30 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
-              <button onClick={() => scrollToSection('destinos')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
-              <button onClick={() => scrollToSection('vision')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
-              <button onClick={() => scrollToSection('contacto')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
-            </div>
-            <button onClick={handleEnterApp} className="bg-[#dd6e42] text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white">{isAuthenticated ? 'Ir al Mapa' : 'Ingresar'}</button>
-          </nav>
+          <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#1a2a30]/90 backdrop-blur-md py-2 shadow-lg' : 'bg-transparent py-6'}`}>
+            <nav className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+              <div className="mb-4 md:mb-0 cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
+                {!logoError ? (
+                  <img
+                    src={settings['logo_url'] || "/logo_easy.png"}
+                    className={`${scrolled ? 'h-10' : 'h-24'} w-auto object-contain hover:scale-105 transition-all duration-300`}
+                    alt={settings['site_name'] || "Easy Patagonia"}
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <div className="flex flex-col">
+                    <h1 className={`font-black text-white italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-lg' : 'text-2xl'}`}>
+                      {settings['site_name'] || 'Easy Patagonia'}
+                    </h1>
+                    {!scrolled && (
+                      <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
+                        {settings['site_tagline'] || 'Austral Experience'}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className={`flex gap-6 mb-4 md:mb-0 px-6 py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
+                <button onClick={() => scrollToSection('destinos')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
+                <button onClick={() => scrollToSection('vision')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
+                <button onClick={() => scrollToSection('contacto')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
+              </div>
+              <button
+                onClick={handleEnterApp}
+                className={`bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white ${scrolled ? 'px-6 py-2' : 'px-8 py-3'}`}
+              >
+                {isAuthenticated ? 'Ir al Mapa' : 'Ingresar'}
+              </button>
+            </nav>
+          </div>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
             <motion.h1
@@ -308,7 +327,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* --- SECCIÓN NUESTRA VISIÓN (LIMPIA) --- */}
-        <section id="vision" className="min-h-screen flex items-center py-24 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
+        <section id="vision" className="min-h-screen flex items-center py-12 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
           <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
 
             {/* Pilares */}
@@ -390,7 +409,7 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="mt-12 pt-12 border-t border-gray-300">
               <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
-              <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">infoeasypatagonia@gmail.com</button>
+              <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">contacto@easypatagonia.com</button>
             </div>
           </div>
         </section>
