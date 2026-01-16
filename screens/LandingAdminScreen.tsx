@@ -85,6 +85,7 @@ const LandingAdminScreen: React.FC = () => {
   const [carousel, setCarousel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingPositions, setUploadingPositions] = useState<Record<number, boolean>>({});
+  const [uploadingKeys, setUploadingKeys] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [customThemeName, setCustomThemeName] = useState('');
   const [showSaveThemeModal, setShowSaveThemeModal] = useState(false);
@@ -524,18 +525,102 @@ const LandingAdminScreen: React.FC = () => {
                               })}
                             </div>
                           </div>
-                        ) : item.image_url && (
+                        ) : (
                           <div>
                             <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
-                            <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
-                              <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm">
-                                  Cambiar
-                                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
-                                </label>
+
+                            {uploadingKeys[item.key] ? (
+                              <div className="h-40 rounded-xl bg-slate-100 flex flex-col items-center justify-center border-2 border-primary/20">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                                <span className="text-xs text-primary font-bold animate-pulse">Subiendo...</span>
                               </div>
-                            </div>
+                            ) : item.image_url ? (
+                              <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
+                                <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm hover:bg-slate-100 shadow-lg transition-transform hover:scale-105">
+                                    Cambiar
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      accept="image/*"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+
+                                        setUploadingKeys(prev => ({ ...prev, [item.key]: true }));
+
+                                        try {
+                                          const fileExt = file.name.split('.').pop();
+                                          const fileName = `content/${item.key}-${Date.now()}.${fileExt}`;
+
+                                          const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                          if (uploadError) throw uploadError;
+
+                                          const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                                          const newUrl = data.publicUrl;
+
+                                          // Update DB
+                                          const { error: dbError } = await supabase.from('landing_content').update({ image_url: newUrl }).eq('key', item.key);
+                                          if (dbError) throw dbError;
+
+                                          // Update local state
+                                          setContent(prev => prev.map(c => c.key === item.key ? { ...c, image_url: newUrl } : c));
+                                          showSaveIndicator();
+
+                                        } catch (error: any) {
+                                          alert(`Error: ${error.message}`);
+                                        } finally {
+                                          setUploadingKeys(prev => ({ ...prev, [item.key]: false }));
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer h-40 rounded-xl border-2 border-dashed border-slate-300 hover:border-primary hover:bg-blue-50 transition-all flex flex-col items-center justify-center group">
+                                <div className="bg-white p-3 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                  <span className="material-symbols-outlined text-slate-400 text-2xl">add_photo_alternate</span>
+                                </div>
+                                <span className="text-xs text-slate-500 font-bold">Subir Imagen</span>
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept="image/*"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    setUploadingKeys(prev => ({ ...prev, [item.key]: true }));
+
+                                    try {
+                                      const fileExt = file.name.split('.').pop();
+                                      const fileName = `content/${item.key}-${Date.now()}.${fileExt}`;
+
+                                      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                      if (uploadError) throw uploadError;
+
+                                      const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                                      const newUrl = data.publicUrl;
+
+                                      // Update DB
+                                      const { error: dbError } = await supabase.from('landing_content').update({ image_url: newUrl }).eq('key', item.key);
+                                      if (dbError) throw dbError;
+
+                                      // Update local state
+                                      setContent(prev => prev.map(c => c.key === item.key ? { ...c, image_url: newUrl } : c));
+                                      showSaveIndicator();
+
+                                    } catch (error: any) {
+                                      alert(`Error: ${error.message}`);
+                                    } finally {
+                                      setUploadingKeys(prev => ({ ...prev, [item.key]: false }));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
                           </div>
                         )}
                       </div>

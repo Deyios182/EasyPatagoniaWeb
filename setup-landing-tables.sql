@@ -8,7 +8,7 @@
 CREATE TABLE IF NOT EXISTS landing_carousel (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   image_url TEXT NOT NULL,
-  order_position INTEGER NOT NULL,
+  order_position INTEGER NOT NULL UNIQUE,
   alt_text TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now(),
