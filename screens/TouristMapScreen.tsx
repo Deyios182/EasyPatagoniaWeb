@@ -12,7 +12,7 @@ const MAP_TILES: Record<MapTheme, string> = {
 
 const TouristMapScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { allBusinesses, t, mapTheme, user, allLocalities, allAttractions } = useAppAuth();
+  const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions } = useAppAuth();
 
   // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
@@ -97,6 +97,7 @@ const TouristMapScreen: React.FC = () => {
 
     tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
       maxZoom: 20,
+      maxNativeZoom: mapTheme === 'satellite' ? 17 : 19, // Fix white screen on high zoom
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
@@ -119,6 +120,7 @@ const TouristMapScreen: React.FC = () => {
       mapInstance.removeLayer(tileLayerRef.current);
       tileLayerRef.current = L.tileLayer(MAP_TILES[mapTheme], {
         maxZoom: 20,
+        maxNativeZoom: mapTheme === 'satellite' ? 17 : 19, // Fix white screen on high zoom
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapInstance);
 
@@ -439,6 +441,16 @@ const TouristMapScreen: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* Toggle Satelital */}
+        <button
+          onClick={() => setMapTheme(mapTheme === 'satellite' ? 'light' : 'satellite')}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all border border-slate-200 dark:border-white/10 ${mapTheme === 'satellite' ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
+          title={mapTheme === 'satellite' ? "Ver Mapa" : "Ver Satélite"}
+        >
+          <span className="material-symbols-outlined text-2xl">{mapTheme === 'satellite' ? 'map' : 'satellite_alt'}</span>
+        </button>
+
 
         {/* Filtros */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">

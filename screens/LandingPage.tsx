@@ -136,7 +136,10 @@ const LandingPage: React.FC = () => {
   };
 
   const handleEmail = () => {
-    window.location.href = `mailto:${settings['contact_email'] || 'infoeasypatagonia@gmail.com'}`;
+    const email = settings['contact_email'] || 'contacto@easypatagonia.com';
+    const subject = encodeURIComponent("Consulta desde EasyPatagonia");
+    const body = encodeURIComponent("Hola, quisiera más información sobre...");
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   };
 
   const scrollToSection = (id: string) => {
@@ -292,19 +295,21 @@ const LandingPage: React.FC = () => {
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
-                      {/* Google Maps Button */}
-                      {place.latitude && place.longitude && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openInGoogleMaps(place.latitude, place.longitude, place.name);
-                          }}
-                          className="absolute top-4 right-4 bg-white/90 hover:bg-white backdrop-blur-md p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10 group/maps"
-                          title="Ver en Google Maps"
-                        >
-                          <span className="material-symbols-outlined text-[#dd6e42] text-xl">map</span>
-                        </button>
-                      )}
+                      {/* Detail Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isAuthenticated) {
+                            navigate(`/attraction/${place.id}`);
+                          } else {
+                            navigate('/auth/login');
+                          }
+                        }}
+                        className="absolute top-4 right-4 bg-white/90 hover:bg-white backdrop-blur-md p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10 group/maps"
+                        title="Ver Detalles"
+                      >
+                        <span className="material-symbols-outlined text-[#dd6e42] text-xl">visibility</span>
+                      </button>
 
                       <div className="absolute bottom-8 left-8 right-8 cursor-pointer" onClick={handleEnterApp}>
                         <h5 className="text-2xl font-black text-white uppercase italic mb-1 leading-none text-left">{place.name}</h5>
@@ -407,9 +412,18 @@ const LandingPage: React.FC = () => {
               <button onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")} className="flex items-center gap-3 px-8 py-4 bg-black text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"><span className="font-black uppercase tracking-widest text-xs">TikTok</span></button>
               <button onClick={handleWhatsApp} className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-2xl shadow-lg hover:-translate-y-1 transition-transform"><span className="font-black uppercase tracking-widest text-xs">Soporte WhatsApp</span></button>
             </div>
-            <div className="mt-12 pt-12 border-t border-gray-300">
-              <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
-              <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">contacto@easypatagonia.com</button>
+            <div className="mt-12 flex flex-col items-center">
+              <button
+                onClick={handleEnterApp}
+                className="bg-[#dd6e42] text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 hover:bg-[#c95d36] transition-all mb-8 animate-pulse"
+              >
+                Explora el Mapa Interactivo
+              </button>
+
+              <div className="pt-8 border-t border-gray-300 w-full">
+                <p className="text-gray-500 mb-2">¿Prefieres Contacto Directo?</p>
+                <button onClick={handleEmail} className="text-[#3498DB] font-bold text-lg underline hover:text-[#2980b9]">contacto@easypatagonia.com</button>
+              </div>
             </div>
           </div>
         </section>
