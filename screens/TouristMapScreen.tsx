@@ -6,7 +6,7 @@ import { Category, Business, MapTheme } from '../types';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',  // Changed to OSM for reliability
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', // Cleaner map without competitor POIs
   satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 };
 
@@ -256,7 +256,7 @@ const TouristMapScreen: React.FC = () => {
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                         <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
         } else if (item.type === 'attraction') {
-          innerHtml = `<div style="width: 100%; height: 100%; background-color: ${item.color}; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">location_on</span></div>`;
+          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 14px;">star</span>`;
         }
 
         customIcon = L.divIcon({
@@ -264,8 +264,8 @@ const TouristMapScreen: React.FC = () => {
           html: `
             <div style="
               position: relative;
-              width: ${isActive ? '56px' : '40px'}; 
-              height: ${isActive ? '56px' : '40px'}; 
+              width: ${isActive ? '56px' : (item.type === 'attraction') ? '24px' : '40px'}; 
+              height: ${isActive ? '56px' : (item.type === 'attraction') ? '24px' : '40px'}; 
               border-radius: 50%; 
               border: ${isActive ? '3px' : '2px'} solid white; 
               background-color: ${item.color}; 
