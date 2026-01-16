@@ -148,7 +148,14 @@ const LandingPage: React.FC = () => {
         <div className="relative h-screen w-full overflow-hidden bg-black">
           {/* Carousel Background */}
           <div className="absolute inset-0">
-            {carouselImages.length > 0 ? (
+            {loading ? (
+              <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
+                  <p className="text-white text-lg font-bold">Cargando...</p>
+                </div>
+              </div>
+            ) : carouselImages.length > 0 ? (
               carouselImages.map((img, index) => (
                 <div
                   key={img.id}
@@ -223,10 +230,8 @@ const LandingPage: React.FC = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1 }}
               className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none"
-            >
-              {content['hero']?.title || 'Patagonia'} <br />
-              <span className="text-[#dd6e42]">Sin Límites</span>
-            </motion.h1>
+              dangerouslySetInnerHTML={{ __html: (content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />') }}
+            ></motion.h1>
             <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
               "{content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
             </p>
@@ -396,7 +401,7 @@ const LandingPage: React.FC = () => {
           <p className="uppercase tracking-widest font-black mb-4">Easy Patagonia © 2024</p>
           <p>Desarrollado con ❤️ en la Región de Aysén</p>
         </footer>
-      </div>
+      </div >
     </>
   );
 };
