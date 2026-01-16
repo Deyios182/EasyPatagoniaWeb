@@ -266,6 +266,7 @@ const LandingAdminScreen: React.FC = () => {
           <div className="flex gap-1">
             {[
               { id: 'content', label: 'Contenido', icon: 'article' },
+              { id: 'carousel', label: 'Carrusel Hero', icon: 'view_carousel' },
               { id: 'theme', label: 'Tema', icon: 'palette' },
               { id: 'contact', label: 'Contacto', icon: 'contact_mail' },
               { id: 'navigation', label: 'Navegación', icon: 'menu' }
@@ -758,3 +759,4 @@ const LandingAdminScreen: React.FC = () => {
 };
 
 export default LandingAdminScreen;
+
