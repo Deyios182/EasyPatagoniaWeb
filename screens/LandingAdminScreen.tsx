@@ -127,6 +127,12 @@ const LandingAdminScreen: React.FC = () => {
     } else {
       console.warn('⚠️ [LANDING ADMIN] No settings data received');
     }
+    if (carouselRes.data) {
+      console.log('✅ [LANDING ADMIN] Setting carousel:', carouselRes.data.length, 'items');
+      setCarousel(carouselRes.data);
+    } else {
+      console.warn('⚠️ [LANDING ADMIN] No carousel data received');
+    }
 
     setLoading(false);
   };
@@ -478,7 +484,8 @@ const LandingAdminScreen: React.FC = () => {
                                 await supabase.from('landing_carousel').upsert({
                                   order_position: position,
                                   image_url: reader.result as string,
-                                  alt_text: `Patagonia Imagen ${position}`
+                                  alt_text: `Patagonia Imagen ${position}`,
+                                  is_active: true
                                 }, { onConflict: 'order_position' });
 
                                 fetchData();
