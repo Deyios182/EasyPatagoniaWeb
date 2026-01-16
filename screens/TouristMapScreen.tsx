@@ -357,14 +357,14 @@ const TouristMapScreen: React.FC = () => {
                     <span className="bg-primary text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg leading-none">LIVE</span>
                   </div>
                   <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Ir a {selectedBusiness?.nombre || 'Destino'}</h3>
+                    <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Ir a {selectedBusiness?.nombre || selectedAttraction?.name || 'Destino'}</h3>
                     <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Ubicación Actual</p>
                   </div>
                   <a
-                    href={selectedBusiness?.gps ? `https://www.google.com/maps/dir/?api=1&destination=${selectedBusiness.gps.lat},${selectedBusiness.gps.lng}` : '#'}
+                    href={selectedBusiness?.gps ? `https://www.google.com/maps/dir/?api=1&destination=${selectedBusiness.gps.lat},${selectedBusiness.gps.lng}` : selectedAttraction?.latitude ? `https://www.google.com/maps/dir/?api=1&destination=${selectedAttraction.latitude},${selectedAttraction.longitude}` : '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none ${!selectedBusiness ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                    className={`w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none ${(!selectedBusiness && !selectedAttraction) ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                   >
                     Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
                   </a>
@@ -504,7 +504,7 @@ const TouristMapScreen: React.FC = () => {
         {selectedAttraction && (
           <div
             className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
-            onClick={() => navigate('/discover', { state: { selectedAttractionId: selectedAttraction.id } })}
+            onClick={() => navigate(`/attraction/${selectedAttraction.id}`)}
           >
             <div
               className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
@@ -530,8 +530,8 @@ const TouristMapScreen: React.FC = () => {
           </div>
         )}
 
-        {/* BOTÓN CÓMO LLEGAR (Se oculta en móvil si hay selección) */}
-        {(!selectedBusiness && !selectedAttraction || !isMobile) && (
+        {/* BOTÓN CÓMO LLEGAR (Se muestra siempre ahora, o condicional si se prefiere) */}
+        {((selectedBusiness || selectedAttraction) || !isMobile) && (
           <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
             <button
               onClick={() => setShowRouteAssistant(true)}
