@@ -12,7 +12,14 @@ const PlannerScreen: React.FC = () => {
   const [days, setDays] = useState(3);
   const [budget, setBudget] = useState('1.500.000 CLP');
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(['Restaurante', 'Hospedaje', 'Actividad']);
+  const [selectedLocalities, setSelectedLocalities] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Derive unique localities from business data
+  const uniqueLocalities = React.useMemo(() => {
+    const locs = new Set(allBusinesses.map(b => b.locality_name).filter(Boolean) as string[]);
+    return Array.from(locs).sort();
+  }, [allBusinesses]);
 
   // RESTORE STATE from LocalStorage (Draft)
   useEffect(() => {
@@ -23,6 +30,7 @@ const PlannerScreen: React.FC = () => {
         if (parsed.days) setDays(parsed.days);
         if (parsed.budget) setBudget(parsed.budget);
         if (parsed.categories) setSelectedCategories(parsed.categories);
+        if (parsed.localities) setSelectedLocalities(parsed.localities);
       } catch (e) {
         console.error("Failed to parse saved draft", e);
       }
@@ -31,8 +39,8 @@ const PlannerScreen: React.FC = () => {
 
   // AUTO-SAVE Draft
   useEffect(() => {
-    localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories }));
-  }, [days, budget, selectedCategories]);
+    localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories, localities: selectedLocalities }));
+  }, [days, budget, selectedCategories, selectedLocalities]);
 
   const categories: { id: Category, icon: string, label: string }[] = [
     { id: 'Hospedaje', icon: 'hotel', label: t('hotel') },
@@ -47,16 +55,22 @@ const PlannerScreen: React.FC = () => {
     );
   };
 
+  const toggleLocality = (loc: string) => {
+    setSelectedLocalities(prev =>
+      prev.includes(loc) ? prev.filter(l => l !== loc) : [...prev, loc]
+    );
+  };
+
   const handleGenerate = async () => {
     if (selectedCategories.length === 0) {
       alert(language === 'ES' ? "Selecciona al menos una categoría" : "Select at least one category");
       return;
     }
     setLoading(true);
-    const plan = await generateItineraryAI(days, budget, selectedCategories, allBusinesses, language);
+    const plan = await generateItineraryAI(days, budget, selectedCategories, allBusinesses, selectedLocalities, language);
     if (plan) {
       localStorage.setItem('ep_plan', JSON.stringify(plan));
-      localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories }));
+      localStorage.setItem('ep_plan_meta', JSON.stringify({ days, budget, categories: selectedCategories, localities: selectedLocalities }));
       navigate('/itinerary');
     } else {
       alert(language === 'ES' ? "No se pudo generar el itinerario. Es posible que el servicio de IA esté saturado momentáneamente. Por favor, intenta de nuevo en unos segundos." : "Could not generate itinerary. AI service might be busy. Please try again shortly.");
@@ -129,6 +143,31 @@ const PlannerScreen: React.FC = () => {
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest ml-2">Define tu presupuesto para recomendaciones</p>
             </section>
           </div>
+
+          {/* Localidades / Destinos */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-1 bg-primary"></div>
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tighter leading-none italic">¿Dónde quieres ir?</h2>
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest pl-14">Selecciona tus destinos (o déjalo vacío para ver todo)</p>
+
+            <div className="flex flex-wrap gap-3 pl-0 md:pl-14">
+              {uniqueLocalities.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">Cargando destinos...</p>
+              ) : (
+                uniqueLocalities.map(loc => (
+                  <button
+                    key={loc}
+                    onClick={() => toggleLocality(loc)}
+                    className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${selectedLocalities.includes(loc) ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-slate-50 dark:bg-background-dark border-slate-200 dark:border-white/10 text-slate-500'}`}
+                  >
+                    {loc}
+                  </button>
+                ))
+              )}
+            </div>
+          </section>
 
           {/* Categorías */}
           <section className="space-y-10">

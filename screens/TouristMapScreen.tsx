@@ -187,7 +187,7 @@ const TouristMapScreen: React.FC = () => {
         lng: l.longitude!,
         title: l.name,
         type: 'locality',
-        color: '#8e44ad', // Purple
+        color: '#dd6e42', // Orange (EasyPatagonia)
         icon: l.image_url,
         data: l
       }))
@@ -238,14 +238,14 @@ const TouristMapScreen: React.FC = () => {
               transform: translateX(-50%);
             ">
               <div style="
-                background: linear-gradient(135deg, #8e44ad, #9b59b6);
+                background: linear-gradient(135deg, #dd6e42, #ff8c61);
                 color: white;
                 font-size: 10px;
                 font-weight: 800;
                 padding: 4px 10px;
                 border-radius: 12px;
                 white-space: nowrap;
-                box-shadow: 0 2px 10px rgba(142, 68, 173, 0.4);
+                box-shadow: 0 2px 10px rgba(221, 110, 66, 0.4);
                 border: 1px solid rgba(255,255,255,0.2);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -257,7 +257,7 @@ const TouristMapScreen: React.FC = () => {
                 height: 0;
                 border-left: 5px solid transparent;
                 border-right: 5px solid transparent;
-                border-top: 5px solid #8e44ad;
+                border-top: 5px solid #dd6e42;
               "></div>
             </div>
           `,

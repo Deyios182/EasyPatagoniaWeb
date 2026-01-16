@@ -111,12 +111,17 @@ export async function generateActivityPreview(activityTitle: string) {
  * 🚀 MODIFICADO: Planificador conectado a Supabase
  * Ya no recibe 'businesses' como argumento, los busca él mismo en la BD.
  */
-export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], language: 'ES' | 'EN' | 'PT' = 'ES') {
+export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], localities: string[] = [], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
 
     // FILTER LOCAL BUSINESSES
-    const filteredBusinesses = businesses.filter(b => categories.includes(b.categoria as Category));
+    let filteredBusinesses = businesses.filter(b => categories.includes(b.categoria as Category));
+
+    // FILTER BY LOCALITY (If selected)
+    if (localities && localities.length > 0) {
+      filteredBusinesses = filteredBusinesses.filter(b => b.locality_name && localities.includes(b.locality_name));
+    }
 
     // 2. Crear contexto del catálogo
     const catalogContext = filteredBusinesses.map((b: any) => ({
@@ -126,6 +131,7 @@ export async function generateItineraryAI(days: number, budget: string, categori
     }));
 
     const prompt = `Planificador Aysén. Idioma: ${language}. Días: ${days}. Presupuesto: ${budget}.
+    LOCALIDADES PREFERIDAS: ${localities.length > 0 ? localities.join(', ') : "Cualquiera"}.
     CATÁLOGO LOCAL (Prioridad): ${JSON.stringify(catalogContext)}
     Genera JSON válido (Array de objetos).`;
 
