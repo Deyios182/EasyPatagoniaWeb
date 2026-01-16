@@ -112,6 +112,7 @@ const LandingAdminScreen: React.FC = () => {
 
     if (contentRes.data) {
       console.log('✅ [LANDING ADMIN] Setting content:', contentRes.data.length, 'items');
+      console.log('📋 [LANDING ADMIN] Sample item:', contentRes.data[0]);
       setContent(contentRes.data);
     } else {
       console.warn('⚠️ [LANDING ADMIN] No content data received');
@@ -286,9 +287,29 @@ const LandingAdminScreen: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* CONTENT TAB */}
         {activeTab === 'content' && (
-          <div className="space-y-8">
-            {/* Mensaje si no hay datos */}
-            {content.length === 0 && !loading && (
+          <div className="space-y-6">
+            {loading && (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-white mt-4">Cargando...</p>
+              </div>
+            )}
+
+            {/* DEBUG PANEL - MOSTRAR DATOS CRUDOS */}
+            {!loading && content.length > 0 && (
+              <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl p-6">
+                <h3 className="text-yellow-500 font-black text-xl mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined">bug_report</span>
+                  DEBUG - Datos Crudos de la BD
+                </h3>
+                <div className="bg-black/50 p-4 rounded-lg overflow-auto max-h-96">
+                  <pre className="text-green-400 text-xs font-mono">{JSON.stringify(content, null, 2)}</pre>
+                </div>
+                <p className="text-yellow-300 text-sm mt-4">👆 Copia este JSON y envíamelo para diagnosticar el problema</p>
+              </div>
+            )}
+
+            {!loading && content.length === 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
                 <span className="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
                 <h3 className="text-xl font-black text-white mb-2">No hay contenido cargado</h3>
@@ -296,100 +317,67 @@ const LandingAdminScreen: React.FC = () => {
               </div>
             )}
 
-            {/* Mostrar todos los items de content */}
-            {content.length > 0 && (
+            {!loading && content.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {content.map(item => (
-                  <div key={item.key} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:border-primary/30 transition-all">
+                {content.map((item, index) => (
+                  <div key={item.key || index} className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-black text-white uppercase">{item.key.replace(/_/g, ' ')}</h3>
+                      <h3 className="text-lg font-black text-white uppercase">{item.key?.replace(/_/g, ' ') || 'Sin Key'}</h3>
                       <span className="text-xs bg-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono">{item.key}</span>
                     </div>
 
                     <div className="space-y-4">
-                      {item.title !== null && item.title !== undefined && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
-                          <input
-                            type="text"
-                            value={item.title || ''}
-                            onChange={(e) => updateContent(item.key, 'title', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            placeholder="Título..."
-                          />
-                        </div>
-                      )}
+                      {/* TITULO - siempre mostrar */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Título</label>
+                        <input
+                          type="text"
+                          value={item.title || ''}
+                          onChange={(e) => updateContent(item.key, 'title', e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                          placeholder="Título..."
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.title}" (tipo: {typeof item.title})</p>
+                      </div>
 
-                      {item.subtitle !== null && item.subtitle !== undefined && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo/Slogan</label>
-                          <input
-                            type="text"
-                            value={item.subtitle || ''}
-                            onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            placeholder="Subtítulo..."
-                          />
-                        </div>
-                      )}
+                      {/* SUBTITULO - siempre mostrar */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Subtítulo/Slogan</label>
+                        <input
+                          type="text"
+                          value={item.subtitle || ''}
+                          onChange={(e) => updateContent(item.key, 'subtitle', e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                          placeholder="Subtítulo..."
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.subtitle}" (tipo: {typeof item.subtitle})</p>
+                      </div>
 
-                      {item.body !== null && item.body !== undefined && (
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
-                          <textarea
-                            value={item.body || ''}
-                            onChange={(e) => updateContent(item.key, 'body', e.target.value)}
-                            rows={3}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
-                            placeholder="Descripción..."
-                          />
-                        </div>
-                      )}
+                      {/* BODY - siempre mostrar */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Descripción</label>
+                        <textarea
+                          value={item.body || ''}
+                          onChange={(e) => updateContent(item.key, 'body', e.target.value)}
+                          rows={3}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none"
+                          placeholder="Descripción..."
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Valor: "{item.body}" (tipo: {typeof item.body})</p>
+                      </div>
 
-                      {item.image_url !== null && item.image_url !== undefined && (
+                      {/* IMAGEN - solo si tiene URL */}
+                      {item.image_url && (
                         <div>
                           <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Imagen</label>
-                          <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300 hover:border-primary transition-colors">
-                            {item.image_url ? (
-                              <>
-                                <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
-                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
-                                    Cambiar
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
-                                  </label>
-                                </div>
-                              </>
-                            ) : (
-                              <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors">
-                                <span className="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
-                                <span className="text-sm font-bold">Subir Imagen</span>
+                          <div className="relative h-40 rounded-xl overflow-hidden group border-2 border-dashed border-slate-300">
+                            <img src={item.image_url} className="w-full h-full object-cover" alt={item.key} />
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm">
+                                Cambiar
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, item.key)} />
                               </label>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {item.button_text !== null && item.button_text !== undefined && (
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Texto Botón</label>
-                            <input
-                              type="text"
-                              value={item.button_text || ''}
-                              onChange={(e) => updateContent(item.key, 'button_text', e.target.value)}
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">URL Botón</label>
-                            <input
-                              type="text"
-                              value={item.button_url || ''}
-                              onChange={(e) => updateContent(item.key, 'button_url', e.target.value)}
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            />
+                            </div>
                           </div>
                         </div>
                       )}
