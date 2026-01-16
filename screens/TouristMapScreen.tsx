@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import { useAppAuth } from '../App';
 import { Category, Business, MapTheme } from '../types';
@@ -12,6 +12,7 @@ const MAP_TILES: Record<MapTheme, string> = {
 
 const TouristMapScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions } = useAppAuth();
 
   // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
@@ -36,6 +37,20 @@ const TouristMapScreen: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle incoming navigation state (e.g. from Highlights or Details)
+  useEffect(() => {
+    if (location.state?.selectedAttractionId) {
+      const attr = allAttractions.find(a => a.id === location.state.selectedAttractionId);
+      if (attr) {
+        setSelectedAttraction(attr);
+        setSelectedBusiness(null);
+        // Clear state to avoid re-triggering on future renders if needed, 
+        // using replace: true might be better but for now this works.
+        // We can optionally clear history state but it's fine.
+      }
+    }
+  }, [location.state, allAttractions]);
 
   const localTransfers = useMemo(() =>
     allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios?.some(s => (s.nombre || '').toLowerCase().includes('traslado') || (s.nombre || '').toLowerCase().includes('aeropuerto'))),

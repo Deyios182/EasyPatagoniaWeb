@@ -96,10 +96,10 @@ const HighlightsScreen: React.FC = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                openInGoogleMaps(place.latitude, place.longitude, place.name);
+                                                navigate('/map', { state: { selectedAttractionId: place.id } });
                                             }}
                                             className="absolute top-4 right-4 bg-white/90 hover:bg-white backdrop-blur-md p-3 rounded-full shadow-lg transition-all hover:scale-110 z-10"
-                                            title="Ver en Google Maps"
+                                            title="Ver en Mapa Interactivo"
                                         >
                                             <span className="material-symbols-outlined text-primary text-xl">map</span>
                                         </button>
@@ -146,11 +146,11 @@ const HighlightsScreen: React.FC = () => {
                                         </button>
                                         {place.latitude && place.longitude && (
                                             <button
-                                                onClick={() => openInGoogleMaps(place.latitude, place.longitude, place.name)}
+                                                onClick={() => navigate('/map', { state: { selectedAttractionId: place.id } })}
                                                 className="bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:scale-105 flex items-center gap-2"
                                             >
-                                                <span className="material-symbols-outlined text-lg">directions</span>
-                                                Cómo llegar
+                                                <span className="material-symbols-outlined text-lg">map</span>
+                                                Ver en Mapa
                                             </button>
                                         )}
                                     </div>
