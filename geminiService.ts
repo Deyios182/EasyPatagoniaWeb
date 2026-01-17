@@ -138,10 +138,29 @@ export async function generateItineraryAI(days: number, budget: string, categori
       });
     }
 
-    const catalogContext = filteredBusinesses.map((b: any) => ({
+    // SMART CONTEXT STRATEGY
+    // If strict filters yield too few results (< 5), we pass ALL businesses 
+    // but mark the matching ones as "preferred" so the AI knows what to prioritize.
+    let finalContextBusinesses = filteredBusinesses;
+    const isFallbackActive = filteredBusinesses.length < 5;
+
+    if (isFallbackActive) {
+      console.log("⚠️ [PLANNER] Low results, expanding search context.");
+      finalContextBusinesses = businesses.map(b => {
+        const isCat = validCategories.includes(normalize(b.categoria || b.category || ""));
+        const isLoc = localities.length === 0 || localities.some(l => normalize(l) === normalize(b.locality_name || ""));
+        return { ...b, isPreferred: isCat && isLoc };
+      });
+    } else {
+      finalContextBusinesses = filteredBusinesses.map(b => ({ ...b, isPreferred: true }));
+    }
+
+    const catalogContext = finalContextBusinesses.map((b: any) => ({
       name: b.name || b.nombre,
       cat: b.categoria || b.category,
-      loc: b.info?.direccion || b.description || "Aysén"
+      loc: b.info?.direccion || b.description || "Aysén",
+      priority: b.isPreferred ? "ALTA (Coincide con filtros)" : "MEDIA (Alternativa)",
+      desc: b.description // Added description for better AI matching
     }));
 
     // LOGGING FOR DEBUGGING
@@ -151,8 +170,9 @@ export async function generateItineraryAI(days: number, budget: string, categori
       localities,
       categoryCount: categories.length,
       totalBusinesses: businesses.length,
-      filtered: filteredBusinesses.length,
-      sample: catalogContext.slice(0, 3)
+      strictMatches: filteredBusinesses.length,
+      contextSize: catalogContext.length,
+      fallbackMode: isFallbackActive
     });
 
     // STICT JSON PROMPT WITH STRONG INSTRUCTIONS
@@ -162,9 +182,10 @@ TAREA: Crear un itinerario de viaje lógico basado en los datos proporcionados.
 RESTRICCIÓN CRÍTICA: Tu salida debe ser EXCLUSIVAMENTE código JSON válido. Sin markdown (\`\`\`), sin explicaciones, sin saludos.
 
 OBJETIVO PRINCIPAL: Recomendar actividades usando el "Catálogo de Negocios Disponibles".
-1. Prioriza SIEMPRE los negocios de la lista adjunta.
-2. Si sugieres comer, dormir o un tour, BUSCA un negocio en el catálogo que coincida y pon su nombre en "businessName".
-3. Si no encuentras uno exacto, pon null en "businessName", pero NO inventes nombres.
+1. Prioriza SIEMPRE los negocios marcados con prioridad "ALTA".
+2. Si no hay suficientes de prioridad alta, RECOMIENDA los de prioridad "MEDIA" aclarando que son alternativas.
+3. IMPORTANTE: En el campo "businessName" debes poner el NOMBRE EXACTO del negocio del catálogo.
+4. Si sugieres "Almorzar", busca un Restaurante. Si sugieres "Dormir", busca Hospedaje.
 
 DATOS DE ENTRADA:
 - Idioma: ${language}
