@@ -122,16 +122,26 @@ export async function generateActivityPreview(activityTitle: string) {
  */
 export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], localities: string[] = [], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
-    // FILTER BUSINESSES
-    let filteredBusinesses = businesses.filter(b => categories.includes(b.categoria as Category));
+    // FILTER BUSINESSES (CASE INSENSITIVE & ROBUST)
+    const normalize = (s: string) => s ? s.toLowerCase().trim() : "";
+    const validCategories = categories.map(c => normalize(c));
+
+    let filteredBusinesses = businesses.filter(b => {
+      const cat = normalize(b.categoria || b.category || "");
+      return validCategories.includes(cat);
+    });
+
     if (localities.length > 0) {
-      filteredBusinesses = filteredBusinesses.filter(b => b.locality_name && localities.includes(b.locality_name));
+      filteredBusinesses = filteredBusinesses.filter(b => {
+        const locName = normalize(b.locality_name || "");
+        return localities.some(l => normalize(l) === locName);
+      });
     }
 
     const catalogContext = filteredBusinesses.map((b: any) => ({
-      name: b.nombre || b.name,
+      name: b.name || b.nombre,
       cat: b.categoria || b.category,
-      loc: b.info?.direccion || b.description
+      loc: b.info?.direccion || b.description || "Aysén"
     }));
 
     // LOGGING FOR DEBUGGING
@@ -139,16 +149,11 @@ export async function generateItineraryAI(days: number, budget: string, categori
       days,
       budget,
       localities,
+      categoryCount: categories.length,
       totalBusinesses: businesses.length,
       filtered: filteredBusinesses.length,
       sample: catalogContext.slice(0, 3)
     });
-
-    const catalogContext = filteredBusinesses.map((b: any) => ({
-      name: b.name || b.nombre,
-      cat: b.categoria || b.category,
-      loc: b.info?.direccion || b.description || "Aysén"
-    }));
 
     // STICT JSON PROMPT WITH STRONG INSTRUCTIONS
     const cleanJsonPrompt = `
