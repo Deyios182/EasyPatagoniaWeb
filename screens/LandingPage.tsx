@@ -305,7 +305,7 @@ const LandingPage: React.FC = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
-              <div className="relative group/locs flex-1 w-full max-w-full md:max-w-2xl overflow-hidden">
+              <div className="relative group/locs flex-1 w-full max-w-full md:max-w-2xl">
                 {/* Scroll Buttons for Localities */}
                 <button
                   onClick={scrollLeftLocs}
