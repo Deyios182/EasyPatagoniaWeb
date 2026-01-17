@@ -138,7 +138,7 @@ const ChatBotScreen: React.FC = () => {
 
         {/* Header Chat */}
         <div className="p-6 md:p-8 bg-surface-dark flex items-center gap-5 text-white shadow-xl relative z-50">
-          <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
+          <button onClick={() => navigate(-1)} className="hidden md:flex w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">

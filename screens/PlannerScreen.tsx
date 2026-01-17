@@ -103,14 +103,14 @@ const PlannerScreen: React.FC = () => {
       <div className="w-full max-w-4xl space-y-12 pb-24">
 
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate('/map')} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark dark:text-white shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
+          <button onClick={() => navigate('/map')} className="hidden md:flex w-14 h-14 items-center justify-center rounded-2xl bg-white dark:bg-surface-dark dark:text-white shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
             <span className="material-symbols-outlined text-2xl">arrow_back</span>
           </button>
-          <div className="text-center">
+          <div className="text-center flex-1 md:flex-initial">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Easy Planner</span>
             <h1 className="text-3xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('itinerary_title')}</h1>
           </div>
-          <div className="w-14"></div>
+          <div className="w-14 hidden md:block"></div>
         </div>
 
         <div className="bg-white dark:bg-surface-dark p-10 md:p-16 rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-16">

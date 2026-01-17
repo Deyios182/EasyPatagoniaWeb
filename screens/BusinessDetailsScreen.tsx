@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import { Service } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const variants = {
   enter: (direction: number) => {
@@ -298,6 +299,9 @@ const BusinessDetailsScreen: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavigationBar />
     </div>
   );
 };

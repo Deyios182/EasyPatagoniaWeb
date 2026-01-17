@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const AttractionDetailsScreen: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -167,6 +168,9 @@ const AttractionDetailsScreen: React.FC = () => {
 
                 </div>
             </div>
+
+            {/* Bottom Navigation Bar */}
+            <BottomNavigationBar />
         </div>
     );
 };
