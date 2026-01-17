@@ -541,8 +541,8 @@ const LandingPage: React.FC = () => {
                 </a>
               </div>
 
-              {/* 2. Map Call to Action (Now Last & Bigger) */}
-              <div className="w-full max-w-2xl border-t border-white/10 pt-12">
+              {/* 2. Map Call to Action (Pushed down) */}
+              <div className="w-full max-w-2xl border-t border-white/10 pt-12 mt-60">
                 <button
                   onClick={handleEnterApp}
                   className="w-full relative group overflow-hidden bg-[#dd6e42] text-white px-10 py-8 rounded-[2rem] shadow-[0_20px_50px_rgba(221,110,66,0.3)] hover:shadow-[0_30px_60px_rgba(221,110,66,0.5)] transition-all hover:scale-[1.02]"
@@ -551,7 +551,7 @@ const LandingPage: React.FC = () => {
                     <span className="text-2xl font-black uppercase tracking-[0.2em] italic group-hover:translate-y-[-2px] transition-transform">Explorar Mapa Interactivo</span>
                     <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">Acceso Inmediato</span>
                   </div>
-                  {/* Hover Effect */}
+
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-[#dd6e42] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </button>
               </div>
