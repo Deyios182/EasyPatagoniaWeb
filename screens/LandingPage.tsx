@@ -340,11 +340,11 @@ const LandingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
-                { icon: 'map', title: 'Mapa Interactivo 3D/2D', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.' },
+                { icon: 'map', title: 'Mapa con Vista Satelital', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.' },
                 { icon: 'explore', title: 'Guía de Atractivos', desc: 'Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.' },
                 { icon: 'storefront', title: 'Directorio Comercial', desc: 'Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.' },
                 { icon: 'calendar_month', title: 'Planner de Viaje', desc: 'Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.' },
-                { icon: 'smart_toy', title: 'Nova AI Assistant', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.' },
+                { icon: 'smart_toy', title: 'Asistente Patagon<span class="text-[#dd6e42]">IA</span>', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.' },
                 { icon: 'verified_user', title: 'Datos en Terreno', desc: 'Información actualizada y verídica gracias a nuestra red de embajadores locales.' }
               ].map((feature, idx) => (
                 <motion.div
@@ -358,7 +358,7 @@ const LandingPage: React.FC = () => {
                   <div className="w-14 h-14 bg-[#4f6d7a]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#dd6e42] transition-colors">
                     <span className="material-symbols-outlined text-[#4f6d7a] group-hover:text-white text-3xl transition-colors">{feature.icon}</span>
                   </div>
-                  <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3">{feature.title}</h5>
+                  <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3" dangerouslySetInnerHTML={{ __html: feature.title }}></h5>
                   <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
                 </motion.div>
               ))}

@@ -56,7 +56,7 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       model: preferredModel,
       contents: prompt,
       config: {
-        systemInstruction: `Eres un guía experto de Aysén. ${languageContext[language]}
+        systemInstruction: `Eres experto de PatagonIA, un guía inteligente de la Región de Aysén. ${languageContext[language]}
         IMPORTANTE: SÉ BREVE Y CONCISO. Máximo 2 párrafos. Ve al grano.
         INFORMACIÓN LOCAL (Prioridad):
         ${contextText}

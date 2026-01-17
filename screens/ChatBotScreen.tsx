@@ -30,9 +30,9 @@ const ChatBotScreen: React.FC = () => {
     }
     // Mensaje de bienvenida por defecto si no hay historial
     return [{
-      text: language === 'PT' ? "Olá! Sou seu guia inteligente. Como posso ajudar?" :
-        language === 'EN' ? "Hello! I am your smart guide. How can I help?" :
-          "¡Hola! Soy tu guía inteligente. ¿En qué puedo ayudarte?",
+      text: language === 'PT' ? "Olá! Sou seu guia inteligente PatagonIA. Como posso ajudar?" :
+        language === 'EN' ? "Hello! I am your PatagonIA smart guide. How can I help?" :
+          "¡Hola! Soy tu asistente PatagonIA. ¿En qué puedo ayudarte?",
       sender: 'ai',
       timestamp: new Date()
     }];
@@ -165,7 +165,9 @@ const ChatBotScreen: React.FC = () => {
             <span className="material-symbols-outlined text-3xl">smart_toy</span>
           </div>
           <div className="flex-1">
-            <h2 className="font-black text-lg tracking-tight uppercase italic">{t('ai_guide_title')}</h2>
+            <h2 className="font-black text-lg tracking-tight uppercase italic">
+              Patagon<span className="text-[#dd6e42]">IA</span>
+            </h2>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">{t('ai_status')}</span>
