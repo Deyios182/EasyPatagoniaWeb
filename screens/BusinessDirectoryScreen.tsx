@@ -143,7 +143,7 @@ const BusinessDirectoryScreen: React.FC = () => {
 
                 <div className="p-10 space-y-8">
                   <div>
-                    <h3 className="text-3xl font-black dark:text-white tracking-tighter truncate leading-tight uppercase italic group-hover:text-primary transition-colors">{biz.nombre}</h3>
+                    <h3 className="text-2xl font-black dark:text-white tracking-tighter leading-tight uppercase italic group-hover:text-primary transition-colors">{biz.nombre}</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mt-4 leading-relaxed">{biz.info.descripcion}</p>
                   </div>
 
