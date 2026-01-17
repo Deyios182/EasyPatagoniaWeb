@@ -339,7 +339,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-[85%] md:w-full max-w-full min-w-0 h-auto lg:h-full mr-auto md:mr-0">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-[80vw] md:w-full max-w-full min-w-0 h-auto lg:h-full mr-auto md:mr-0">
                 <div>
                   <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-left md:text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
