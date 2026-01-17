@@ -61,7 +61,7 @@ const BusinessDetailsScreen: React.FC = () => {
     return () => clearInterval(timer);
   }, [page, allPhotos.length]);
 
-  const handleServiceContact = (service: Service) => {
+  const handleServiceContact = (service: any) => {
     const phone = business.contacto.whatsapp.replace(/\D/g, '');
     const message = encodeURIComponent(
       `Hola ${business.nombre}, me gustaría consultar por el servicio "${service.nombre}" que vi en EasyPatagonia. (Precio: ${service.precio})`
@@ -286,7 +286,7 @@ const BusinessDetailsScreen: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-8 md:p-12 z-[120] flex justify-center pointer-events-none">
+      <div className="fixed bottom-[70px] md:bottom-0 left-0 right-0 p-8 md:p-12 z-[120] flex justify-center pointer-events-none">
         <div className="w-full max-w-lg pointer-events-auto">
           <button
             onClick={handleGeneralContact}
