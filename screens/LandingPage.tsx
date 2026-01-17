@@ -301,7 +301,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* DESTINOS */}
-        <section id="destinos" className="min-h-screen flex flex-col justify-center py-20 px-6 md:px-20 bg-[#eaeaea]">
+        <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea]">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
@@ -339,10 +339,10 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[auto] w-full">
+              <div className="lg:col-span-1 bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[auto] w-full max-w-full overflow-hidden">
                 <div>
-                  <h4 className="text-xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-3 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
-                  <p className="text-gray-600 leading-relaxed mb-4 text-sm font-medium break-words">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
+                  <h4 className="text-xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-3 break-words">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
+                  <p className="text-gray-600 leading-relaxed mb-4 text-sm font-medium break-words text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
                 <div className="p-4 bg-[#eaeaea] rounded-2xl w-full">
                   <p className="text-[10px] font-bold text-[#4f6d7a] uppercase tracking-widest mb-1">Gestión Local</p>
