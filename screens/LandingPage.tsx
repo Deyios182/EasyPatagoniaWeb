@@ -244,38 +244,41 @@ const LandingPage: React.FC = () => {
             </div>
           )}
 
-          <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#1a2a30]/90 backdrop-blur-md py-2 shadow-lg' : 'bg-transparent py-6'}`}>
-            <nav className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-              <div className="mb-4 md:mb-0 cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
+          <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#1a2a30]/90 backdrop-blur-md py-2 shadow-lg' : 'bg-transparent py-2 md:py-6'}`}>
+            <nav className="max-w-7xl mx-auto px-4 md:px-6 flex flex-row justify-between items-center h-full">
+              <div className="cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
                 {!logoError ? (
                   <img
                     src={settings['logo_url'] || "/logo_easy.png"}
-                    className={`${scrolled ? 'h-10' : 'h-24'} w-auto object-contain hover:scale-105 transition-all duration-300`}
+                    className={`${scrolled ? 'h-8 md:h-10' : 'h-12 md:h-24'} w-auto object-contain hover:scale-105 transition-all duration-300`}
                     alt={settings['site_name'] || "Easy Patagonia"}
                     onError={() => setLogoError(true)}
                   />
                 ) : (
                   <div className="flex flex-col">
-                    <h1 className={`font-black italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-lg' : 'text-2xl'}`}>
+                    <h1 className={`font-black italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-sm md:text-lg' : 'text-lg md:text-2xl'}`}>
                       <span className="text-white">Easy</span>
                       <span className="text-[#dd6e42]">Patagonia</span>
                     </h1>
                     {!scrolled && (
-                      <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
+                      <span className="hidden md:block text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
                         {settings['site_tagline'] || 'Austral Experience'}
                       </span>
                     )}
                   </div>
                 )}
               </div>
-              <div className={`flex gap-6 mb-4 md:mb-0 px-6 py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
+
+              {/* Desktop Nav Links - Hidden on Mobile */}
+              <div className={`hidden md:flex gap-6 px-6 py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
                 <button onClick={() => scrollToSection('destinos')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
                 <button onClick={() => scrollToSection('vision')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
                 <button onClick={() => scrollToSection('contacto')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
               </div>
+
               <button
                 onClick={handleEnterApp}
-                className={`bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white ${scrolled ? 'px-6 py-2' : 'px-8 py-3'}`}
+                className={`bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white ${scrolled ? 'px-4 py-1.5 md:px-6 md:py-2' : 'px-5 py-2 md:px-8 md:py-3'}`}
               >
                 {isAuthenticated ? 'Ir al Mapa' : 'Ingresar'}
               </button>
@@ -302,7 +305,7 @@ const LandingPage: React.FC = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
-              <div className="relative group/locs flex-1 max-w-2xl">
+              <div className="relative group/locs flex-1 w-full max-w-full md:max-w-2xl overflow-hidden">
                 {/* Scroll Buttons for Localities */}
                 <button
                   onClick={scrollLeftLocs}
@@ -321,7 +324,7 @@ const LandingPage: React.FC = () => {
 
                 <div
                   ref={localitiesScrollRef}
-                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-2 mask-linear-fade"
+                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-2 mask-linear-fade touch-pan-x w-full"
                 >
                   {allLocalities.filter(l => l.is_active).map(loc => (
                     <button
@@ -335,8 +338,8 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1 bg-white p-8 rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
+              <div className="lg:col-span-1 bg-white p-8 rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px]">
                 <div>
                   <h4 className="text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
