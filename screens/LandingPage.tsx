@@ -330,7 +330,7 @@ const LandingPage: React.FC = () => {
                     <button
                       key={loc.id}
                       onClick={() => setSelectedLocality(loc.id)}
-                      className={`flex-none snap-start min-w-[80vw] md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
+                      className={`flex-none snap-center min-w-full md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
                     >
                       {loc.name}
                     </button>
@@ -373,7 +373,7 @@ const LandingPage: React.FC = () => {
                   className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory px-4 md:px-2"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="min-w-[80vw] md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-start">
+                    <div key={place.id} className="min-w-full md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
