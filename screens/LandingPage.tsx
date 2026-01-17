@@ -275,8 +275,8 @@ const LandingPage: React.FC = () => {
                 <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Funciones</button>
                 <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
                 <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
-                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">FAQ</button>
                 <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
+                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">FAQ</button>
               </div>
 
               <button
@@ -623,21 +623,6 @@ const LandingPage: React.FC = () => {
                 </a>
               </div>
 
-              {/* 2. Map Call to Action (Pushed down) */}
-              <div className="w-full max-w-2xl border-t border-white/10 pt-12 mt-60">
-                <button
-                  onClick={handleEnterApp}
-                  className="w-full relative group overflow-hidden bg-[#dd6e42] text-white px-10 py-8 rounded-[2rem] shadow-[0_20px_50px_rgba(221,110,66,0.3)] hover:shadow-[0_30px_60px_rgba(221,110,66,0.5)] transition-all hover:scale-[1.02]"
-                >
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <span className="text-2xl font-black uppercase tracking-[0.2em] italic group-hover:translate-y-[-2px] transition-transform">Explorar Mapa Interactivo</span>
-                    <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">Acceso Inmediato</span>
-                  </div>
-
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-[#dd6e42] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </button>
-              </div>
-
             </div>
           </div>
         </section>
@@ -701,11 +686,27 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        {/* BOTÓN DE ACCESO FINAL ARRIBA DE EMPRESAS */}
+        <div className="bg-[#1a2a30] py-16 px-6 relative z-10">
+          <div className="max-w-2xl mx-auto">
+            <button
+              onClick={handleEnterApp}
+              className="w-full relative group overflow-hidden bg-[#dd6e42] text-white px-10 py-8 rounded-[2rem] shadow-[0_20px_50px_rgba(221,110,66,0.3)] hover:shadow-[0_30px_60px_rgba(221,110,66,0.5)] transition-all hover:scale-[1.02]"
+            >
+              <div className="relative z-10 flex flex-col items-center gap-2">
+                <span className="text-2xl md:text-3xl font-black uppercase tracking-[0.1em] italic group-hover:translate-y-[-2px] transition-transform text-center">Explorar Mapa Interactivo</span>
+                <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">Acceso Inmediato</span>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-[#dd6e42] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+          </div>
+        </div>
+
         {/* LOGO TICKER BANNER */}
         <section className="relative z-30 bg-[#1a2a30] pb-10 -mt-10 pt-10 rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
           <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Empresas que confían en nosotros</h3>
           <LogoTicker businesses={allBusinesses} speed={60} />
-        </section>
+        </section >
 
         <footer className="relative z-40 bg-[#152024] py-12 text-center text-slate-500 text-xs">
           <img src="/logo_easy.png" className="h-10 w-auto mx-auto mb-6 opacity-50 grayscale hover:grayscale-0 transition-all" alt="Logo Footer" onError={(e) => e.currentTarget.style.display = 'none'} />
