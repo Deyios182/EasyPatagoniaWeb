@@ -339,17 +339,17 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full h-auto lg:h-full">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full min-w-0 h-auto lg:h-full">
                 <div>
                   <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
-                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
+                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-left md:text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
                 <div className="p-5 bg-[#eaeaea] rounded-2xl w-full">
                   <p className="text-[10px] font-bold text-[#4f6d7a] uppercase tracking-widest mb-1">Gestión Local</p>
                   <p className="text-[9px] text-gray-500 font-bold break-words">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
               </div>
-              <div className="lg:col-span-2 relative group-hover/section">
+              <div className="lg:col-span-2 relative group-hover/section min-w-0 w-full">
 
                 {/* Scroll Buttons (Visible on Desktop) */}
                 <button
