@@ -338,13 +338,13 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[auto] w-full max-w-full overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full overflow-hidden h-auto lg:h-full">
                 <div>
-                  <h4 className="text-xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-3 break-words">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
-                  <p className="text-gray-600 leading-relaxed mb-4 text-sm font-medium break-words text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
+                  <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
+                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
-                <div className="p-4 bg-[#eaeaea] rounded-2xl w-full">
+                <div className="p-5 bg-[#eaeaea] rounded-2xl w-full">
                   <p className="text-[10px] font-bold text-[#4f6d7a] uppercase tracking-widest mb-1">Gestión Local</p>
                   <p className="text-[9px] text-gray-500 font-bold break-words">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
