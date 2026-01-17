@@ -110,7 +110,18 @@ const PlannerScreen: React.FC = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Easy Planner</span>
             <h1 className="text-3xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('itinerary_title')}</h1>
           </div>
-          <div className="w-14 hidden md:block"></div>
+          {/* Botón para ver el último plan si existe */}
+          {localStorage.getItem('ep_plan') ? (
+            <button
+              onClick={() => navigate('/itinerary')}
+              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all animate-pulse"
+            >
+              <span className="material-symbols-outlined text-sm">visibility</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Ver Último Plan</span>
+            </button>
+          ) : (
+            <div className="w-14 hidden md:block"></div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-surface-dark p-10 md:p-16 rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-16">

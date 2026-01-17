@@ -188,7 +188,7 @@ const ItineraryScreen: React.FC = () => {
             onClick={() => navigate('/planner')}
             className="flex-1 bg-white dark:bg-surface-dark dark:text-white font-black h-20 rounded-full shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all border border-slate-200 dark:border-white/10 uppercase tracking-widest text-[10px]"
           >
-            <span className="material-symbols-outlined">restart_alt</span>
+            <span className="material-symbols-outlined">edit_note</span>
             Ajustar
           </button>
           <button
