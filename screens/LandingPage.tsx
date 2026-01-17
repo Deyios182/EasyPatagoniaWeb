@@ -330,7 +330,7 @@ const LandingPage: React.FC = () => {
                     <button
                       key={loc.id}
                       onClick={() => setSelectedLocality(loc.id)}
-                      className={`flex-none snap-start min-w-[80%] md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
+                      className={`flex-none snap-center min-w-full md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
                     >
                       {loc.name}
                     </button>
@@ -339,7 +339,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-[80%] md:w-full max-w-full min-w-0 h-auto lg:h-full mr-auto md:mr-0">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full min-w-0 h-auto lg:h-full">
                 <div>
                   <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-left md:text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
@@ -373,7 +373,7 @@ const LandingPage: React.FC = () => {
                   className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory md:px-2"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="min-w-[80%] md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-start">
+                    <div key={place.id} className="min-w-full md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
