@@ -42,6 +42,7 @@ const LandingPage: React.FC = () => {
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   // Handle scroll for sticky nav
   useEffect(() => {
@@ -271,8 +272,10 @@ const LandingPage: React.FC = () => {
 
               {/* Nav Links - Visible on Mobile (Compact) */}
               <div className={`flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
+                <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Funciones</button>
                 <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
                 <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
+                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">FAQ</button>
                 <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
               </div>
 
@@ -299,6 +302,81 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce"><span className="material-symbols-outlined text-white text-4xl">keyboard_arrow_down</span></div>
         </div>
+
+        {/* FUNCIONALIDADES DETALLADAS */}
+        <section id="funcionalidades" className="py-24 bg-white relative overflow-hidden">
+          {/* Decorative background element */}
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-[#f8f9fa] skew-x-[-10deg] translate-x-1/2 z-0 hidden lg:block"></div>
+
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-16">
+              <motion.h4
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4"
+              >
+                Tu Herramienta de Viaje
+              </motion.h4>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter mb-6"
+              >
+                Todo lo que necesitas <br /> <span className="text-[#4f6d7a]">en un solo lugar</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-gray-500 max-w-2xl mx-auto text-lg italic"
+              >
+                No es solo una web, es tu guía inteligente diseñada para que vivas la Patagonia sin complicaciones técnicas ni pérdida de tiempo.
+              </motion.p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                { icon: 'map', title: 'Mapa Interactivo 3D/2D', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.' },
+                { icon: 'explore', title: 'Guía de Atractivos', desc: 'Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.' },
+                { icon: 'storefront', title: 'Directorio Comercial', desc: 'Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.' },
+                { icon: 'calendar_month', title: 'Planner de Viaje', desc: 'Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.' },
+                { icon: 'smart_toy', title: 'Nova AI Assistant', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.' },
+                { icon: 'verified_user', title: 'Datos en Terreno', desc: 'Información actualizada y verídica gracias a nuestra red de embajadores locales.' }
+              ].map((feature, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl hover:shadow-2xl transition-all group"
+                >
+                  <div className="w-14 h-14 bg-[#4f6d7a]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#dd6e42] transition-colors">
+                    <span className="material-symbols-outlined text-[#4f6d7a] group-hover:text-white text-3xl transition-colors">{feature.icon}</span>
+                  </div>
+                  <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3">{feature.title}</h5>
+                  <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-20 text-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleEnterApp}
+                className="bg-[#dd6e42] text-white px-12 py-6 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_20px_40px_rgba(221,110,66,0.3)] hover:shadow-[0_25px_50px_rgba(221,110,66,0.5)] transition-all"
+              >
+                Comenzar a usar la herramienta
+              </motion.button>
+              <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">Acceso instantáneo • No requiere descarga</p>
+            </div>
+          </div>
+        </section>
 
         {/* DESTINOS */}
         <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea] overflow-x-hidden w-full">
@@ -560,6 +638,65 @@ const LandingPage: React.FC = () => {
                 </button>
               </div>
 
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ - PREGUNTAS FRECUENTES */}
+        <section id="faq" className="py-24 bg-[#eaeaea] relative z-20 overflow-hidden">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-4">¿Dudas?</h2>
+              <h3 className="text-4xl md:text-5xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Preguntas Frecuentes</h3>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: "¿Cómo accedo a la plataforma?",
+                  a: "¡Es muy sencillo! Solo necesitas un navegador web. Puedes usarla desde tu computadora o directamente en tu celular mientras viajas presionando el botón 'Ingresar' en la parte superior."
+                },
+                {
+                  q: "¿La app es gratuita para los turistas?",
+                  a: "Sí, el acceso a la información de destinos, atractivos y el directorio comercial es completamente gratuito para todos los viajeros."
+                },
+                {
+                  q: "¿Necesito internet para usar el mapa?",
+                  a: "Sí, al ser una plataforma en línea, necesitas conexión de datos para cargar el mapa y la información en tiempo real. Te recomendamos revisar tus puntos de interés antes de entrar en zonas sin señal."
+                },
+                {
+                  q: "¿Cómo contacto a un negocio local?",
+                  a: "Dentro de cada ficha de negocio en el directorio, encontrarás botones directos para llamar, enviar WhatsApp o ver su ubicación en el mapa."
+                },
+                {
+                  q: "¿Qué es un embajador en terreno?",
+                  a: "Son habitantes locales certificados por Easy Patagonia que se encargan de verificar que la información de los atractivos y comercios sea real, actual y de calidad."
+                }
+              ].map((faq, idx) => (
+                <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                  <button
+                    onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
+                    className="w-full px-8 py-6 text-left flex justify-between items-center group"
+                  >
+                    <span className="text-lg font-bold text-[#1a2a30] italic">{faq.q}</span>
+                    <span className={`material-symbols-outlined transition-transform duration-300 ${activeFaq === idx ? 'rotate-180 text-[#dd6e42]' : 'text-gray-400'}`}>
+                      expand_more
+                    </span>
+                  </button>
+                  <div className={`px-8 transition-all duration-300 ease-in-out ${activeFaq === idx ? 'max-h-48 pb-6 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                    <p className="text-gray-500 leading-relaxed italic">{faq.a}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-16 p-8 bg-[#1a2a30] rounded-[2.5rem] text-center text-white relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#dd6e42]/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
+              <h4 className="text-xl font-black uppercase italic mb-2">¿Aún tienes preguntas?</h4>
+              <p className="text-slate-400 text-sm mb-6">Nuestro equipo de soporte está listo para ayudarte en tu viaje.</p>
+              <button onClick={handleWhatsApp} className="bg-white text-[#1a2a30] px-8 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-[#dd6e42] hover:text-white transition-all">
+                Contactar por WhatsApp
+              </button>
             </div>
           </div>
         </section>
