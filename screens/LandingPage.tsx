@@ -339,14 +339,14 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px]">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px] w-full max-w-[92vw] mx-auto overflow-hidden">
                 <div>
-                  <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
-                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
+                  <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
+                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
-                <div className="p-6 bg-[#eaeaea] rounded-3xl">
+                <div className="p-6 bg-[#eaeaea] rounded-3xl w-full">
                   <p className="text-xs font-bold text-[#4f6d7a] uppercase tracking-widest mb-2">Gestión Local</p>
-                  <p className="text-[10px] text-gray-500 font-bold">Datos actualizados por nuestros embajadores en terreno.</p>
+                  <p className="text-[10px] text-gray-500 font-bold break-words">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
               </div>
               <div className="lg:col-span-2 relative group-hover/section">
@@ -414,7 +414,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* --- SECCIÓN NUESTRA VISIÓN (LIMPIA) --- */}
-        <section id="vision" className="min-h-screen flex items-center py-12 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
+        <section id="vision" className="min-h-0 md:min-h-screen flex items-center py-20 bg-[#1a2a30] text-white rounded-t-[4rem] -mt-10 relative z-10 overflow-hidden">
           <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
 
             {/* Pilares */}
@@ -486,7 +486,8 @@ const LandingPage: React.FC = () => {
 
         {/* CONTACTO */}
         {/* CONTACTO REDESÑADO - WIDER & PREMIUM */}
-        <section id="contacto" className="relative py-24 bg-[#1a2a30] overflow-hidden">
+        {/* CONTACTO */}
+        <section id="contacto" className="relative py-24 bg-[#1a2a30] overflow-hidden z-20 -mt-10 rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.5)]">
           {/* Background Decoration */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#dd6e42] rounded-full blur-[100px]"></div>
