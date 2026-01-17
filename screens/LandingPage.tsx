@@ -309,14 +309,14 @@ const LandingPage: React.FC = () => {
                 {/* Scroll Buttons for Localities */}
                 <button
                   onClick={scrollLeftLocs}
-                  className="hidden md:flex absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
+                  className="absolute left-[-10px] md:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
                   aria-label="Scroll Left"
                 >
                   <span className="material-symbols-outlined text-sm">arrow_back</span>
                 </button>
                 <button
                   onClick={scrollRightLocs}
-                  className="hidden md:flex absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
+                  className="absolute right-[-10px] md:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white text-[#1a2a30] rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:bg-[#4f6d7a] hover:text-white transition-all border border-gray-100"
                   aria-label="Scroll Right"
                 >
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -339,7 +339,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full min-w-0 h-auto lg:h-full">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-[85%] md:w-full max-w-full min-w-0 h-auto lg:h-full mr-auto md:mr-0">
                 <div>
                   <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-left md:text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
@@ -354,7 +354,7 @@ const LandingPage: React.FC = () => {
                 {/* Scroll Buttons (Visible on Desktop) */}
                 <button
                   onClick={scrollLeft}
-                  className="hidden md:flex absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
+                  className="absolute left-[-10px] md:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl flex items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
                   aria-label="Scroll Left"
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
@@ -362,7 +362,7 @@ const LandingPage: React.FC = () => {
 
                 <button
                   onClick={scrollRight}
-                  className="hidden md:flex absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
+                  className="absolute right-[-10px] md:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white text-[#1a2a30] rounded-full shadow-xl flex items-center justify-center hover:scale-110 hover:bg-[#dd6e42] hover:text-white transition-all border border-gray-100"
                   aria-label="Scroll Right"
                 >
                   <span className="material-symbols-outlined">arrow_forward</span>
