@@ -339,14 +339,14 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px] w-full max-w-[92vw] mx-auto overflow-hidden">
+              <div className="lg:col-span-1 bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[auto] w-full">
                 <div>
-                  <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
-                  <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
+                  <h4 className="text-xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-3 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
+                  <p className="text-gray-600 leading-relaxed mb-4 text-sm font-medium break-words">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
-                <div className="p-6 bg-[#eaeaea] rounded-3xl w-full">
-                  <p className="text-xs font-bold text-[#4f6d7a] uppercase tracking-widest mb-2">Gestión Local</p>
-                  <p className="text-[10px] text-gray-500 font-bold break-words">Datos actualizados por nuestros embajadores en terreno.</p>
+                <div className="p-4 bg-[#eaeaea] rounded-2xl w-full">
+                  <p className="text-[10px] font-bold text-[#4f6d7a] uppercase tracking-widest mb-1">Gestión Local</p>
+                  <p className="text-[9px] text-gray-500 font-bold break-words">Datos actualizados por nuestros embajadores en terreno.</p>
                 </div>
               </div>
               <div className="lg:col-span-2 relative group-hover/section">
@@ -565,12 +565,12 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* LOGO TICKER BANNER */}
-        <section className="bg-[#1a2a30] pb-10">
+        <section className="relative z-30 bg-[#1a2a30] pb-10 -mt-10 pt-10 rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
           <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Empresas que confían en nosotros</h3>
           <LogoTicker businesses={allBusinesses} speed={60} />
         </section>
 
-        <footer className="bg-[#152024] py-12 text-center text-slate-500 text-xs">
+        <footer className="relative z-40 bg-[#152024] py-12 text-center text-slate-500 text-xs">
           <img src="/logo_easy.png" className="h-10 w-auto mx-auto mb-6 opacity-50 grayscale hover:grayscale-0 transition-all" alt="Logo Footer" onError={(e) => e.currentTarget.style.display = 'none'} />
           <p className="uppercase tracking-widest font-black mb-4">Easy Patagonia © 2024</p>
           <p>Desarrollado con ❤️ en la Región de Aysén</p>
