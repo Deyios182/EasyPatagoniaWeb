@@ -288,7 +288,7 @@ const LandingPage: React.FC = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1 }}
               className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none"
-              dangerouslySetInnerHTML={{ __html: (content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />') }}
+              dangerouslySetInnerHTML={{ __html: (content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />').replace(/Patagonia/g, '<span class="text-[#dd6e42]">Patagonia</span>') }}
             ></motion.h1>
             <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
               "{content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
