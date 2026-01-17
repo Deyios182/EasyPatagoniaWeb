@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import { Category } from '../types';
 import { supabase } from '../supabaseClient';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const BusinessDirectoryScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -154,6 +155,9 @@ const BusinessDirectoryScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavigationBar />
     </div>
   );
 };

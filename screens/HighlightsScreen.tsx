@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const HighlightsScreen: React.FC = () => {
     const navigate = useNavigate();
@@ -139,6 +140,9 @@ const HighlightsScreen: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Bottom Navigation Bar */}
+            <BottomNavigationBar />
         </div>
     );
 };

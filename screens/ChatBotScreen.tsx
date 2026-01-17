@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { askPatagoniaAI, textToSpeechPatagonia } from '../geminiService';
 import { useAppAuth } from '../App';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 interface Message {
   text: string;
@@ -20,7 +21,7 @@ const ChatBotScreen: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   // Referencias para controlar el audio y evitar superposiciones
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -62,16 +63,16 @@ const ChatBotScreen: React.FC = () => {
     setIsTyping(true);
 
     const aiResult = await askPatagoniaAI(input, language);
-    const aiMsg: Message = { 
-      text: aiResult.text, 
-      sender: 'ai', 
+    const aiMsg: Message = {
+      text: aiResult.text,
+      sender: 'ai',
       timestamp: new Date(),
       sources: aiResult.sources
     };
-    
+
     setMessages(prev => [...prev, aiMsg]);
     setIsTyping(false);
-    
+
     // Reproducir automáticamente la respuesta
     handleTTS(aiResult.text);
   };
@@ -110,7 +111,7 @@ const ChatBotScreen: React.FC = () => {
     const len = binary.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-    
+
     const dataInt16 = new Int16Array(bytes.buffer);
     const buffer = ctx.createBuffer(1, dataInt16.length, 24000);
     const channelData = buffer.getChannelData(0);
@@ -121,7 +122,7 @@ const ChatBotScreen: React.FC = () => {
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
-    
+
     source.onended = () => {
       setIsPlaying(false);
       audioSourceRef.current = null;
@@ -134,7 +135,7 @@ const ChatBotScreen: React.FC = () => {
   return (
     <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center">
       <div className="w-full max-w-4xl h-full flex flex-col bg-white dark:bg-surface-dark md:border-x border-white/5 shadow-2xl overflow-hidden">
-        
+
         {/* Header Chat */}
         <div className="p-6 md:p-8 bg-surface-dark flex items-center gap-5 text-white shadow-xl relative z-50">
           <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
@@ -165,9 +166,9 @@ const ChatBotScreen: React.FC = () => {
             <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] md:max-w-[75%] p-6 md:p-8 rounded-[2.5rem] text-sm md:text-base leading-relaxed relative shadow-sm border ${m.sender === 'user' ? 'bg-primary text-white rounded-tr-none border-primary shadow-primary/10' : 'bg-white dark:bg-surface-dark dark:text-white border-slate-200 dark:border-white/5 rounded-tl-none'}`}>
                 {m.text}
-                
+
                 {m.sender === 'ai' && (
-                  <button 
+                  <button
                     onClick={() => handleTTS(m.text)}
                     className={`absolute -right-3 -bottom-3 w-12 h-12 rounded-2xl shadow-xl flex items-center justify-center transition-all ${isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 text-primary hover:scale-110'}`}
                   >
@@ -201,17 +202,17 @@ const ChatBotScreen: React.FC = () => {
         </div>
 
         {/* Input */}
-        <div className="p-6 md:p-12 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-white/10">
+        <div className="p-6 md:p-12 pb-[90px] md:pb-12 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-white/10">
           <div className="bg-slate-100 dark:bg-background-dark rounded-[2.5rem] p-2 pl-8 flex items-center gap-4 shadow-inner max-w-3xl mx-auto">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder={t('chat_placeholder')}
               className="flex-1 bg-transparent border-none focus:ring-0 text-lg py-4 dark:text-white placeholder:text-slate-400 font-bold"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isTyping}
               className="w-16 h-16 rounded-[2rem] bg-primary text-white flex items-center justify-center disabled:opacity-50 active:scale-95 transition-all shadow-xl shadow-primary/20"
@@ -221,6 +222,9 @@ const ChatBotScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavigationBar />
     </div>
   );
 };

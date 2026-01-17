@@ -5,6 +5,7 @@ import { generateItineraryAI } from '../geminiService';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
 import { Category } from '../types';
+import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const PlannerScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -203,6 +204,9 @@ const PlannerScreen: React.FC = () => {
           "Nuestra IA optimiza tu ruta por la Carretera Austral basándose en los tiempos reales y ubicaciones de nuestros aliados certificados."
         </p>
       </div>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavigationBar />
     </div>
   );
 };
