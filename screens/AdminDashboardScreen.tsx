@@ -37,7 +37,7 @@ const AdminDashboardScreen: React.FC = () => {
       const [companies, services, users, localities, attractions] = await Promise.all([
          supabase.from('companies').select('id, is_active', { count: 'exact' }),
          supabase.from('services').select('id', { count: 'exact' }),
-         supabase.from('users').select('id, created_at', { count: 'exact' }),
+         supabase.from('profiles').select('id, created_at', { count: 'exact' }), // Fixed: Query 'profiles', not 'users'
          supabase.from('localities').select('id', { count: 'exact' }),
          supabase.from('attractions').select('id', { count: 'exact' })
       ]);
