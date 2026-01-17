@@ -15,9 +15,29 @@ interface Message {
 const ChatBotScreen: React.FC = () => {
   const navigate = useNavigate();
   const { language, t } = useAppAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    { text: language === 'PT' ? "Olá! Sou seu guia inteligente. Como posso ajudar?" : language === 'EN' ? "Hello! I am your smart guide. How can I help?" : "¡Hola! Soy tu guía inteligente. ¿En qué puedo ayudarte?", sender: 'ai', timestamp: new Date() }
-  ]);
+
+  // PERSISTENCIA: Cargar mensajes iniciales desde localStorage
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('ep_chat_history');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Re-convertir timestamps a objetos Date para que no haya errores de formato
+        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+      } catch (e) {
+        console.error("Error al cargar historial de chat:", e);
+      }
+    }
+    // Mensaje de bienvenida por defecto si no hay historial
+    return [{
+      text: language === 'PT' ? "Olá! Sou seu guia inteligente. Como posso ajudar?" :
+        language === 'EN' ? "Hello! I am your smart guide. How can I help?" :
+          "¡Hola! Soy tu guía inteligente. ¿En qué puedo ayudarte?",
+      sender: 'ai',
+      timestamp: new Date()
+    }];
+  });
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,7 +47,9 @@ const ChatBotScreen: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // PERSISTENCIA: Guardar mensajes en cada cambio
   useEffect(() => {
+    localStorage.setItem('ep_chat_history', JSON.stringify(messages));
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
 
@@ -78,13 +100,12 @@ const ChatBotScreen: React.FC = () => {
   };
 
   const handleTTS = async (text: string) => {
-    // Si ya está reproduciendo, el segundo clic detiene el audio (Toggle)
     if (isPlaying) {
       stopAudio();
       return;
     }
 
-    setIsPlaying(true); // Bloqueamos clics adicionales inmediatamente
+    setIsPlaying(true);
 
     try {
       const base64Audio = await textToSpeechPatagonia(text);
@@ -100,7 +121,6 @@ const ChatBotScreen: React.FC = () => {
   };
 
   const playPCM = async (base64: string) => {
-    // Detener cualquier audio previo antes de iniciar uno nuevo
     stopAudio();
     setIsPlaying(true);
 
@@ -158,6 +178,20 @@ const ChatBotScreen: React.FC = () => {
               <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0.2s] rounded-full"></div>
             </div>
           )}
+
+          {/* Botón Limpiar Chat */}
+          <button
+            onClick={() => {
+              if (confirm("¿Estás seguro de que quieres limpiar la conversación?")) {
+                localStorage.removeItem('ep_chat_history');
+                window.location.reload();
+              }
+            }}
+            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-red-500 transition-all ml-4"
+            title="Limpiar Conversación"
+          >
+            <span className="material-symbols-outlined text-xl">delete_sweep</span>
+          </button>
         </div>
 
         {/* Mensajes */}
