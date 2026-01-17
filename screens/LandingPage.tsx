@@ -269,11 +269,11 @@ const LandingPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Desktop Nav Links - Hidden on Mobile */}
-              <div className={`hidden md:flex gap-6 px-6 py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
-                <button onClick={() => scrollToSection('destinos')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
-                <button onClick={() => scrollToSection('vision')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
-                <button onClick={() => scrollToSection('contacto')} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
+              {/* Nav Links - Visible on Mobile (Compact) */}
+              <div className={`flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
+                <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
+                <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
+                <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
               </div>
 
               <button
