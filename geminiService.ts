@@ -12,9 +12,9 @@ console.log(`🤖 [AI SERVICE] Provider: ${AI_PROVIDER}`);
 // OPENROUTER CONFIG
 const OR_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
 // Default for Chat (Fast & Good)
-const OR_MODEL_CHAT = "google/gemini-2.0-flash-exp:free";
+const OR_MODEL_CHAT = "openai/gpt-4o-mini";
 // Dedicated for Logic/JSON (Strict & Smart)
-const OR_MODEL_LOGIC = "google/gemini-2.0-flash-exp:free";
+const OR_MODEL_LOGIC = "openai/gpt-4o-mini";
 
 /**
  * OpenRouter Fetch Helper
