@@ -466,9 +466,9 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* Columna Imagen (SIN TARJETA BLANCA) */}
-              <div className="flex-1 relative w-full h-[300px] md:h-[500px]">
+              <div className="flex-1 relative w-full h-[400px] md:h-[500px]">
                 {/* Imagen principal */}
-                <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
+                <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 md:rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
                   <img
                     src={content['vision']?.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop"}
                     className="w-full h-full object-cover"
@@ -478,7 +478,7 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 {/* Decoración de fondo */}
-                <div className="absolute top-4 -right-4 bottom-[-10px] left-4 bg-[#dd6e42] rounded-[3rem] -rotate-2 opacity-20 z-0"></div>
+                <div className="hidden md:block absolute top-4 -right-4 bottom-[-10px] left-4 bg-[#dd6e42] rounded-[3rem] -rotate-2 opacity-20 z-0"></div>
               </div>
             </div>
           </div>
