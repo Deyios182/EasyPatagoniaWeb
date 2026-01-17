@@ -437,7 +437,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Misión y Visión + Imagen */}
-            <div className="flex flex-col lg:flex-row gap-10 items-center">
+            <div className="flex flex-col-reverse lg:flex-row gap-10 items-center">
 
               {/* Columna Texto */}
               <div className="flex-1 space-y-12">
@@ -466,9 +466,9 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* Columna Imagen (SIN TARJETA BLANCA) */}
-              <div className="flex-1 relative w-full h-[400px] md:h-[500px]">
+              <div className="flex-1 relative w-full min-h-[400px] md:h-[500px] mb-8 lg:mb-0">
                 {/* Imagen principal */}
-                <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 md:rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
+                <div className="w-full h-full rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 md:rotate-2 hover:rotate-0 transition-all duration-700 bg-gray-800">
                   <img
                     src={content['vision']?.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop"}
                     className="w-full h-full object-cover"
