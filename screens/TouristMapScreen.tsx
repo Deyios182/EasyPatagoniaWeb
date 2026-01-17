@@ -119,7 +119,11 @@ const TouristMapScreen: React.FC = () => {
     tileLayerRef.current = L.tileLayer(tileUrl, {
       maxZoom: 20,
       maxNativeZoom: isSatellite ? 17 : 19,
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
+      updateWhenIdle: false, // Load tiles while panned, not just when stopped
+      keepBuffer: 10,        // Keep more tiles around for smoother panning
+      updateWhenZooming: true,
+      className: 'map-tiles'  // For custom CSS transitions
     }).addTo(map);
 
     // Add error handling for tile loading
@@ -146,7 +150,11 @@ const TouristMapScreen: React.FC = () => {
       tileLayerRef.current = L.tileLayer(tileUrl, {
         maxZoom: 20,
         maxNativeZoom: isSatellite ? 17 : 19,
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        updateWhenIdle: false,
+        keepBuffer: 10,
+        updateWhenZooming: true,
+        className: 'map-tiles'
       }).addTo(mapInstance);
 
       // Add error handling

@@ -160,6 +160,17 @@
       transition: width 0.3s ease;
       box-shadow: 0 0 10px rgba(221, 110, 66, 0.5);
     }
+
+    /* Map Smoothness Optimizations */
+    .leaflet-tile {
+      filter: brightness(0.9);
+      transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out !important;
+    }
+
+    .leaflet-tile-loaded {
+      filter: brightness(1);
+      opacity: 1 !important;
+    }
   </style>
   <script type="importmap">
 {
