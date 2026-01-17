@@ -301,7 +301,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* DESTINOS */}
-        <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea]">
+        <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea] overflow-hidden">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
@@ -324,13 +324,13 @@ const LandingPage: React.FC = () => {
 
                 <div
                   ref={localitiesScrollRef}
-                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 touch-pan-x w-full snap-x snap-mandatory"
+                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 touch-pan-x w-full snap-x snap-mandatory px-1"
                 >
                   {allLocalities.filter(l => l.is_active).map(loc => (
                     <button
                       key={loc.id}
                       onClick={() => setSelectedLocality(loc.id)}
-                      className={`flex-none snap-center min-w-full md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
+                      className={`flex-none snap-center w-[calc(100%-0.5rem)] md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
                     >
                       {loc.name}
                     </button>
@@ -339,7 +339,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 min-h-[auto] lg:min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full min-w-0 h-auto lg:h-full">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 flex flex-col justify-between w-full max-w-full min-w-0 h-auto lg:h-full mx-auto">
                 <div>
                   <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words hyphens-auto">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium break-words text-left md:text-justify">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
@@ -370,10 +370,10 @@ const LandingPage: React.FC = () => {
 
                 <div
                   ref={scrollContainerRef}
-                  className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory md:px-2"
+                  className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory px-1 md:px-2"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="min-w-full md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
+                    <div key={place.id} className="w-[calc(100%-0.5rem)] flex-shrink-0 md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
