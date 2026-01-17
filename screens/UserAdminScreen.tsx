@@ -103,7 +103,7 @@ const UserAdminScreen: React.FC = () => {
         </button>
       </div>
     </div>
-      </div >
+    </div >
 
   {/* TABLE */ }
   < div className = "p-8 md:p-12 pt-0" >
