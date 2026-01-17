@@ -302,7 +302,7 @@ const LandingPage: React.FC = () => {
 
         {/* DESTINOS */}
         <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea] overflow-x-hidden w-full">
-          <div className="w-full mx-auto">
+          <div className="w-full md:max-w-7xl md:mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
               <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
               <div className="relative group/locs flex-1 w-full md:max-w-2xl">
@@ -330,7 +330,7 @@ const LandingPage: React.FC = () => {
                     <button
                       key={loc.id}
                       onClick={() => setSelectedLocality(loc.id)}
-                      className={`flex-none snap-center w-[90vw] md:min-w-0 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
+                      className={`flex-none snap-center w-[90vw] md:w-auto md:whitespace-nowrap px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest transition-all ${selectedLocality === loc.id ? 'bg-[#4f6d7a] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-200'}`}
                     >
                       {loc.name}
                     </button>
@@ -373,7 +373,7 @@ const LandingPage: React.FC = () => {
                   className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="w-[90vw] flex-shrink-0 md:min-w-[320px] group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
+                    <div key={place.id} className="w-[90vw] md:w-auto md:min-w-[320px] flex-shrink-0 group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
