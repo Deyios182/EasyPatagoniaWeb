@@ -373,7 +373,7 @@ const LandingPage: React.FC = () => {
                   className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="w-[90vw] md:w-auto md:min-w-[320px] flex-shrink-0 group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
+                    <div key={place.id} className="w-[90vw] md:w-[320px] flex-shrink-0 group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
