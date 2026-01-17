@@ -256,8 +256,9 @@ const LandingPage: React.FC = () => {
                   />
                 ) : (
                   <div className="flex flex-col">
-                    <h1 className={`font-black text-white italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-lg' : 'text-2xl'}`}>
-                      {settings['site_name'] || 'Easy Patagonia'}
+                    <h1 className={`font-black italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-lg' : 'text-2xl'}`}>
+                      <span className="text-white">Easy</span>
+                      <span className="text-[#dd6e42]">Patagonia</span>
                     </h1>
                     {!scrolled && (
                       <span className="text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
