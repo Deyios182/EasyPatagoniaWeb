@@ -324,14 +324,33 @@ const TouristMapScreen: React.FC = () => {
       }
     });
 
-    // Auto Center (only if GPS valid and explicitly selected)
+  }, [filtered, selectedBusiness?.id, selectedAttraction?.id, mapInstance, allLocalities, allAttractions]);
+
+  // Separate Effect for Camera Movement (FlyTo) to avoid snapping on ogni trigger de marcadores
+  useEffect(() => {
+    if (!mapInstance) return;
+
     if (selectedBusiness && selectedBusiness.gps) {
       mapInstance.flyTo([selectedBusiness.gps.lat, selectedBusiness.gps.lng], 16, { animate: true, duration: 1.5 });
     } else if (selectedAttraction && selectedAttraction.latitude && selectedAttraction.longitude) {
       mapInstance.flyTo([selectedAttraction.latitude, selectedAttraction.longitude], 15, { animate: true, duration: 1.5 });
     }
+  }, [selectedBusiness?.id, selectedAttraction?.id, mapInstance]);
 
-  }, [filtered, selectedBusiness, selectedAttraction, mapInstance, allLocalities, allAttractions]);
+  // Close selection when clicking on Map Background
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    const onMapClick = (e: any) => {
+      // Leaflet click events on the map itself (not on markers)
+      // Usually markers prevent propagation, so a direct click on map means background.
+      setSelectedBusiness(null);
+      setSelectedAttraction(null);
+    };
+
+    mapInstance.on('click', onMapClick);
+    return () => mapInstance.off('click', onMapClick);
+  }, [mapInstance]);
 
   const handleLocalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const locId = e.target.value;
@@ -512,7 +531,7 @@ const TouristMapScreen: React.FC = () => {
             onClick={() => navigate(`/details/${selectedBusiness.id}`)}
           >
             <div
-              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
+              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
               onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
             >
               <span className="material-symbols-outlined text-sm">close</span>
@@ -543,7 +562,7 @@ const TouristMapScreen: React.FC = () => {
             onClick={() => navigate(`/attraction/${selectedAttraction.id}`)}
           >
             <div
-              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20"
+              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
               onClick={(e) => { e.stopPropagation(); setSelectedAttraction(null); }}
             >
               <span className="material-symbols-outlined text-sm">close</span>
