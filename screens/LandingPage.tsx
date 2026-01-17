@@ -324,7 +324,7 @@ const LandingPage: React.FC = () => {
 
                 <div
                   ref={localitiesScrollRef}
-                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-2 mask-linear-fade touch-pan-x w-full"
+                  className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-2 touch-pan-x w-full"
                 >
                   {allLocalities.filter(l => l.is_active).map(loc => (
                     <button
@@ -339,9 +339,9 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[400px]">
-              <div className="lg:col-span-1 bg-white p-8 rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px]">
+              <div className="lg:col-span-1 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] shadow-xl border border-[#4f6d7a]/10 h-full flex flex-col justify-between min-h-[300px]">
                 <div>
-                  <h4 className="text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
+                  <h4 className="text-2xl md:text-3xl font-black text-[#dd6e42] uppercase italic leading-none mb-4 break-words">{selectedLocalityDetails?.name || 'Seleccione'}</h4>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm font-medium">{selectedLocalityDetails?.description || 'Descubre los tesoros de esta localidad.'}</p>
                 </div>
                 <div className="p-6 bg-[#eaeaea] rounded-3xl">
@@ -466,7 +466,7 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* Columna Imagen (SIN TARJETA BLANCA) */}
-              <div className="flex-1 relative w-full h-[500px]">
+              <div className="flex-1 relative w-full h-[300px] md:h-[500px]">
                 {/* Imagen principal */}
                 <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white/10 rotate-2 hover:rotate-0 transition-all duration-700 z-10 bg-gray-800">
                   <img
