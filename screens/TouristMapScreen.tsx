@@ -120,10 +120,12 @@ const TouristMapScreen: React.FC = () => {
       maxZoom: 20,
       maxNativeZoom: isSatellite ? 17 : 19,
       attribution: '© OpenStreetMap contributors',
-      updateWhenIdle: false, // Load tiles while panned, not just when stopped
-      keepBuffer: 10,        // Keep more tiles around for smoother panning
+      updateWhenIdle: false, // Carga mientras te mueves
+      keepBuffer: 25,        // Carga el equivalente a 25 cuadros extra en cada dirección (Mucha antelación)
       updateWhenZooming: true,
-      className: 'map-tiles'  // For custom CSS transitions
+      updateInterval: 0,      // Sin retraso para pedir nuevos cuadros
+      className: 'map-tiles',
+      bounds: [[-49.3, -76.0], [-43.5, -71.0]] // Enfocar recursos en la Región de Aysén
     }).addTo(map);
 
     // Add error handling for tile loading
@@ -152,9 +154,11 @@ const TouristMapScreen: React.FC = () => {
         maxNativeZoom: isSatellite ? 17 : 19,
         attribution: '© OpenStreetMap contributors',
         updateWhenIdle: false,
-        keepBuffer: 10,
+        keepBuffer: 25,
         updateWhenZooming: true,
-        className: 'map-tiles'
+        updateInterval: 0,
+        className: 'map-tiles',
+        bounds: [[-49.3, -76.0], [-43.5, -71.0]]
       }).addTo(mapInstance);
 
       // Add error handling
