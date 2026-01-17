@@ -186,6 +186,7 @@ OBJETIVO PRINCIPAL: Recomendar actividades usando el "Catálogo de Negocios Disp
 2. Si no hay suficientes de prioridad alta, RECOMIENDA los de prioridad "MEDIA" aclarando que son alternativas.
 3. IMPORTANTE: En el campo "businessName" debes poner el NOMBRE EXACTO del negocio del catálogo.
 4. Si sugieres "Almorzar", busca un Restaurante. Si sugieres "Dormir", busca Hospedaje.
+5. DENSIDAD: Genera un itinerario COMPLETO. Intenta incluir al menos 3 actividades por día (Mañana, Tarde, Noche). Aprovecha el día.
 
 DATOS DE ENTRADA:
 - Idioma: ${language}
