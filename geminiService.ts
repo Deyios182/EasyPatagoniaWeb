@@ -144,6 +144,12 @@ export async function generateItineraryAI(days: number, budget: string, categori
       sample: catalogContext.slice(0, 3)
     });
 
+    const catalogContext = filteredBusinesses.map((b: any) => ({
+      name: b.name || b.nombre,
+      cat: b.categoria || b.category,
+      loc: b.info?.direccion || b.description || "Aysén"
+    }));
+
     // STICT JSON PROMPT WITH STRONG INSTRUCTIONS
     const cleanJsonPrompt = `
 ACTÚA COMO: API Generadora de Itinerarios JSON para "Easy Patagonia".
