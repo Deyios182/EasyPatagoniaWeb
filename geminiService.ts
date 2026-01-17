@@ -134,11 +134,26 @@ export async function generateItineraryAI(days: number, budget: string, categori
       loc: b.info?.direccion || b.description
     }));
 
-    // STICT JSON PROMPT
+    // LOGGING FOR DEBUGGING
+    console.log("🧩 [PLANNER INPUT]", {
+      days,
+      budget,
+      localities,
+      totalBusinesses: businesses.length,
+      filtered: filteredBusinesses.length,
+      sample: catalogContext.slice(0, 3)
+    });
+
+    // STICT JSON PROMPT WITH STRONG INSTRUCTIONS
     const cleanJsonPrompt = `
 ACTÚA COMO: API Generadora de Itinerarios JSON para "Easy Patagonia".
 TAREA: Crear un itinerario de viaje lógico basado en los datos proporcionados.
 RESTRICCIÓN CRÍTICA: Tu salida debe ser EXCLUSIVAMENTE código JSON válido. Sin markdown (\`\`\`), sin explicaciones, sin saludos.
+
+OBJETIVO PRINCIPAL: Recomendar actividades usando el "Catálogo de Negocios Disponibles".
+1. Prioriza SIEMPRE los negocios de la lista adjunta.
+2. Si sugieres comer, dormir o un tour, BUSCA un negocio en el catálogo que coincida y pon su nombre en "businessName".
+3. Si no encuentras uno exacto, pon null en "businessName", pero NO inventes nombres.
 
 DATOS DE ENTRADA:
 - Idioma: ${language}
