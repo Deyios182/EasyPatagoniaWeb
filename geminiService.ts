@@ -11,20 +11,23 @@ console.log(`🤖 [AI SERVICE] Provider: ${AI_PROVIDER}`);
 
 // OPENROUTER CONFIG
 const OR_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OR_MODEL = "google/gemini-2.0-flash-001"; // Recommended cheap & fast model
+// Default for Chat (Fast & Good)
+const OR_MODEL_CHAT = "google/gemini-2.0-flash-lite-preview-02-05:free";
+// Dedicated for Logic/JSON (Strict & Smart)
+const OR_MODEL_LOGIC = "deepseek/deepseek-chat:free";
 
 /**
  * OpenRouter Fetch Helper
  */
-async function callOpenRouter(messages: any[], model = OR_MODEL, responseFormat?: any) {
+async function callOpenRouter(messages: any[], model = OR_MODEL_CHAT, responseFormat?: any) {
   if (!OPENROUTER_API_KEY) throw new Error("Missing VITE_OPENROUTER_API_KEY");
 
   const body: any = {
     model: model,
     messages: messages,
+    // DeepSeek prefers simpler parameters, Gemini likes these. Valid for both roughly.
     top_p: 1,
     temperature: 0.7,
-    repetition_penalty: 1,
   };
 
   if (responseFormat) {
@@ -35,7 +38,7 @@ async function callOpenRouter(messages: any[], model = OR_MODEL, responseFormat?
     method: "POST",
     headers: {
       "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": window.location.origin, // Required by OpenRouter for stats
+      "HTTP-Referer": window.location.origin,
       "X-Title": "EasyPatagonia",
       "Content-Type": "application/json"
     },
@@ -44,7 +47,14 @@ async function callOpenRouter(messages: any[], model = OR_MODEL, responseFormat?
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`OpenRouter Error ${response.status}: ${err}`);
+    // Try to parse friendly error
+    try {
+      const jsonDate = JSON.parse(err);
+      const msg = jsonDate.error?.message || err;
+      throw new Error(`OpenRouter: ${msg}`);
+    } catch (e) {
+      throw new Error(`OpenRouter Error ${response.status}: ${err}`);
+    }
   }
 
   const data = await response.json();
@@ -72,24 +82,16 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
     ${contextText}
     Si recomiendas algo, menciona si está en la lista local.`;
 
-    // --- GOOGLE PROVIDER ---
+    // --- GOOGLE PROVIDER (Legacy/Backup) ---
     if (AI_PROVIDER === "GOOGLE") {
       if (!GOOGLE_API_KEY) throw new Error("Missing VITE_GEMINI_API_KEY");
       const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
-
-      // Tools setup... (omitted for brevity implementation matching original logic just simplified)
-      // Note: keeping original logic implies using tools. OpenRouter might not support tools same way easily without complex setup.
-      // For now, simpler path: Just text.
-
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: { systemInstruction }
       });
-
-      const text = response.text || "";
-      // Grounding extraction omitted for simplicity in hybrid mode unless crucial.
-      return { text, sources: [] };
+      return { text: response.text || "", sources: [] };
     }
 
     // --- OPENROUTER PROVIDER ---
@@ -98,7 +100,8 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
       { role: "user", content: prompt }
     ];
 
-    const text = await callOpenRouter(messages);
+    // Use default Chat model
+    const text = await callOpenRouter(messages, OR_MODEL_CHAT);
     return { text: text || "No response", sources: [] };
 
   } catch (error: any) {
@@ -108,20 +111,18 @@ export async function askPatagoniaAI(prompt: string, language: 'ES' | 'EN' | 'PT
 }
 
 /**
- * Generador de Imágenes
+ * Generador de Imágenes (Placeholder)
  */
 export async function generateActivityPreview(activityTitle: string) {
-  // Image generation usually requires specific models. 
-  // For now, return null or implement if user asks. Keeping as null fallback for safety.
   return null;
 }
 
 /**
- * Planificador
+ * Planificador (Optimized with Strict JSON Prompt)
  */
 export async function generateItineraryAI(days: number, budget: string, categories: Category[], businesses: Business[], localities: string[] = [], language: 'ES' | 'EN' | 'PT' = 'ES') {
   try {
-    // FILTER BUSINESSES (Same logic)
+    // FILTER BUSINESSES
     let filteredBusinesses = businesses.filter(b => categories.includes(b.categoria as Category));
     if (localities.length > 0) {
       filteredBusinesses = filteredBusinesses.filter(b => b.locality_name && localities.includes(b.locality_name));
@@ -133,35 +134,57 @@ export async function generateItineraryAI(days: number, budget: string, categori
       loc: b.info?.direccion || b.description
     }));
 
-    const prompt = `Planificador Aysén. Idioma: ${language}. Días: ${days}. Presupuesto: ${budget}.
-     LOCALIDADES: ${localities.join(', ')}.
-     CATÁLOGO: ${JSON.stringify(catalogContext)}
-     Genera un JSON válido (Array de objetos) con el itinerario.
-     Formato deseado: [{ "day": 1, "title": "...", "activities": [{ "time": "...", "title": "...", "description": "..." }] }]
-     SOLO EL JSON.`;
+    // STICT JSON PROMPT
+    const cleanJsonPrompt = `
+ACTÚA COMO: API Generadora de Itinerarios JSON para "Easy Patagonia".
+TAREA: Crear un itinerario de viaje lógico basado en los datos proporcionados.
+RESTRICCIÓN CRÍTICA: Tu salida debe ser EXCLUSIVAMENTE código JSON válido. Sin markdown (\`\`\`), sin explicaciones, sin saludos.
+
+DATOS DE ENTRADA:
+- Idioma: ${language}
+- Días: ${days}
+- Presupuesto: ${budget}
+- Localidades: ${localities.join(', ') || "Cualquiera en Aysén"}
+- Catálogo de Negocios Disponibles: ${JSON.stringify(catalogContext)}
+
+FORMATO JSON REQUERIDO:
+[
+  {
+    "day": 1,
+    "title": "Título del día",
+    "activities": [
+      { 
+        "time": "09:00", 
+        "title": "Nombre de actividad", 
+        "description": "Breve descripción", 
+        "businessName": "Nombre EXACTO del negocio del catálogo si aplica (o null)" 
+      }
+    ]
+  }
+]
+`;
 
     if (AI_PROVIDER === "GOOGLE") {
       const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
+        contents: cleanJsonPrompt,
+        config: { responseMimeType: "application/json" } // Google supports this natively
       });
       return JSON.parse(response.text || "[]");
     }
 
-    // OPENROUTER
+    // OPENROUTER - Using DeepSeek for Logic
     const messages = [
-      { role: "system", content: "You are a travel planner. Output strictly valid JSON." },
-      { role: "user", content: prompt }
+      { role: "system", content: "You are a rigid JSON generator. You output ONLY valid JSON arrays. No Markdown formatting." },
+      { role: "user", content: cleanJsonPrompt }
     ];
-    // Some OpenRouter models support json_object mode, but not all. 
-    // Gemini 2.0 Flash on OpenRouter should support it or be smart enough.
-    // We'll rely on the prompt "SOLO EL JSON".
 
-    const text = await callOpenRouter(messages);
-    // Clean potential markdown code blocks
-    const cleanJson = text?.replace(/```json/g, '').replace(/```/g, '').trim();
+    // Use Logic/JSON specific model
+    const text = await callOpenRouter(messages, OR_MODEL_LOGIC);
+
+    // Clean potential markdown code blocks provided by eager models
+    let cleanJson = text?.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleanJson || "[]");
 
   } catch (error) {
@@ -174,8 +197,6 @@ export async function generateItineraryAI(days: number, budget: string, categori
  * Audio TTS
  */
 export async function textToSpeechPatagonia(text: string) {
-  // OpenRouter doesn't support Google-style TTS directly via same endpoint usually.
-  // Fallback immediately to browser.
   console.warn("TTS: Using Browser Fallback (OpenRouter/Standard)");
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
