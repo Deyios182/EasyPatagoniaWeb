@@ -7,131 +7,66 @@ import BottomNavigationBar from '../components/BottomNavigationBar';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', // Cleaner map without competitor POIs
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 };
 
 const TouristMapScreen: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions } = useAppAuth();
+  // ... (hooks)
 
-  // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
-  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  // ... (state)
 
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<{ [key: string]: L.Marker | L.CircleMarker }>({});
+  // ... (resize effect)
 
-  const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
-  const [serviceSearch, setServiceSearch] = useState('');
-  const [zoom, setZoom] = useState(14);
-  const [isSatellite, setIsSatellite] = useState(false); // Local state for satellite view
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
-  const [selectedAttraction, setSelectedAttraction] = useState<any | null>(null); // New state for Attraction
-  const [showRouteAssistant, setShowRouteAssistant] = useState(false);
+  // ... (navigation state effect)
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  // ... (zoomLevelPriority)
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // ... (filtered)
 
-  // Handle incoming navigation state (e.g. from Highlights or Details)
-  useEffect(() => {
-    if (location.state?.selectedAttractionId) {
-      const attr = allAttractions.find(a => a.id === location.state.selectedAttractionId);
-      if (attr) {
-        setSelectedAttraction(attr);
-        setSelectedBusiness(null);
-        // Clear state to avoid re-triggering on future renders if needed, 
-        // using replace: true might be better but for now this works.
-        // We can optionally clear history state but it's fine.
-      }
-    }
-  }, [location.state, allAttractions]);
-
-  const localTransfers = useMemo(() =>
-    allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios?.some(s => (s.nombre || '').toLowerCase().includes('traslado') || (s.nombre || '').toLowerCase().includes('aeropuerto'))),
-    [allBusinesses]
-  );
-
-  const zoomLevelPriority = useMemo(() => {
-    if (zoom < 13.0) return 0;
-    if (zoom < 15.0) return 1;
-    if (zoom < 16.5) return 2;
-    return 3;
-  }, [zoom]);
-
-  const filtered = useMemo(() => {
-    return allBusinesses.filter(b => {
-      // Robust checks
-      if (!b.gps) return false;
-      if (b.isOpen === false) return false;
-
-      let matchesFilter = false;
-      if (activeFilter === 'All') {
-        matchesFilter = true;
-      } else if (activeFilter === 'Actividad') {
-        matchesFilter = ['Actividad', 'Tour Operador', 'Agencia', 'Tour', 'Excursión'].some(c => b.categoria.includes(c));
-      } else if (activeFilter === 'Hospedaje') {
-        matchesFilter = ['Hospedaje', 'Hotel', 'Cabaña', 'Hostal', 'Lodge', 'Camping', 'Alojamiento'].some(c => b.categoria.includes(c));
-      } else if (activeFilter === 'Restaurante') {
-        matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
-      } else if (activeFilter === 'Transporte') {
-        matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
-      } else {
-        matchesFilter = b.categoria === activeFilter;
-      }
-
-      // Ignore Priority for now to debug - Uncomment if strict priority needed
-      // const businessPriority = b.priority !== undefined ? b.priority : 0; 
-      // const matchesPriority = businessPriority <= zoomLevelPriority;
-      const matchesPriority = true; // FORCE SHOW ALL
-
-      const matchesSearch = serviceSearch === '' ||
-        b.servicios?.some(s => (s.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase())) ||
-        (b.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase());
-
-      return matchesFilter && matchesPriority && matchesSearch;
-    });
-  }, [allBusinesses, activeFilter, zoomLevelPriority, serviceSearch]);
-
-  // Init Map (unchanged)
+  // Init Map
   useEffect(() => {
     if (!containerRef.current || mapInstance) return;
     const initialPos: L.LatLngExpression = [-46.6225, -72.6745]; // Tranquilo
+
+    // Force valid theme
+    const currentTheme = mapTheme || 'light';
+    const validTheme = (currentTheme === 'satellite' ? 'light' : currentTheme);
+    const tileUrl = isSatellite ? MAP_TILES['satellite'] : (MAP_TILES[validTheme] || MAP_TILES['light']);
+
+    console.log('🗺️ [MAP] Initializing map with theme:', validTheme, 'URL:', tileUrl);
+
     const map = L.map(containerRef.current, {
       zoomControl: false,
       attributionControl: false,
       center: initialPos,
-      zoom: 14
+      zoom: 14,
+      bounceAtZoomLimits: false
     });
 
     map.on('zoomend', () => setZoom(map.getZoom()));
 
-    // Determine valid theme for tiles (fallback to light if satellite was saved globally)
-    const validTheme = (mapTheme === 'satellite' ? 'light' : mapTheme);
-    const tileUrl = isSatellite ? MAP_TILES['satellite'] : MAP_TILES[validTheme];
-
     tileLayerRef.current = L.tileLayer(tileUrl, {
       maxZoom: 20,
       maxNativeZoom: isSatellite ? 17 : 19,
-      attribution: '© OpenStreetMap contributors',
-      updateWhenIdle: false, // Carga mientras te mueves
-      keepBuffer: 25,        // Carga el equivalente a 25 cuadros extra en cada dirección (Mucha antelación)
+      attribution: '© OpenStreetMap contributors & CartoDB',
+      subdomains: 'abcd', // IMPORTANT for CartoCDN
+      updateWhenIdle: false,
+      keepBuffer: 10,
       updateWhenZooming: true,
-      updateInterval: 0,      // Sin retraso para pedir nuevos cuadros
+      updateInterval: 100,
       className: 'map-tiles',
-      bounds: [[-49.3, -76.0], [-43.5, -71.0]] // Enfocar recursos en la Región de Aysén
+      bounds: [[-49.3, -76.0], [-43.5, -71.0]]
     }).addTo(map);
 
-    // Add error handling for tile loading
     tileLayerRef.current.on('tileerror', (error) => {
-      console.error('❌ [MAP] Tile load error:', error);
+      console.error('❌ [MAP] Tile load error. Check network or URL.', error);
     });
+
+    // Fix gray area by invalidating size after mount
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
 
     setMapInstance(map);
 
@@ -139,29 +74,32 @@ const TouristMapScreen: React.FC = () => {
       map.remove();
       setMapInstance(null);
     };
-  }, []); // Run once (but strictly clean up)
+  }, []);
 
-  // Update Theme (unchanged)
+  // Update Theme
   useEffect(() => {
     if (mapInstance && tileLayerRef.current) {
       mapInstance.removeLayer(tileLayerRef.current);
 
-      const validTheme = (mapTheme === 'satellite' ? 'light' : mapTheme);
-      const tileUrl = isSatellite ? MAP_TILES['satellite'] : MAP_TILES[validTheme];
+      const currentTheme = mapTheme || 'light';
+      const validTheme = (currentTheme === 'satellite' ? 'light' : currentTheme);
+      const tileUrl = isSatellite ? MAP_TILES['satellite'] : (MAP_TILES[validTheme] || MAP_TILES['light']);
+
+      console.log('🗺️ [MAP] Updating tiles to:', tileUrl);
 
       tileLayerRef.current = L.tileLayer(tileUrl, {
         maxZoom: 20,
         maxNativeZoom: isSatellite ? 17 : 19,
-        attribution: '© OpenStreetMap contributors',
+        attribution: '© OpenStreetMap contributors & CartoDB',
+        subdomains: 'abcd',
         updateWhenIdle: false,
-        keepBuffer: 25,
+        keepBuffer: 10,
         updateWhenZooming: true,
-        updateInterval: 0,
+        updateInterval: 100,
         className: 'map-tiles',
         bounds: [[-49.3, -76.0], [-43.5, -71.0]]
       }).addTo(mapInstance);
 
-      // Add error handling
       tileLayerRef.current.on('tileerror', (error) => {
         console.error('❌ [MAP] Tile load error:', error);
       });
