@@ -12,17 +12,86 @@ const MAP_TILES: Record<MapTheme, string> = {
 };
 
 const TouristMapScreen: React.FC = () => {
-  // ... (hooks)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions } = useAppAuth();
 
-  // ... (state)
+  // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 
-  // ... (resize effect)
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<{ [key: string]: L.Marker | L.CircleMarker }>({});
 
-  // ... (navigation state effect)
+  const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [zoom, setZoom] = useState(14);
+  const [isSatellite, setIsSatellite] = useState(false); // Local state for satellite view
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [selectedAttraction, setSelectedAttraction] = useState<any | null>(null); // New state for Attraction
+  const [showRouteAssistant, setShowRouteAssistant] = useState(false);
 
-  // ... (zoomLevelPriority)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // ... (filtered)
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Handle incoming navigation state (e.g. from Highlights or Details)
+  useEffect(() => {
+    if (location.state?.selectedAttractionId) {
+      const attr = allAttractions.find(a => a.id === location.state.selectedAttractionId);
+      if (attr) {
+        setSelectedAttraction(attr);
+        setSelectedBusiness(null);
+      }
+    }
+  }, [location.state, allAttractions]);
+
+  const localTransfers = useMemo(() =>
+    allBusinesses.filter(b => b.categoria === 'Transporte' || b.servicios?.some(s => (s.nombre || '').toLowerCase().includes('traslado') || (s.nombre || '').toLowerCase().includes('aeropuerto'))),
+    [allBusinesses]
+  );
+
+  const zoomLevelPriority = useMemo(() => {
+    if (zoom < 13.0) return 0;
+    if (zoom < 15.0) return 1;
+    if (zoom < 16.5) return 2;
+    return 3;
+  }, [zoom]);
+
+  const filtered = useMemo(() => {
+    return allBusinesses.filter(b => {
+      // Robust checks
+      if (!b.gps) return false;
+      if (b.isOpen === false) return false;
+
+      let matchesFilter = false;
+      if (activeFilter === 'All') {
+        matchesFilter = true;
+      } else if (activeFilter === 'Actividad') {
+        matchesFilter = ['Actividad', 'Tour Operador', 'Agencia', 'Tour', 'Excursión'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Hospedaje') {
+        matchesFilter = ['Hospedaje', 'Hotel', 'Cabaña', 'Hostal', 'Lodge', 'Camping', 'Alojamiento'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Restaurante') {
+        matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Transporte') {
+        matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
+      } else {
+        matchesFilter = b.categoria === activeFilter;
+      }
+
+      const matchesPriority = true; // FORCE SHOW ALL
+
+      const matchesSearch = serviceSearch === '' ||
+        b.servicios?.some(s => (s.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase())) ||
+        (b.nombre || '').toLowerCase().includes(serviceSearch.toLowerCase());
+
+      return matchesFilter && matchesPriority && matchesSearch;
+    });
+  }, [allBusinesses, activeFilter, zoomLevelPriority, serviceSearch]);
 
   // Init Map
   useEffect(() => {
