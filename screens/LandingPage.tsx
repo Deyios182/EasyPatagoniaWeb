@@ -30,104 +30,13 @@ const LandingPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   // Fetch Real Data
-  const { allLocalities, allAttractions, allBusinesses, t, language, setLanguage } = useAppAuth();
+  const { allLocalities, allAttractions, allBusinesses } = useAppAuth();
 
-  // Landing Specific Translations (since App.tsx translations are app-focused)
-  const landingT = {
-    ES: { features: "Funciones", destinations: "Destinos", vision: "Visión", contact: "Contacto", faq: "FAQ", login: "Ingresar", map_btn: "Ir al Mapa", feature_map_title: "Mapa con Vista Satelital", feature_map_desc: "Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.", feature_guide_title: "Guía de Atractivos", feature_guide_desc: "Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.", feature_directory_title: "Directorio Comercial", feature_directory_desc: "Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.", feature_planner_title: "Planner de Viaje", feature_planner_desc: "Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.", feature_ai_title: 'Asistente Patagon<span class="text-[#dd6e42]">IA</span>', feature_ai_desc: "Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.", feature_data_title: "Datos en Terreno", feature_data_desc: "Información actualizada y verídica gracias a nuestra red de embajadores locales.", tool_title: "Tu Herramienta de Viaje", tool_heading: "Todo lo que necesitas <br /> <span class=\"text-[#4f6d7a]\">en un solo lugar</span>", tool_sub: "No es solo una web, es tu guía inteligente diseñada para que vivas la Patagonia sin complicaciones técnicas ni pérdida de tiempo." },
-    EN: { features: "Features", destinations: "Destinations", vision: "Vision", contact: "Contact", faq: "FAQ", login: "Login", map_btn: "Go to Map", feature_map_title: "Satellite View Map", feature_map_desc: "Navigate the region with precision. Locate attractions, viewpoints, and services in real-time.", feature_guide_title: "Attractions Guide", feature_guide_desc: "Complete files with photos, descriptions, and verified access routes.", feature_directory_title: "Business Directory", feature_directory_desc: "Find the best places to eat, sleep, and buy authentic local products.", feature_planner_title: "Trip Planner", feature_planner_desc: "Save your favorite places and organize your personalized itinerary effectively.", feature_ai_title: 'Patagon<span class="text-[#dd6e42]">IA</span> Assistant', feature_ai_desc: "Our AI answers your questions and gives personalized recommendations 24/7.", feature_data_title: "On-Site Data", feature_data_desc: "Updated and truthful info thanks to our network of local ambassadors.", tool_title: "Your Travel Tool", tool_heading: "Everything you need <br /> <span class=\"text-[#4f6d7a]\">in one place</span>", tool_sub: "It's not just a website, it's your smart guide designed for you to live Patagonia without technical complications or wasted time." },
-    PT: { features: "Funções", destinations: "Destinos", vision: "Visão", contact: "Contato", faq: "FAQ", login: "Entrar", map_btn: "Ir para o Mapa", feature_map_title: "Mapa com Visão de Satélite", feature_map_desc: "Navegue pela região com precisão. Localize atrações, mirantes e serviços em tempo real.", feature_guide_title: "Guia de Atrações", feature_guide_desc: "Fichas completas com fotos, descrições e as melhores rotas de acesso verificadas.", feature_directory_title: "Diretório Comercial", feature_directory_desc: "Encontre os melhores lugares para comer, dormir e comprar produtos locais autênticos.", feature_planner_title: "Planejador de Viagem", feature_planner_desc: "Salve seus lugares favoritos e organize seu itinerário personalizado de forma simples.", feature_ai_title: 'Assistente Patagon<span class="text-[#dd6e42]">IA</span>', feature_ai_desc: "Nossa IA resolve suas dúvidas e dá recomendações personalizadas 24/7.", feature_data_title: "Dados em Campo", feature_data_desc: "Informações atualizadas e verídicas graças à nossa rede de embaixadores locais.", tool_title: "Sua Ferramenta de Viagem", tool_heading: "Tudo o que você precisa <br /> <span class=\"text-[#4f6d7a]\">em um só lugar</span>", tool_sub: "Não é apenas um site, é seu guia inteligente projetado para você viver a Patagônia sem complicações técnicas." }
-  };
+  // Default to first active locality or 'tran' if none
+  const [selectedLocality, setSelectedLocality] = useState<string>('loc-tranquilo');
 
-  const lt = landingT[language || 'ES'];
-
-  // ... (rest of the component)
-
-  // In the return:
-  // Navbar modifications
-  <div className="fixed top-0 left-0 right-0 z-50 bg-[#1a2a30]/90 backdrop-blur-md py-4 shadow-lg transition-all duration-300">
-    <nav className="max-w-7xl mx-auto px-4 md:px-6 flex flex-row justify-between items-center h-full">
-      <div className="cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
-        {!logoError ? (
-          <img
-            src={settings['logo_url'] || "/logo_easy.png"}
-            className="h-10 w-auto object-contain hover:scale-105 transition-all duration-300"
-            alt={settings['site_name'] || "Easy Patagonia"}
-            onError={() => setLogoError(true)}
-          />
-        ) : (
-          <div className="flex flex-col">
-            <h1 className="font-black italic tracking-tighter uppercase text-lg md:text-2xl">
-              <span className="text-white">Easy</span>
-              <span className="text-[#dd6e42]">Patagonia</span>
-            </h1>
-          </div>
-        )}
-      </div>
-
-      {/* Nav Links - Center */}
-      <div className="flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 overflow-x-auto no-scrollbar max-w-[40vw] md:max-w-none">
-        <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">{lt.features}</button>
-        <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">{lt.destinations}</button>
-        <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">{lt.vision}</button>
-        <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">{lt.contact}</button>
-        <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">{lt.faq}</button>
-      </div>
-
-      {/* Right Side: Language + Login */}
-      <div className="flex items-center gap-3">
-        {/* Language Selector */}
-        <div className="flex bg-black/30 backdrop-blur-md rounded-full p-1 border border-white/10">
-          {(['ES', 'EN', 'PT'] as const).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLanguage(lang)}
-              className={`text-[9px] font-black px-2 py-1 rounded-full transition-all ${language === lang ? 'bg-[#dd6e42] text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-            >
-              {lang}
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={handleEnterApp}
-          className="bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white px-5 py-2 md:px-6 md:py-2 whitespace-nowrap"
-        >
-          {isAuthenticated ? lt.map_btn : lt.login}
-        </button>
-      </div>
-    </nav>
-  </div>
-
-  {/* ... Hero Section ... */ }
-
-  {/* Features Section - Reverted to Static */ }
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {[
-      { icon: 'map', title: lt.feature_map_title, desc: lt.feature_map_desc },
-      { icon: 'explore', title: lt.feature_guide_title, desc: lt.feature_guide_desc },
-      { icon: 'storefront', title: lt.feature_directory_title, desc: lt.feature_directory_desc },
-      { icon: 'calendar_month', title: lt.feature_planner_title, desc: lt.feature_planner_desc },
-      { icon: 'smart_toy', title: lt.feature_ai_title, desc: lt.feature_ai_desc },
-      { icon: 'verified_user', title: lt.feature_data_title, desc: lt.feature_data_desc }
-    ].map((feature, idx) => (
-      <motion.div
-        key={idx}
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        viewport={{ once: true }}
-        transition={{ delay: idx * 0.1 }}
-        className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl hover:shadow-2xl transition-all group"
-      >
-        <div className="w-14 h-14 bg-[#4f6d7a]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#dd6e42] transition-colors">
-          <span className="material-symbols-outlined text-[#4f6d7a] group-hover:text-white text-3xl transition-colors">{feature.icon}</span>
-        </div>
-        <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3" dangerouslySetInnerHTML={{ __html: feature.title }}></h5>
-        <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
-      </motion.div>
-    ))}
-  </div>
+  // Dynamic Landing Data
+  const [content, setContent] = useState<Record<string, LandingContent>>({});
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
