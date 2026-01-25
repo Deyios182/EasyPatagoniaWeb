@@ -245,60 +245,62 @@ const LandingPage: React.FC = () => {
             </div>
           )}
 
-          <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#1a2a30]/90 backdrop-blur-md py-2 shadow-lg' : 'bg-transparent py-2 md:py-6'}`}>
+          {/* Fixed Navbar - No resizing/displacement */}
+          <div className="fixed top-0 left-0 right-0 z-50 bg-[#1a2a30]/90 backdrop-blur-md py-4 shadow-lg transition-all duration-300">
             <nav className="max-w-7xl mx-auto px-4 md:px-6 flex flex-row justify-between items-center h-full">
               <div className="cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
                 {!logoError ? (
                   <img
                     src={settings['logo_url'] || "/logo_easy.png"}
-                    className={`${scrolled ? 'h-8 md:h-10' : 'h-12 md:h-24'} w-auto object-contain hover:scale-105 transition-all duration-300`}
+                    className="h-10 w-auto object-contain hover:scale-105 transition-all duration-300"
                     alt={settings['site_name'] || "Easy Patagonia"}
                     onError={() => setLogoError(true)}
                   />
                 ) : (
                   <div className="flex flex-col">
-                    <h1 className={`font-black italic tracking-tighter uppercase transition-all duration-300 ${scrolled ? 'text-sm md:text-lg' : 'text-lg md:text-2xl'}`}>
+                    <h1 className="font-black italic tracking-tighter uppercase text-lg md:text-2xl">
                       <span className="text-white">Easy</span>
                       <span className="text-[#dd6e42]">Patagonia</span>
                     </h1>
-                    {!scrolled && (
-                      <span className="hidden md:block text-[10px] text-[#dd6e42] tracking-[0.3em] font-bold uppercase">
-                        {settings['site_tagline'] || 'Austral Experience'}
-                      </span>
-                    )}
                   </div>
                 )}
               </div>
 
               {/* Nav Links - Visible on Mobile (Compact) */}
-              <div className={`flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full transition-all duration-300 ${scrolled ? 'bg-transparent' : 'bg-black/30 backdrop-blur-md border border-white/10'}`}>
-                <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Funciones</button>
-                <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Destinos</button>
-                <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Visión</button>
-                <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">Contacto</button>
-                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors">FAQ</button>
+              <div className="flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 overflow-x-auto no-scrollbar max-w-[50vw] md:max-w-none">
+                <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">Funciones</button>
+                <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">Destinos</button>
+                <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">Visión</button>
+                <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">Contacto</button>
+                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap">FAQ</button>
               </div>
 
               <button
                 onClick={handleEnterApp}
-                className={`bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white ${scrolled ? 'px-4 py-1.5 md:px-6 md:py-2' : 'px-5 py-2 md:px-8 md:py-3'}`}
+                className="bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white px-5 py-2 md:px-8 md:py-3"
               >
                 {isAuthenticated ? 'Ir al Mapa' : 'Ingresar'}
               </button>
             </nav>
           </div>
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40">
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-40 cursor-pointer group"
+            onClick={handleEnterApp}
+          >
             <motion.h1
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1 }}
-              className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none"
+              className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500"
               dangerouslySetInnerHTML={{ __html: (content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />').replace(/Patagonia/g, '<span class="text-[#dd6e42]">Patagonia</span>') }}
             ></motion.h1>
-            <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic">
+            <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic group-hover:text-white transition-colors">
               "{content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
             </p>
+            <div className="mt-8 opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
+              <span className="text-white text-xs font-black uppercase tracking-widest">Toca para explorar</span>
+            </div>
           </div>
           <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce"><span className="material-symbols-outlined text-white text-4xl">keyboard_arrow_down</span></div>
         </div>
@@ -340,26 +342,42 @@ const LandingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
-                { icon: 'map', title: 'Mapa con Vista Satelital', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.' },
-                { icon: 'explore', title: 'Guía de Atractivos', desc: 'Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.' },
-                { icon: 'storefront', title: 'Directorio Comercial', desc: 'Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.' },
-                { icon: 'calendar_month', title: 'Planner de Viaje', desc: 'Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.' },
-                { icon: 'smart_toy', title: 'Asistente Patagon<span class="text-[#dd6e42]">IA</span>', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.' },
-                { icon: 'verified_user', title: 'Datos en Terreno', desc: 'Información actualizada y verídica gracias a nuestra red de embajadores locales.' }
+                { icon: 'map', title: 'Mapa con Vista Satelital', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.', route: '/map' },
+                { icon: 'explore', title: 'Guía de Atractivos', desc: 'Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.', route: '/highlights' },
+                { icon: 'storefront', title: 'Directorio Comercial', desc: 'Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.', route: '/directory' },
+                { icon: 'calendar_month', title: 'Planner de Viaje', desc: 'Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.', route: '/planner', requireAuth: true },
+                { icon: 'smart_toy', title: 'Asistente Patagon<span class="text-[#dd6e42]">IA</span>', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.', route: '/chat', requireAuth: true },
+                { icon: 'verified_user', title: 'Datos en Terreno', desc: 'Información actualizada y verídica gracias a nuestra red de embajadores locales.', route: '/highlights' } // Linking to highlights as it contains verified data
               ].map((feature, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.03, y: -5 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl hover:shadow-2xl transition-all group"
+                  onClick={() => {
+                    if (feature.requireAuth && !isAuthenticated) {
+                      navigate('/auth/login');
+                    } else {
+                      navigate(feature.route);
+                    }
+                  }}
+                  className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl hover:shadow-2xl transition-all group cursor-pointer relative overflow-hidden"
                 >
-                  <div className="w-14 h-14 bg-[#4f6d7a]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#dd6e42] transition-colors">
-                    <span className="material-symbols-outlined text-[#4f6d7a] group-hover:text-white text-3xl transition-colors">{feature.icon}</span>
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#4f6d7a]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="relative z-10 text-left">
+                    <div className="w-14 h-14 bg-[#4f6d7a]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#dd6e42] transition-colors shadow-sm decoration-clone">
+                      <span className="material-symbols-outlined text-[#4f6d7a] group-hover:text-white text-3xl transition-colors">{feature.icon}</span>
+                    </div>
+                    <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3" dangerouslySetInnerHTML={{ __html: feature.title }}></h5>
+                    <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
+
+                    <div className="mt-6 flex items-center gap-2 text-[#dd6e42] text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                      <span>Ir a la sección</span>
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </div>
                   </div>
-                  <h5 className="text-xl font-black text-[#1a2a30] uppercase italic mb-3" dangerouslySetInnerHTML={{ __html: feature.title }}></h5>
-                  <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -451,7 +469,15 @@ const LandingPage: React.FC = () => {
                   className="flex gap-6 overflow-x-auto no-scrollbar pb-8 snap-x snap-mandatory"
                 >
                   {visibleHighlights.length > 0 ? visibleHighlights.map(place => (
-                    <div key={place.id} className="w-[90vw] md:w-[320px] flex-shrink-0 group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center">
+                    <div
+                      key={place.id}
+                      className="w-[90vw] md:w-[320px] flex-shrink-0 group relative h-[500px] rounded-[3rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all snap-center cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isAuthenticated) navigate(`/attraction/${place.id}`);
+                        else navigate('/auth/login');
+                      }}
+                    >
                       <img src={place.main_image_url || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={place.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30]/90 via-transparent to-transparent"></div>
 
