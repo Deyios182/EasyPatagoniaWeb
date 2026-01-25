@@ -566,21 +566,22 @@ const LandingPage: React.FC = () => {
           <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
 
             {/* Pilares */}
+            {/* Pilares */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
                 <span className="text-2xl mb-3 block">🧭</span>
-                <h3 className="text-base font-black uppercase mb-2">Conexión y Autenticidad</h3>
-                <p className="text-xs text-slate-300 leading-relaxed text-left">Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.</p>
+                <h3 className="text-base font-black uppercase mb-2">{t('pillar_1_title')}</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">{t('pillar_1_desc')}</p>
               </div>
               <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
                 <span className="text-2xl mb-3 block">💡</span>
-                <h3 className="text-base font-black uppercase mb-2">Planificación Simple</h3>
-                <p className="text-xs text-slate-300 leading-relaxed text-left">Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.</p>
+                <h3 className="text-base font-black uppercase mb-2">{t('pillar_2_title')}</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">{t('pillar_2_desc')}</p>
               </div>
               <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors">
                 <span className="text-2xl mb-3 block">💚</span>
-                <h3 className="text-base font-black uppercase mb-2">Turismo Sostenible</h3>
-                <p className="text-xs text-slate-300 leading-relaxed text-left">Promover un turismo responsable que respeta la riqueza natural de la Patagonia.</p>
+                <h3 className="text-base font-black uppercase mb-2">{t('pillar_3_title')}</h3>
+                <p className="text-xs text-slate-300 leading-relaxed text-left">{t('pillar_3_desc')}</p>
               </div>
             </div>
 
@@ -592,24 +593,24 @@ const LandingPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-[#dd6e42]">rocket_launch</span>
-                    <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em]">Nuestra Misión</h2>
+                    <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em]">{t('our_mission')}</h2>
                   </div>
                   <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-left pl-9 border-l-2 border-[#dd6e42]/30">
-                    Impulsar el desarrollo turístico de la Región de Aysén mediante una plataforma innovadora que conecta a viajeros con experiencias auténticas, la naturaleza y las comunidades locales.
+                    {t('mission_text')}
                   </p>
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-[#dd6e42]">visibility</span>
-                    <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em]">Nuestra Visión</h2>
+                    <h2 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em]">{t('our_vision')}</h2>
                   </div>
                   <p className="text-[#c0d6df]/90 text-base leading-relaxed font-light text-left pl-9 border-l-2 border-[#dd6e42]/30">
-                    Convertirnos en la plataforma turística líder de toda la Patagonia —chilena y argentina— integrando tecnología, sostenibilidad y desarrollo comunitario.
+                    {t('vision_text')}
                   </p>
                 </div>
 
                 <button onClick={handleEnterApp} className="bg-white text-[#1a2a30] px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#dd6e42] hover:text-white transition-all shadow-xl w-full md:w-auto mt-4">
-                  EXPLORAR LA PATAGONIA AHORA
+                  {t('explore_now_btn')}
                 </button>
               </div>
 
@@ -644,10 +645,10 @@ const LandingPage: React.FC = () => {
 
           <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 text-center">
             <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
-              ¡Únete a la <span className="text-[#dd6e42]">Aventura</span>!
+              {t('join_adventure')} <span className="text-[#dd6e42]">{t('adventure_word')}</span>{t('join_adventure_end')}
             </h2>
             <p className="text-slate-400 text-lg md:text-xl font-light mb-16 max-w-2xl mx-auto">
-              Síguenos para descubrir rincones secretos, ofertas exclusivas y la magia de la Patagonia al instante.
+              {t('follow_us_text')}
             </p>
 
             {/* Social Grid - Wider & Prettier */}
@@ -657,7 +658,7 @@ const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
                 </div>
                 <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">Instagram</h3>
-                <p className="text-xs text-slate-400">Inspiración visual diaria</p>
+                <p className="text-xs text-slate-400">{t('insta_desc')}</p>
               </button>
 
               <button onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")} className="group bg-white/5 border border-white/5 hover:border-white/20 p-8 rounded-[2rem] transition-all hover:scale-105 hover:bg-white/10">
@@ -665,7 +666,7 @@ const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-white text-3xl">movie</span>
                 </div>
                 <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">TikTok</h3>
-                <p className="text-xs text-slate-400">Videos y tendencias</p>
+                <p className="text-xs text-slate-400">{t('tiktok_desc')}</p>
               </button>
 
               <button onClick={handleWhatsApp} className="group bg-[#25D366]/5 border border-white/5 hover:border-[#25D366]/50 p-8 rounded-[2rem] transition-all hover:scale-105 hover:bg-white/5">
@@ -673,7 +674,7 @@ const LandingPage: React.FC = () => {
                   <span className="material-symbols-outlined text-white text-3xl">chat</span>
                 </div>
                 <h3 className="text-white font-black uppercase tracking-widest text-sm mb-1">WhatsApp</h3>
-                <p className="text-xs text-slate-400">Soporte directo 24/7</p>
+                <p className="text-xs text-slate-400">{t('whatsapp_desc')}</p>
               </button>
             </div>
 
@@ -682,7 +683,7 @@ const LandingPage: React.FC = () => {
 
               {/* 1. Contact Info (Now First) */}
               <div className="space-y-4">
-                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">¿Prefieres escribirnos un correo?</p>
+                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">{t('email_pref')}</p>
                 <a
                   href="https://mail.google.com/mail/?view=cm&fs=1&to=contacto@easypatagonia.com&su=Consulta%20desde%20EasyPatagonia&body=Hola%2C%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n."
                   target="_blank"
@@ -701,31 +702,31 @@ const LandingPage: React.FC = () => {
         <section id="faq" className="py-24 bg-[#eaeaea] relative z-20 overflow-hidden">
           <div className="max-w-4xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-4">¿Dudas?</h2>
-              <h3 className="text-4xl md:text-5xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Preguntas Frecuentes</h3>
+              <h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-4">{t('doubts_title')}</h2>
+              <h3 className="text-4xl md:text-5xl font-black text-[#1a2a30] uppercase italic tracking-tighter">{t('faq_title')}</h3>
             </div>
 
             <div className="space-y-4">
               {[
                 {
-                  q: "¿Cómo accedo a la plataforma?",
-                  a: "¡Es muy sencillo! Solo necesitas un navegador web. Puedes usarla desde tu computadora o directamente en tu celular mientras viajas presionando el botón 'Ingresar' en la parte superior."
+                  q: t('faq_q1'),
+                  a: t('faq_a1')
                 },
                 {
-                  q: "¿La app es gratuita para los turistas?",
-                  a: "Sí, el acceso a la información de destinos, atractivos y el directorio comercial es completamente gratuito para todos los viajeros."
+                  q: t('faq_q2'),
+                  a: t('faq_a2')
                 },
                 {
-                  q: "¿Necesito internet para usar el mapa?",
-                  a: "Sí, al ser una plataforma en línea, necesitas conexión de datos para cargar el mapa y la información en tiempo real. Te recomendamos revisar tus puntos de interés antes de entrar en zonas sin señal."
+                  q: t('faq_q3'),
+                  a: t('faq_a3')
                 },
                 {
-                  q: "¿Cómo contacto a un negocio local?",
-                  a: "Dentro de cada ficha de negocio en el directorio, encontrarás botones directos para llamar, enviar WhatsApp o ver su ubicación en el mapa."
+                  q: t('faq_q4'),
+                  a: t('faq_a4')
                 },
                 {
-                  q: "¿Qué es un embajador en terreno?",
-                  a: "Son habitantes locales certificados por Easy Patagonia que se encargan de verificar que la información de los atractivos y comercios sea real, actual y de calidad."
+                  q: t('faq_q5'),
+                  a: t('faq_a5')
                 }
               ].map((faq, idx) => (
                 <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 transition-all hover:shadow-md">
@@ -747,10 +748,10 @@ const LandingPage: React.FC = () => {
 
             <div className="mt-16 p-8 bg-[#1a2a30] rounded-[2.5rem] text-center text-white relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#dd6e42]/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
-              <h4 className="text-xl font-black uppercase italic mb-2">¿Aún tienes preguntas?</h4>
-              <p className="text-slate-400 text-sm mb-6">Nuestro equipo de soporte está listo para ayudarte en tu viaje.</p>
+              <h4 className="text-xl font-black uppercase italic mb-2">{t('still_questions')}</h4>
+              <p className="text-slate-400 text-sm mb-6">{t('support_team_desc')}</p>
               <button onClick={handleWhatsApp} className="bg-white text-[#1a2a30] px-8 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-[#dd6e42] hover:text-white transition-all">
-                Contactar por WhatsApp
+                {t('contact_whatsapp_btn')}
               </button>
             </div>
           </div>
@@ -764,8 +765,8 @@ const LandingPage: React.FC = () => {
               className="w-full relative group overflow-hidden bg-[#dd6e42] text-white px-10 py-8 rounded-[2rem] shadow-[0_20px_50px_rgba(221,110,66,0.3)] hover:shadow-[0_30px_60px_rgba(221,110,66,0.5)] transition-all hover:scale-[1.02]"
             >
               <div className="relative z-10 flex flex-col items-center gap-2">
-                <span className="text-2xl md:text-3xl font-black uppercase tracking-[0.1em] italic group-hover:translate-y-[-2px] transition-transform text-center">Explorar Mapa Interactivo</span>
-                <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">Acceso Inmediato</span>
+                <span className="text-2xl md:text-3xl font-black uppercase tracking-[0.1em] italic group-hover:translate-y-[-2px] transition-transform text-center">{t('explore_map_btn')}</span>
+                <span className="text-xs font-bold bg-white/20 px-4 py-1 rounded-full uppercase tracking-widest group-hover:bg-white group-hover:text-[#dd6e42] transition-all">{t('instant_access_badge')}</span>
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-[#dd6e42] opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>

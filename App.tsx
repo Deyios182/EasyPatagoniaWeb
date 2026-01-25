@@ -36,15 +36,42 @@ type Language = 'ES' | 'EN' | 'PT';
 // ... (Mantenemos el objeto translations igual para no alargar el código, asumo que ya lo tienes) ...
 const translations: Record<Language, Record<string, string>> = {
   ES: {
-    welcome: "Bienvenido", map: "Mapa", list: "Colaboradores", discover: "Imperdibles", ai: "EasyAI", profile: "Perfil", how_to_get: "Cómo llegar / Traslado Local", search_placeholder: "¿Qué buscas hoy en Aysén?...", all: "Todos", restaurant: "Restaurante", hotel: "Hospedaje", activity: "Actividad", transport: "Transporte", natural: "Natural", my_account: "Mi Cuenta", settings: "Configuración", language: "Idioma", map_style: "Estilo del Mapa", currency_label: "Divisa", apply_changes: "Aplicar y Guardar", logout: "Cerrar Sesión", hero_title: "Aysén te espera.", hero_subtitle: "Tú disfruta, nosotros resolvemos.", start_btn: "Comenzar Exploración", chat_placeholder: "Pregunta sobre rutas, precios...", directory_title: "DIRECTORIO", ai_guide_title: "Guía Inteligente", ai_status: "Sincronizado", itinerary_title: "PLANIFICADOR AI", back: "Volver", verified_ops: "Operadores Verificados", view_profile: "Ver Perfil", explore_place: "Explorar Lugar", discovery_title: "DESCUBRE AYSÉN", discovery_subtitle: "Guía de Imperdibles", business_status_open: "Abierto", business_status_closed: "Cerrado", business_description_label: "Descripción del local", business_offer: "Nuestra Oferta", contact_direct: "Mensaje Directo al Local", consult_service: "Consultar Servicio", schedule_label: "Horarios", location_label: "Ubicación", save_trip: "Guardar en Perfil", my_trips: "Mis Viajes", no_trips: "Aún no tienes rutas guardadas", nav_functions: "Funciones", nav_destinations: "Destinos", nav_vision: "Visión", nav_contact: "Contacto", nav_faq: "FAQ", enter_app: "Ingresar", go_to_map: "Ir al Mapa",
+    welcome: "Bienvenido", map: "Mapa", list: "Colaboradores", discover: "Imperdibles", ai: "EasyAI", profile: "Perfil", how_to_get: "Cómo llegar / Traslado Local", search_placeholder: "¿Qué buscas hoy en Aysén?...", all: "Todos", restaurant: "Restaurante", hotel: "Hospedaje", activity: "Actividad", transport: "Transporte", natural: "Natural", my_account: "Mi Cuenta", settings: "Configuración", language: "Idioma", map_style: "Estilo del Mapa", currency_label: "Divisa", apply_changes: "Aplicar y Guardar", logout: "Cerrar Sesión", hero_title: "Aysén te espera.", hero_subtitle: "Menos planificación. Más Patagonia.", start_btn: "Comenzar Exploración", chat_placeholder: "Pregunta sobre rutas, precios...", directory_title: "DIRECTORIO", ai_guide_title: "Guía Inteligente", ai_status: "Sincronizado", itinerary_title: "PLANIFICADOR AI", back: "Volver", verified_ops: "Operadores Verificados", view_profile: "Ver Perfil", explore_place: "Explorar Lugar", discovery_title: "DESCUBRE AYSÉN", discovery_subtitle: "Guía de Imperdibles", business_status_open: "Abierto", business_status_closed: "Cerrado", business_description_label: "Descripción del local", business_offer: "Nuestra Oferta", contact_direct: "Mensaje Directo al Local", consult_service: "Consultar Servicio", schedule_label: "Horarios", location_label: "Ubicación", save_trip: "Guardar en Perfil", my_trips: "Mis Viajes", no_trips: "Aún no tienes rutas guardadas", nav_functions: "Funciones", nav_destinations: "Destinos", nav_vision: "Visión", nav_contact: "Contacto", nav_faq: "FAQ", enter_app: "Ingresar", go_to_map: "Ir al Mapa",
     feat_map_title: "Mapa con Vista Satelital", feat_map_desc: "Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.",
     feat_guide_title: "Guía de Atractivos", feat_guide_desc: "Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.",
     feat_dir_title: "Directorio Comercial", feat_dir_desc: "Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.",
     feat_plan_title: "Planner de Viaje", feat_plan_desc: "Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.",
-    explore_region: "Explora la Región", localities: "Localidades", start_tool_btn: "Comenzar a usar la herramienta", no_download: "Acceso instantáneo • No requiere descarga", go_to_section: "Ir a la sección"
+    feat_ai_title: "Asistente PatagonIA", feat_ai_desc: "Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.",
+    feat_data_title: "Datos en Terreno", feat_data_desc: "Información actualizada y verídica gracias a nuestra red de embajadores locales.",
+    tool_title: "Tu Herramienta de Viaje", tool_subtitle: "Todo lo que necesitas en un solo lugar",
+    explore_region: "Explora la Región", localities: "Localidades", start_tool_btn: "Comenzar a usar la herramienta", no_download: "Acceso instantáneo • No requiere descarga", go_to_section: "Ir a la sección",
+
+    // Vision & Mission
+    our_mission: "Nuestra Misión", mission_text: "Impulsar el desarrollo turístico de la Región de Aysén mediante una plataforma innovadora que conecta a viajeros con experiencias auténticas, la naturaleza y las comunidades locales.",
+    our_vision: "Nuestra Visión", vision_text: "Convertirnos en la plataforma turística líder de toda la Patagonia —chilena y argentina— integrando tecnología, sostenibilidad y desarrollo comunitario.",
+    explore_now_btn: "EXPLORAR LA PATAGONIA AHORA",
+    pillar_1_title: "Conexión y Autenticidad", pillar_1_desc: "Ser la plataforma líder que conecta a los viajeros con experiencias auténticas.",
+    pillar_2_title: "Planificación Simple", pillar_2_desc: "Soluciones innovadoras para simplificar tu viaje: hospedaje, gastronomía y tours.",
+    pillar_3_title: "Turismo Sostenible", pillar_3_desc: "Promover un turismo responsable que respeta la riqueza natural de la Patagonia.",
+    // Contact
+    join_adventure: "¡Únete a la", adventure_word: "Aventura", join_adventure_end: "!",
+    follow_us_text: "Síguenos para descubrir rincones secretos, ofertas exclusivas y la magia de la Patagonia al instante.",
+    insta_desc: "Inspiración visual diaria", tiktok_desc: "Videos y tendencias", whatsapp_desc: "Soporte directo 24/7",
+    email_pref: "¿Prefieres escribirnos un correo?",
+    // FAQ
+    doubts_title: "¿Dudas?", faq_title: "Preguntas Frecuentes",
+    still_questions: "¿Aún tienes preguntas?", support_team_desc: "Nuestro equipo de soporte está listo para ayudarte en tu viaje.", contact_whatsapp_btn: "Contactar por WhatsApp",
+    // Footer CTA
+    explore_map_btn: "Explorar Mapa Interativo", instant_access_badge: "Acceso Inmediato",
+    // FAQ Items
+    faq_q1: "¿Cómo accedo a la plataforma?", faq_a1: "¡Es muy sencillo! Solo necesitas un navegador web. Puedes usarla desde tu computadora o directamente en tu celular mientras viajas presionando el botón 'Ingresar' en la parte superior.",
+    faq_q2: "¿La app es gratuita para los turistas?", faq_a2: "Sí, el acceso a la información de destinos, atractivos y el directorio comercial es completamente gratuito para todos los viajeros.",
+    faq_q3: "¿Necesito internet para usar el mapa?", faq_a3: "Sí, al ser una plataforma en línea, necesitas conexión de datos para cargar el mapa y la información en tiempo real. Te recomendamos revisar tus puntos de interés antes de entrar en zonas sin señal.",
+    faq_q4: "¿Cómo contacto a un negocio local?", faq_a4: "Dentro de cada ficha de negocio en el directorio, encontrarás botones directos para llamar, enviar WhatsApp o ver su ubicación en el mapa.",
+    faq_q5: "¿Qué es un embajador en terreno?", faq_a5: "Son habitantes locales certificados por Easy Patagonia que se encargan de verificar que la información de los atractivos y comercios sea real, actual y de calidad."
   },
   EN: {
-    welcome: "Welcome", map: "Map", list: "Partners", discover: "Explore", ai: "EasyAI", profile: "Profile", how_to_get: "How to get / Local Transfers", search_placeholder: "Search for services...", all: "All", restaurant: "Restaurant", hotel: "Hotel", activity: "Activity", transport: "Transport", natural: "Natural", my_account: "My Account", settings: "Settings", language: "Language", map_style: "Map Style", currency_label: "Currency", apply_changes: "Apply and Save", logout: "Log Out", hero_title: "Aysén awaits.", hero_subtitle: "You enjoy, we solve.", start_btn: "Start Exploration", chat_placeholder: "Ask about routes, prices...", directory_title: "DIRECTORY", ai_guide_title: "Smart Guide", ai_status: "Synced", itinerary_title: "AI PLANNER", back: "Back", verified_ops: "Verified Operators", view_profile: "View Profile", explore_place: "Explore Place", discovery_title: "DISCOVER AYSÉN", discovery_subtitle: "Unmissable Guide", business_status_open: "Open", business_status_closed: "Closed", business_description_label: "Business description", business_offer: "Our Services", contact_direct: "Direct Message to Shop", consult_service: "Enquire Now", schedule_label: "Schedule", location_label: "Location", save_trip: "Save to Profile", my_trips: "My Trips", no_trips: "No saved trips yet", nav_functions: "Features", nav_destinations: "Destinations", nav_vision: "Vision", nav_contact: "Contact", nav_faq: "FAQ", enter_app: "Enter", go_to_map: "Go to Map",
+    welcome: "Welcome", map: "Map", list: "Partners", discover: "Explore", ai: "EasyAI", profile: "Profile", how_to_get: "How to get / Local Transfers", search_placeholder: "Search for services...", all: "All", restaurant: "Restaurant", hotel: "Hotel", activity: "Activity", transport: "Transport", natural: "Natural", my_account: "My Account", settings: "Settings", language: "Language", map_style: "Map Style", currency_label: "Currency", apply_changes: "Apply and Save", logout: "Log Out", hero_title: "Aysén awaits.", hero_subtitle: "Less planning. More Patagonia.", start_btn: "Start Exploration", chat_placeholder: "Ask about routes, prices...", directory_title: "DIRECTORY", ai_guide_title: "Smart Guide", ai_status: "Synced", itinerary_title: "AI PLANNER", back: "Back", verified_ops: "Verified Operators", view_profile: "View Profile", explore_place: "Explore Place", discovery_title: "DISCOVER AYSÉN", discovery_subtitle: "Unmissable Guide", business_status_open: "Open", business_status_closed: "Closed", business_description_label: "Business description", business_offer: "Our Services", contact_direct: "Direct Message to Shop", consult_service: "Enquire Now", schedule_label: "Schedule", location_label: "Location", save_trip: "Save to Profile", my_trips: "My Trips", no_trips: "No saved trips yet", nav_functions: "Features", nav_destinations: "Destinations", nav_vision: "Vision", nav_contact: "Contact", nav_faq: "FAQ", enter_app: "Enter", go_to_map: "Go to Map",
     feat_map_title: "Satellite View Map", feat_map_desc: "Navigate the region with precision. Locate attractions, viewpoints, and services in real-time.",
     feat_guide_title: "Attractions Guide", feat_guide_desc: "Complete cards with photos, descriptions, and verified access routes.",
     feat_dir_title: "Business Directory", feat_dir_desc: "Find the best places to eat, sleep, and buy authentic local products.",
@@ -52,10 +79,34 @@ const translations: Record<Language, Record<string, string>> = {
     feat_ai_title: "PatagonIA Assistant", feat_ai_desc: "Our AI solves your doubts and gives you personalized recommendations 24/7.",
     feat_data_title: "Field Data", feat_data_desc: "Updated and truthful information thanks to our network of local ambassadors.",
     tool_title: "Your Travel Tool", tool_subtitle: "Everything you need in one place",
-    explore_region: "Explore the Region", localities: "Towns", start_tool_btn: "Start using the tool", no_download: "Instant access • No download required", go_to_section: "Go to section"
+    explore_region: "Explore the Region", localities: "Towns", start_tool_btn: "Start using the tool", no_download: "Instant access • No download required", go_to_section: "Go to section",
+
+    // Vision & Mission
+    our_mission: "Our Mission", mission_text: "To boost tourism development in the Aysén Region through an innovative platform that connects travelers with authentic experiences, nature, and local communities.",
+    our_vision: "Our Vision", vision_text: "To become the leading tourism platform for all of Patagonia —Chilean and Argentine— integrating technology, sustainability, and community development.",
+    explore_now_btn: "EXPLORE PATAGONIA NOW",
+    pillar_1_title: "Connection & Authenticity", pillar_1_desc: "Being the leading platform connecting travelers with authentic experiences.",
+    pillar_2_title: "Simple Planning", pillar_2_desc: "Innovative solutions to simplify your trip: accommodation, gastronomy, and tours.",
+    pillar_3_title: "Sustainable Tourism", pillar_3_desc: "Promoting responsible tourism that respects Patagonia's natural wealth.",
+    // Contact
+    join_adventure: "Join the", adventure_word: "Adventure", join_adventure_end: "!",
+    follow_us_text: "Follow us to discover secret spots, exclusive offers, and the magic of Patagonia instantly.",
+    insta_desc: "Daily visual inspiration", tiktok_desc: "Videos and trends", whatsapp_desc: "Direct support 24/7",
+    email_pref: "Prefer to write us an email?",
+    // FAQ
+    doubts_title: "Doubts?", faq_title: "Frequently Asked Questions",
+    still_questions: "Still have questions?", support_team_desc: "Our support team is ready to help you on your trip.", contact_whatsapp_btn: "Contact via WhatsApp",
+    // Footer CTA
+    explore_map_btn: "Explore Interactive Map", instant_access_badge: "Instant Access",
+    // FAQ Items
+    faq_q1: "How do I access the platform?", faq_a1: "It's very simple! You just need a web browser. You can use it from your computer or directly on your phone while traveling by pressing the 'Enter' button at the top.",
+    faq_q2: "Is the app free for tourists?", faq_a2: "Yes, access to destination information, attractions, and the business directory is completely free for all travelers.",
+    faq_q3: "Do I need internet to use the map?", faq_a3: "Yes, as it is an online platform, you need a data connection to load the map and real-time information. We recommend checking your points of interest before entering areas without signal.",
+    faq_q4: "How do I contact a local business?", faq_a4: "Inside each business card in the directory, you will find direct buttons to call, send a WhatsApp, or see their location on the map.",
+    faq_q5: "What is a field ambassador?", faq_a5: "They are local residents certified by Easy Patagonia who are responsible for verifying that the information on attractions and businesses is real, current, and of high quality."
   },
   PT: {
-    welcome: "Bem-vindo", map: "Mapa", list: "Parceiros", discover: "Descobrir", ai: "EasyAI", profile: "Perfil", how_to_get: "Como chegar / Traslado", search_placeholder: "O que você procura?...", all: "Todos", restaurant: "Restaurante", hotel: "Hospedagem", activity: "Atividade", transport: "Transporte", natural: "Natural", my_account: "Minha Conta", settings: "Configuração", language: "Idioma", map_style: "Estilo do Mapa", currency_label: "Moeda", apply_changes: "Aplicar e Salvar", logout: "Sair", hero_title: "Aysén te espera.", hero_subtitle: "Você aproveita, nós resolvemos.", start_btn: "Iniciar Exploração", chat_placeholder: "Pergunte sobre rotas, precios...", directory_title: "DIRETÓRIO", ai_guide_title: "Guia Inteligente", ai_status: "Sincronizado", itinerary_title: "PLANEJADOR AI", back: "Voltar", verified_ops: "Operadores Verificados", view_profile: "Ver Perfil", explore_place: "Explorar Lugar", discovery_title: "DESCUBRA AYSÉN", discovery_subtitle: "Guia Imperdível", business_status_open: "Aberto", business_status_closed: "Fechado", business_description_label: "Descrição do local", business_offer: "Nossa Oferta", contact_direct: "Mensagem Direta ao Local", consult_service: "Consultar Servício", schedule_label: "Horário", location_label: "Localização", save_trip: "Salvar no Perfil", my_trips: "Minhas Viagens", no_trips: "Nenhuma viagem salva ainda", nav_functions: "Funcionalidades", nav_destinations: "Destinos", nav_vision: "Visão", nav_contact: "Contato", nav_faq: "FAQ", enter_app: "Entrar", go_to_map: "Ir para o Mapa",
+    welcome: "Bem-vindo", map: "Mapa", list: "Parceiros", discover: "Descobrir", ai: "EasyAI", profile: "Perfil", how_to_get: "Como chegar / Traslado", search_placeholder: "O que você procura?...", all: "Todos", restaurant: "Restaurante", hotel: "Hospedagem", activity: "Atividade", transport: "Transporte", natural: "Natural", my_account: "Minha Conta", settings: "Configuração", language: "Idioma", map_style: "Estilo do Mapa", currency_label: "Moeda", apply_changes: "Aplicar e Salvar", logout: "Sair", hero_title: "Aysén te espera.", hero_subtitle: "Menos planejamento. Mais Patagônia.", start_btn: "Iniciar Exploração", chat_placeholder: "Pergunte sobre rotas, precios...", directory_title: "DIRETÓRIO", ai_guide_title: "Guia Inteligente", ai_status: "Sincronizado", itinerary_title: "PLANEJADOR AI", back: "Voltar", verified_ops: "Operadores Verificados", view_profile: "Ver Perfil", explore_place: "Explorar Lugar", discovery_title: "DESCUBRA AYSÉN", discovery_subtitle: "Guia Imperdível", business_status_open: "Aberto", business_status_closed: "Fechado", business_description_label: "Descrição do local", business_offer: "Nossa Oferta", contact_direct: "Mensagem Direta ao Local", consult_service: "Consultar Servício", schedule_label: "Horário", location_label: "Localização", save_trip: "Salvar no Perfil", my_trips: "Minhas Viagens", no_trips: "Nenhuma viagem salva ainda", nav_functions: "Funcionalidades", nav_destinations: "Destinos", nav_vision: "Visão", nav_contact: "Contato", nav_faq: "FAQ", enter_app: "Entrar", go_to_map: "Ir para o Mapa",
     feat_map_title: "Mapa com Vista de Satélite", feat_map_desc: "Navegue pela região com precisão. Localize atrações, mirantes e serviços em tempo real.",
     feat_guide_title: "Guia de Atrações", feat_guide_desc: "Fichas completas com fotos, descrições e as melhores rotas de acesso verificadas.",
     feat_dir_title: "Diretório Comercial", feat_dir_desc: "Encontre os melhores lugares para comer, dormir e comprar produtos locais autênticos.",
@@ -63,7 +114,31 @@ const translations: Record<Language, Record<string, string>> = {
     feat_ai_title: "Assistente PatagonIA", feat_ai_desc: "Nossa IA resolve suas dúvidas e dá recomendações personalizadas 24/7.",
     feat_data_title: "Dados em Campo", feat_data_desc: "Informações atualizadas e verdadeiras graças à nossa rede de embaixadores locais.",
     tool_title: "Sua Ferramenta de Viagem", tool_subtitle: "Tudo o que você precisa em um só lugar",
-    explore_region: "Explore a Região", localities: "Localidades", start_tool_btn: "Começar a usar a ferramenta", no_download: "Acesso imediato • Sem download", go_to_section: "Ir para a seção"
+    explore_region: "Explore a Região", localities: "Localidades", start_tool_btn: "Começar a usar a ferramenta", no_download: "Acesso imediato • Sem download", go_to_section: "Ir para a seção",
+
+    // Vision & Mission
+    our_mission: "Nossa Missão", mission_text: "Impulsionar o desenvolvimento turístico da Região de Aysén através de uma plataforma inovadora que conecta viajantes a experiências autênticas, à natureza e às comunidades locais.",
+    our_vision: "Nossa Visão", vision_text: "Tornar-nos a plataforma turística líder de toda a Patagônia —chilena e argentina— integrando tecnologia, sustentabilidade e desenvolvimento comunitário.",
+    explore_now_btn: "EXPLORAR A PATAGÔNIA AGORA",
+    pillar_1_title: "Conexão e Autenticidade", pillar_1_desc: "Ser a plataforma líder que conecta viajantes a experiências autênticas.",
+    pillar_2_title: "Planejamento Simples", pillar_2_desc: "Soluções inovadoras para simplificar sua viagem: hospedagem, gastronomia e passeios.",
+    pillar_3_title: "Turismo Sustentável", pillar_3_desc: "Promover um turismo responsável que respeite a riqueza natural da Patagônia.",
+    // Contact
+    join_adventure: "Junte-se à", adventure_word: "Aventura", join_adventure_end: "!",
+    follow_us_text: "Siga-nos para descobrir recantos secretos, ofertas exclusivas e a magia da Patagônia instantaneamente.",
+    insta_desc: "Inspiração visual diária", tiktok_desc: "Vídeos e tendências", whatsapp_desc: "Suporte direto 24/7",
+    email_pref: "Prefere nos escrever um e-mail?",
+    // FAQ
+    doubts_title: "Dúvidas?", faq_title: "Perguntas Frequentes",
+    still_questions: "Ainda tem perguntas?", support_team_desc: "Nossa equipe de suporte está pronta para ajudá-lo em sua viagem.", contact_whatsapp_btn: "Contatar pelo WhatsApp",
+    // Footer CTA
+    explore_map_btn: "Explorar Mapa Interativo", instant_access_badge: "Acesso Imediato",
+    // FAQ Items
+    faq_q1: "Como acesso a plataforma?", faq_a1: "É muito simples! Você só precisa de um navegador web. Você pode usá-lo do seu computador ou diretamente no seu celular enquanto viaja pressionando o botão 'Entrar' na parte superior.",
+    faq_q2: "O aplicativo é gratuito para turistas?", faq_a2: "Sim, o acesso às informações de destinos, atrativos e ao diretório comercial é totalmente gratuito para todos os viajantes.",
+    faq_q3: "Preciso de internet para usar o mapa?", faq_a3: "Sim, como é uma plataforma online, você precisa de conexão de dados para carregar o mapa e as informações em tempo real. Recomendamos verificar seus pontos de interesse antes de entrar em áreas sem sinal.",
+    faq_q4: "Como entro em contato com um comércio local?", faq_a4: "Dentro de cada ficha de negócio no diretório, você encontrará botões diretos para ligar, enviar WhatsApp ou ver sua localização no mapa.",
+    faq_q5: "O que é um embaixador de campo?", faq_a5: "São moradores locais certificados pela Easy Patagonia responsáveis por verificar se as informações das atrações e comércios são reais, atuais e de qualidade."
   }
 };
 
