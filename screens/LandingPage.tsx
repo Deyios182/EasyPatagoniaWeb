@@ -53,6 +53,8 @@ const LandingPage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
   const toggleLanguage = () => {
     const nextLang = language === 'ES' ? 'EN' : language === 'EN' ? 'PT' : 'ES';
     setLanguage(nextLang);
@@ -277,21 +279,38 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* Botón Ingresar + Idioma */}
-              <div className="flex items-center gap-4">
+              {/* Language World Icon + Dropdown */}
+              <div className="relative">
                 <button
-                  onClick={toggleLanguage}
-                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all font-black text-xs text-white overflow-hidden border border-white/20 backdrop-blur-md shadow-lg"
-                  title="Cambiar Idioma / Change Language"
+                  onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-white border border-white/20 backdrop-blur-md shadow-lg"
+                  title="Idioma / Language"
                 >
-                  {language}
+                  <span className="material-symbols-outlined text-xl text-white">language</span>
                 </button>
 
-                <button
-                  onClick={handleEnterApp}
-                  className="bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white px-5 py-2 md:px-8 md:py-3"
-                >
-                  {isAuthenticated ? t('go_to_map') : t('enter_app')}
-                </button>
+                {isLangMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-32 bg-[#1a2a30]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col">
+                    <button
+                      onClick={() => { setLanguage('ES'); setIsLangMenuOpen(false); }}
+                      className={`px-4 py-3 text-sm text-left hover:bg-white/10 transition-colors ${language === 'ES' ? 'text-[#dd6e42] font-black' : 'text-white'}`}
+                    >
+                      Español
+                    </button>
+                    <button
+                      onClick={() => { setLanguage('EN'); setIsLangMenuOpen(false); }}
+                      className={`px-4 py-3 text-sm text-left hover:bg-white/10 transition-colors ${language === 'EN' ? 'text-[#dd6e42] font-black' : 'text-white'}`}
+                    >
+                      English
+                    </button>
+                    <button
+                      onClick={() => { setLanguage('PT'); setIsLangMenuOpen(false); }}
+                      className={`px-4 py-3 text-sm text-left hover:bg-white/10 transition-colors ${language === 'PT' ? 'text-[#dd6e42] font-black' : 'text-white'}`}
+                    >
+                      Português
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -318,13 +337,13 @@ const LandingPage: React.FC = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1 }}
               className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500"
-              dangerouslySetInnerHTML={{ __html: (content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />').replace(/Patagonia/g, '<span class="text-[#dd6e42]">Patagonia</span>') }}
+              dangerouslySetInnerHTML={{ __html: (t('hero_title') || content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />').replace(/Patagonia/g, '<span class="text-[#dd6e42]">Patagonia</span>') }}
             ></motion.h1>
             <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic group-hover:text-white transition-colors">
-              "{content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
+              "{t('hero_subtitle') || content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
             </p>
             <div className="mt-8 opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
-              <span className="text-white text-xs font-black uppercase tracking-widest">Toca para explorar</span>
+              <span className="text-white text-xs font-black uppercase tracking-widest">{t('enter_app') || 'Toca para explorar'}</span>
             </div>
           </div>
           <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce"><span className="material-symbols-outlined text-white text-4xl">keyboard_arrow_down</span></div>
@@ -343,7 +362,7 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true }}
                 className="text-[#dd6e42] text-sm font-black uppercase tracking-[0.4em] mb-4"
               >
-                Tu Herramienta de Viaje
+                {t('tool_title')}
               </motion.h4>
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
@@ -352,7 +371,7 @@ const LandingPage: React.FC = () => {
                 transition={{ delay: 0.1 }}
                 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter mb-6"
               >
-                Todo lo que necesitas <br /> <span className="text-[#4f6d7a]">en un solo lugar</span>
+                {t('tool_subtitle').split(' ').slice(0, 4).join(' ')} <br /> <span className="text-[#4f6d7a]">{t('tool_subtitle').split(' ').slice(4).join(' ')}</span>
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -367,12 +386,12 @@ const LandingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
-                { icon: 'map', title: 'Mapa con Vista Satelital', desc: 'Navega por la región con precisión. Localiza atractivos, miradores y servicios en tiempo real.', route: '/map' },
-                { icon: 'explore', title: 'Guía de Atractivos', desc: 'Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.', route: '/highlights' },
-                { icon: 'storefront', title: 'Directorio Comercial', desc: 'Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.', route: '/directory' },
-                { icon: 'calendar_month', title: 'Planner de Viaje', desc: 'Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.', route: '/planner', requireAuth: true },
-                { icon: 'smart_toy', title: 'Asistente Patagon<span class="text-[#dd6e42]">IA</span>', desc: 'Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.', route: '/chat', requireAuth: true },
-                { icon: 'verified_user', title: 'Datos en Terreno', desc: 'Información actualizada y verídica gracias a nuestra red de embajadores locales.', route: '/highlights' } // Linking to highlights as it contains verified data
+                { icon: 'map', title: t('feat_map_title'), desc: t('feat_map_desc'), route: '/map' },
+                { icon: 'explore', title: t('feat_guide_title'), desc: t('feat_guide_desc'), route: '/highlights' },
+                { icon: 'storefront', title: t('feat_dir_title'), desc: t('feat_dir_desc'), route: '/directory' },
+                { icon: 'calendar_month', title: t('feat_plan_title'), desc: t('feat_plan_desc'), route: '/planner', requireAuth: true },
+                { icon: 'smart_toy', title: t('feat_ai_title'), desc: t('feat_ai_desc'), route: '/chat', requireAuth: true },
+                { icon: 'verified_user', title: t('feat_data_title'), desc: t('feat_data_desc'), route: '/highlights' }
               ].map((feature, idx) => (
                 <motion.div
                   key={idx}
