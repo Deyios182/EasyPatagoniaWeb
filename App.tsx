@@ -413,8 +413,7 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
   const { user, supabaseUser, t } = useAppAuth();
   const { profile, loading: profileLoading } = useAuth(); // Get Supabase profile as fallback
 
-  // If no user data at all, don't render
-  if (!user && !supabaseUser) return null;
+  // if (!user && !supabaseUser) return null; // ALLOW GUEST ACCESS
 
   // Get Google OAuth metadata as fallback (available immediately after login)
   const googleMeta = supabaseUser?.user_metadata;
@@ -462,10 +461,17 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         )}
       </div>
       <div className="mt-auto pt-6 border-t border-slate-300 dark:border-white/5 shrink-0">
-        <Link to="/profile" className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline ${location.pathname === '/profile' ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'justify-center' : ''}`}>
-          <img src={displayAvatar} className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10 object-cover" alt="Avatar" />
-          {!isCollapsed && (<div className="flex-1 min-w-0 animate-in fade-in duration-300"><p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{displayName}</p><p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{displayRole}</p></div>)}
-        </Link>
+        {user || supabaseUser ? (
+          <Link to="/profile" className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline ${location.pathname === '/profile' ? 'bg-white/50 dark:bg-primary/10 border border-white dark:border-primary/30' : 'hover:bg-white/20 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'justify-center' : ''}`}>
+            <img src={displayAvatar} className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/5 border border-white dark:border-white/10 object-cover" alt="Avatar" />
+            {!isCollapsed && (<div className="flex-1 min-w-0 animate-in fade-in duration-300"><p className="text-sm font-black text-slate-700 dark:text-white truncate uppercase italic leading-none">{displayName}</p><p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-1 opacity-100 leading-none">{displayRole}</p></div>)}
+          </Link>
+        ) : (
+          <Link to="/auth/login" className={`group flex items-center gap-4 p-3 rounded-3xl transition-all no-underline bg-primary/10 border border-primary/30 hover:bg-primary/20 ${isCollapsed ? 'justify-center' : ''}`}>
+            <span className="material-symbols-outlined text-2xl text-primary">login</span>
+            {!isCollapsed && (<div className="flex-1 min-w-0 animate-in fade-in duration-300"><p className="text-sm font-black text-primary truncate uppercase italic leading-none">Iniciar Sesión</p><p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 opacity-100 leading-none">Acceder a AI</p></div>)}
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -493,8 +499,9 @@ const AuthenticatedApp: React.FC = () => {
   // NOTE: We no longer block on profile loading. The app proceeds with fallback data
   // and the sidebar/profile will update when the data arrives.
 
-  const isPublicPage = location.pathname === '/' || location.pathname === '/auth/login' || location.pathname === '/auth/register' || location.pathname === '/auth/callback';
-  const shouldShowSidebar = isAuthenticated && !isPublicPage;
+  // Sidebar visible on main app pages (Map, Directory, etc) even for guests
+  const isAuthPage = location.pathname === '/' || location.pathname === '/auth/login' || location.pathname === '/auth/register' || location.pathname === '/auth/callback';
+  const shouldShowSidebar = !isAuthPage;
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
@@ -509,17 +516,21 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <RegisterScreen />} />
           <Route path="/auth/callback" element={<AuthCallbackScreen />} />
 
-          {/* Rutas protegidas - Use isAuthenticated instead of just user */}
-          <Route path="/map" element={isAuthenticated ? <TouristMapScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/discover" element={isAuthenticated ? <DiscoveryScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/highlights" element={isAuthenticated ? <HighlightsScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/directory" element={isAuthenticated ? <BusinessDirectoryScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/details/:id" element={isAuthenticated ? <BusinessDetailsScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/attraction/:id" element={isAuthenticated ? <AttractionDetailsScreen /> : <Navigate to="/auth/login" />} />
+          {/* Rutas Públicas (Modo Invitado) */}
+          <Route path="/map" element={<TouristMapScreen />} />
+          <Route path="/discover" element={<DiscoveryScreen />} />
+          <Route path="/highlights" element={<HighlightsScreen />} />
+          <Route path="/directory" element={<BusinessDirectoryScreen />} />
+          <Route path="/details/:id" element={<BusinessDetailsScreen />} />
+          <Route path="/attraction/:id" element={<AttractionDetailsScreen />} />
+
+          {/* Rutas Privadas (Requieren Login) */}
           <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/itinerary" element={isAuthenticated ? <ItineraryScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/profile" element={isAuthenticated ? <ProfileScreen role={role} /> : <Navigate to="/auth/login" />} />
           <Route path="/chat" element={isAuthenticated ? <ChatBotScreen /> : <Navigate to="/auth/login" />} />
+
+          {/* Rutas Administrativas */}
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />

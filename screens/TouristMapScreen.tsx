@@ -494,22 +494,24 @@ const TouristMapScreen: React.FC = () => {
           </div>
 
           {/* BOTÓN PERFIL MÓVIL (Solo visible en MÓVIL) */}
-          <Link to="/profile" className="md:hidden w-12 h-12 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all overflow-hidden relative shrink-0">
-            <img
-              src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`}
-              alt="Perfil"
-              className="w-full h-full object-cover backdrop-blur-sm"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                // Show icon sibling
-                if (target.nextElementSibling) {
-                  (target.nextElementSibling as HTMLElement).style.display = 'block';
-                }
-              }}
-            />
-            {/* Fallback Icon if image fails/hidden */}
-            <span className="material-symbols-outlined text-slate-700 dark:text-white absolute inset-0 m-auto flex items-center justify-center pointer-events-none" style={{ display: user?.avatar ? 'none' : 'flex' }}>person</span>
+          <Link to={user ? "/profile" : "/auth/login"} className={`md:hidden w-12 h-12 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all overflow-hidden relative shrink-0 ${user ? 'bg-white/90 dark:bg-surface-dark/90' : 'bg-primary text-white'}`}>
+            {user ? (
+              <>
+                <img
+                  src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`}
+                  alt="Perfil"
+                  className="w-full h-full object-cover backdrop-blur-sm"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.nextElementSibling) (target.nextElementSibling as HTMLElement).style.display = 'block';
+                  }}
+                />
+                <span className="material-symbols-outlined text-slate-700 dark:text-white absolute inset-0 m-auto flex items-center justify-center pointer-events-none" style={{ display: user.avatar ? 'none' : 'flex' }}>person</span>
+              </>
+            ) : (
+              <span className="material-symbols-outlined text-2xl">login</span>
+            )}
           </Link>
         </div>
 
