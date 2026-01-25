@@ -245,9 +245,10 @@ const LandingPage: React.FC = () => {
             </div>
           )}
 
-          {/* Navbar - Transparent & Static Elements */}
-          <div className="absolute top-0 left-0 right-0 z-50 py-6 transition-all duration-300">
-            <nav className="max-w-7xl mx-auto px-4 md:px-6 flex flex-row justify-between items-center h-full">
+          {/* 1. Header Absoluto (Logo + Botón) - Se van con el scroll */}
+          <div className="absolute top-0 left-0 right-0 z-50 py-6">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
+              {/* Logo */}
               <div className="cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo(0, 0)}>
                 {!logoError ? (
                   <img
@@ -266,22 +267,27 @@ const LandingPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Nav Links - Visible on Mobile (Compact) */}
-              <div className="flex gap-2 md:gap-6 px-2 py-1 md:px-6 md:py-2 rounded-full bg-black/20 backdrop-blur-md border border-white/10 overflow-x-auto no-scrollbar max-w-[50vw] md:max-w-none hover:bg-black/40 transition-colors">
-                <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Funciones</button>
-                <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Destinos</button>
-                <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Visión</button>
-                <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Contacto</button>
-                <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">FAQ</button>
-              </div>
-
+              {/* Botón Ingresar */}
               <button
                 onClick={handleEnterApp}
                 className="bg-[#dd6e42] text-white rounded-full font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg hover:scale-105 transition-transform border-2 border-transparent hover:border-white px-5 py-2 md:px-8 md:py-3"
               >
                 {isAuthenticated ? 'Ir al Mapa' : 'Ingresar'}
               </button>
-            </nav>
+            </div>
+          </div>
+
+          {/* 2. Menú Flotante (Sticky/Fixed) - Acompaña al usuario */}
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] w-auto max-w-[90%]">
+            <div className="flex gap-2 md:gap-6 px-4 py-2 md:px-8 md:py-3 rounded-full bg-[#1a2a30]/80 backdrop-blur-xl border border-white/10 shadow-2xl overflow-x-auto no-scrollbar items-center justify-center">
+              <button onClick={() => scrollToSection('funcionalidades')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Funciones</button>
+              <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Destinos</button>
+              <div className="w-px h-3 bg-white/20 hidden md:block"></div>
+              <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Visión</button>
+              <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Contacto</button>
+              <div className="w-px h-3 bg-white/20 hidden md:block"></div>
+              <button onClick={() => scrollToSection('faq')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">FAQ</button>
+            </div>
           </div>
 
           <div
