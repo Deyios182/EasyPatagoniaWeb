@@ -337,7 +337,7 @@ const LandingPage: React.FC = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1 }}
               className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500"
-              dangerouslySetInnerHTML={{ __html: (t('hero_title') || content['hero']?.title || 'Patagonia <br /> <span class="text-[#dd6e42]">Sin Límites</span>').replace(/\n/g, '<br />').replace(/Patagonia/g, '<span class="text-[#dd6e42]">Patagonia</span>') }}
+              dangerouslySetInnerHTML={{ __html: 'EASY <span class="text-[#dd6e42]">PATAGONIA</span>' }}
             ></motion.h1>
             <p className="mt-6 text-[#e8dab2] text-lg md:text-xl max-w-2xl font-medium drop-shadow-md italic group-hover:text-white transition-colors">
               "{t('hero_subtitle') || content['hero']?.subtitle || 'Menos planificación. Más Patagonia.'}"
@@ -418,7 +418,7 @@ const LandingPage: React.FC = () => {
                     <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
 
                     <div className="mt-6 flex items-center gap-2 text-[#dd6e42] text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
-                      <span>Ir a la sección</span>
+                      <span>{t('go_to_section')}</span>
                       <span className="material-symbols-outlined text-sm">arrow_forward</span>
                     </div>
                   </div>
@@ -433,9 +433,9 @@ const LandingPage: React.FC = () => {
                 onClick={handleEnterApp}
                 className="bg-[#dd6e42] text-white px-12 py-6 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_20px_40px_rgba(221,110,66,0.3)] hover:shadow-[0_25px_50px_rgba(221,110,66,0.5)] transition-all"
               >
-                Comenzar a usar la herramienta
+                {t('start_tool_btn')}
               </motion.button>
-              <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">Acceso instantáneo • No requiere descarga</p>
+              <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">{t('no_download')}</p>
             </div>
           </div>
         </section>
@@ -444,7 +444,7 @@ const LandingPage: React.FC = () => {
         <section id="destinos" className="min-h-screen flex flex-col justify-center py-16 px-4 md:px-20 bg-[#eaeaea] overflow-x-hidden w-full">
           <div className="w-full md:max-w-7xl md:mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-              <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">Explora la Región</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">Localidades</h3></div>
+              <div><h2 className="text-[#4f6d7a] text-sm font-black uppercase tracking-[0.4em] mb-2">{t('explore_region')}</h2><h3 className="text-4xl md:text-6xl font-black text-[#1a2a30] uppercase italic tracking-tighter">{t('localities')}</h3></div>
               <div className="relative group/locs flex-1 w-full md:max-w-2xl">
                 {/* Scroll Buttons for Localities */}
                 <button

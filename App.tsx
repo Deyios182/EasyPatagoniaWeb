@@ -41,9 +41,7 @@ const translations: Record<Language, Record<string, string>> = {
     feat_guide_title: "Guía de Atractivos", feat_guide_desc: "Fichas completas con fotos, descripciones y las mejores rutas de acceso verificadas.",
     feat_dir_title: "Directorio Comercial", feat_dir_desc: "Encuentra los mejores lugares para comer, dormir y comprar productos locales auténticos.",
     feat_plan_title: "Planner de Viaje", feat_plan_desc: "Guarda tus lugares favoritos y organiza tu itinerario personalizado de forma sencilla.",
-    feat_ai_title: "Asistente PatagonIA", feat_ai_desc: "Nuestra inteligencia artificial resuelve tus dudas y te da recomendaciones personalizadas 24/7.",
-    feat_data_title: "Datos en Terreno", feat_data_desc: "Información actualizada y verídica gracias a nuestra red de embajadores locales.",
-    tool_title: "Tu Herramienta de Viaje", tool_subtitle: "Todo lo que necesitas en un solo lugar"
+    explore_region: "Explora la Región", localities: "Localidades", start_tool_btn: "Comenzar a usar la herramienta", no_download: "Acceso instantáneo • No requiere descarga", go_to_section: "Ir a la sección"
   },
   EN: {
     welcome: "Welcome", map: "Map", list: "Partners", discover: "Explore", ai: "EasyAI", profile: "Profile", how_to_get: "How to get / Local Transfers", search_placeholder: "Search for services...", all: "All", restaurant: "Restaurant", hotel: "Hotel", activity: "Activity", transport: "Transport", natural: "Natural", my_account: "My Account", settings: "Settings", language: "Language", map_style: "Map Style", currency_label: "Currency", apply_changes: "Apply and Save", logout: "Log Out", hero_title: "Aysén awaits.", hero_subtitle: "You enjoy, we solve.", start_btn: "Start Exploration", chat_placeholder: "Ask about routes, prices...", directory_title: "DIRECTORY", ai_guide_title: "Smart Guide", ai_status: "Synced", itinerary_title: "AI PLANNER", back: "Back", verified_ops: "Verified Operators", view_profile: "View Profile", explore_place: "Explore Place", discovery_title: "DISCOVER AYSÉN", discovery_subtitle: "Unmissable Guide", business_status_open: "Open", business_status_closed: "Closed", business_description_label: "Business description", business_offer: "Our Services", contact_direct: "Direct Message to Shop", consult_service: "Enquire Now", schedule_label: "Schedule", location_label: "Location", save_trip: "Save to Profile", my_trips: "My Trips", no_trips: "No saved trips yet", nav_functions: "Features", nav_destinations: "Destinations", nav_vision: "Vision", nav_contact: "Contact", nav_faq: "FAQ", enter_app: "Enter", go_to_map: "Go to Map",
@@ -53,7 +51,8 @@ const translations: Record<Language, Record<string, string>> = {
     feat_plan_title: "Trip Planner", feat_plan_desc: "Save your favorite places and organize your personalized itinerary easily.",
     feat_ai_title: "PatagonIA Assistant", feat_ai_desc: "Our AI solves your doubts and gives you personalized recommendations 24/7.",
     feat_data_title: "Field Data", feat_data_desc: "Updated and truthful information thanks to our network of local ambassadors.",
-    tool_title: "Your Travel Tool", tool_subtitle: "Everything you need in one place"
+    tool_title: "Your Travel Tool", tool_subtitle: "Everything you need in one place",
+    explore_region: "Explore the Region", localities: "Towns", start_tool_btn: "Start using the tool", no_download: "Instant access • No download required", go_to_section: "Go to section"
   },
   PT: {
     welcome: "Bem-vindo", map: "Mapa", list: "Parceiros", discover: "Descobrir", ai: "EasyAI", profile: "Perfil", how_to_get: "Como chegar / Traslado", search_placeholder: "O que você procura?...", all: "Todos", restaurant: "Restaurante", hotel: "Hospedagem", activity: "Atividade", transport: "Transporte", natural: "Natural", my_account: "Minha Conta", settings: "Configuração", language: "Idioma", map_style: "Estilo do Mapa", currency_label: "Moeda", apply_changes: "Aplicar e Salvar", logout: "Sair", hero_title: "Aysén te espera.", hero_subtitle: "Você aproveita, nós resolvemos.", start_btn: "Iniciar Exploração", chat_placeholder: "Pergunte sobre rotas, precios...", directory_title: "DIRETÓRIO", ai_guide_title: "Guia Inteligente", ai_status: "Sincronizado", itinerary_title: "PLANEJADOR AI", back: "Voltar", verified_ops: "Operadores Verificados", view_profile: "Ver Perfil", explore_place: "Explorar Lugar", discovery_title: "DESCUBRA AYSÉN", discovery_subtitle: "Guia Imperdível", business_status_open: "Aberto", business_status_closed: "Fechado", business_description_label: "Descrição do local", business_offer: "Nossa Oferta", contact_direct: "Mensagem Direta ao Local", consult_service: "Consultar Servício", schedule_label: "Horário", location_label: "Localização", save_trip: "Salvar no Perfil", my_trips: "Minhas Viagens", no_trips: "Nenhuma viagem salva ainda", nav_functions: "Funcionalidades", nav_destinations: "Destinos", nav_vision: "Visão", nav_contact: "Contato", nav_faq: "FAQ", enter_app: "Entrar", go_to_map: "Ir para o Mapa",
@@ -63,7 +62,8 @@ const translations: Record<Language, Record<string, string>> = {
     feat_plan_title: "Planejador de Viagem", feat_plan_desc: "Salve seus lugares favoritos e organize seu itinerário personalizado facilmente.",
     feat_ai_title: "Assistente PatagonIA", feat_ai_desc: "Nossa IA resolve suas dúvidas e dá recomendações personalizadas 24/7.",
     feat_data_title: "Dados em Campo", feat_data_desc: "Informações atualizadas e verdadeiras graças à nossa rede de embaixadores locais.",
-    tool_title: "Sua Ferramenta de Viagem", tool_subtitle: "Tudo o que você precisa em um só lugar"
+    tool_title: "Sua Ferramenta de Viagem", tool_subtitle: "Tudo o que você precisa em um só lugar",
+    explore_region: "Explore a Região", localities: "Localidades", start_tool_btn: "Começar a usar a ferramenta", no_download: "Acesso imediato • Sem download", go_to_section: "Ir para a seção"
   }
 };
 
