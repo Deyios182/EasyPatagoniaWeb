@@ -62,7 +62,9 @@ const translations: Record<Language, Record<string, string>> = {
     doubts_title: "¿Dudas?", faq_title: "Preguntas Frecuentes",
     still_questions: "¿Aún tienes preguntas?", support_team_desc: "Nuestro equipo de soporte está listo para ayudarte en tu viaje.", contact_whatsapp_btn: "Contactar por WhatsApp",
     // Footer CTA
-    explore_map_btn: "Explorar Mapa Interativo", instant_access_badge: "Acceso Inmediato",
+    explore_map_btn: "Explorar Mapa Interactivo", instant_access_badge: "Acceso Inmediato",
+    // Footer & Credits
+    partners_title: "Empresas que confían en nosotros", copyright_text: "Easy Patagonia © 2024", dev_with_love: "Desarrollado con ❤️ en la Región de Aysén",
     // FAQ Items
     faq_q1: "¿Cómo accedo a la plataforma?", faq_a1: "¡Es muy sencillo! Solo necesitas un navegador web. Puedes usarla desde tu computadora o directamente en tu celular mientras viajas presionando el botón 'Ingresar' en la parte superior.",
     faq_q2: "¿La app es gratuita para los turistas?", faq_a2: "Sí, el acceso a la información de destinos, atractivos y el directorio comercial es completamente gratuito para todos los viajeros.",
@@ -98,6 +100,8 @@ const translations: Record<Language, Record<string, string>> = {
     still_questions: "Still have questions?", support_team_desc: "Our support team is ready to help you on your trip.", contact_whatsapp_btn: "Contact via WhatsApp",
     // Footer CTA
     explore_map_btn: "Explore Interactive Map", instant_access_badge: "Instant Access",
+    // Footer & Credits
+    partners_title: "Companies that trust us", copyright_text: "Easy Patagonia © 2024", dev_with_love: "Developed with ❤️ in the Aysén Region",
     // FAQ Items
     faq_q1: "How do I access the platform?", faq_a1: "It's very simple! You just need a web browser. You can use it from your computer or directly on your phone while traveling by pressing the 'Enter' button at the top.",
     faq_q2: "Is the app free for tourists?", faq_a2: "Yes, access to destination information, attractions, and the business directory is completely free for all travelers.",
@@ -133,6 +137,8 @@ const translations: Record<Language, Record<string, string>> = {
     still_questions: "Ainda tem perguntas?", support_team_desc: "Nossa equipe de suporte está pronta para ajudá-lo em sua viagem.", contact_whatsapp_btn: "Contatar pelo WhatsApp",
     // Footer CTA
     explore_map_btn: "Explorar Mapa Interativo", instant_access_badge: "Acesso Imediato",
+    // Footer & Credits
+    partners_title: "Empresas que confiam em nós", copyright_text: "Easy Patagonia © 2024", dev_with_love: "Desenvolvido com ❤️ na Região de Aysén",
     // FAQ Items
     faq_q1: "Como acesso a plataforma?", faq_a1: "É muito simples! Você só precisa de um navegador web. Você pode usá-lo do seu computador ou diretamente no seu celular enquanto viaja pressionando o botão 'Entrar' na parte superior.",
     faq_q2: "O aplicativo é gratuito para turistas?", faq_a2: "Sim, o acesso às informações de destinos, atrativos e ao diretório comercial é totalmente gratuito para todos os viajantes.",

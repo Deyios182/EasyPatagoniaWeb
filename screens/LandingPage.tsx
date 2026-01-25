@@ -775,14 +775,14 @@ const LandingPage: React.FC = () => {
 
         {/* LOGO TICKER BANNER */}
         <section className="relative z-30 bg-[#1a2a30] pb-10 -mt-10 pt-10 rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-          <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Empresas que confían en nosotros</h3>
+          <h3 className="text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">{t('partners_title')}</h3>
           <LogoTicker businesses={allBusinesses} speed={60} />
         </section >
 
         <footer className="relative z-40 bg-[#152024] py-12 text-center text-slate-500 text-xs">
           <img src="/logo_easy.png" className="h-10 w-auto mx-auto mb-6 opacity-50 grayscale hover:grayscale-0 transition-all" alt="Logo Footer" onError={(e) => e.currentTarget.style.display = 'none'} />
-          <p className="uppercase tracking-widest font-black mb-4">Easy Patagonia © 2024</p>
-          <p>Desarrollado con ❤️ en la Región de Aysén</p>
+          <p className="uppercase tracking-widest font-black mb-4">{t('copyright_text')}</p>
+          <p>{t('dev_with_love')}</p>
         </footer>
       </div >
     </>
