@@ -387,8 +387,8 @@ const TouristMapScreen: React.FC = () => {
         const marker = L.marker([item.lat, item.lng], { icon: customIcon })
           .addTo(mapInstance)
           .on('click', () => {
-            // If Business, Select it
-            if (item.type === 'business') {
+            // Handle different marker types
+            if (item.type === 'business' || item.type === 'market') {
               setSelectedBusiness(item.data as Business);
               setSelectedAttraction(null);
             } else if (item.type === 'attraction') {
