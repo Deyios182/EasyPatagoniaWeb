@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Camera, X, Upload, Check } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../supabaseClient';
 
 interface PhotoUploadModalProps {
     isOpen: boolean;
