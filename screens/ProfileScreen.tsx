@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Role, MapTheme, Currency, SavedItinerary } from '../types';
 import { useAppAuth } from '../App';
+import { getUserRank } from '../utils/rankingSystem';
+import { supabase } from '../supabaseClient';
 
 interface ProfileScreenProps { role: Role; }
 
@@ -15,7 +17,28 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
   const [tempMapTheme, setTempMapTheme] = useState<MapTheme>(mapTheme);
   const [tempCurrency, setTempCurrency] = useState<Currency>(currency);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<'settings' | 'trips'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'trips' | 'contributions'>('settings');
+  const [contributionsCount, setContributionsCount] = useState({ total: 0, approved: 0, pending: 0 });
+
+  // Fetch user contributions count
+  useEffect(() => {
+    const fetchContributions = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_photo_contributions')
+        .select('status')
+        .eq('user_id', user.uid);
+
+      if (data) {
+        setContributionsCount({
+          total: data.length,
+          approved: data.filter(c => c.status === 'approved').length,
+          pending: data.filter(c => c.status === 'pending').length
+        });
+      }
+    };
+    fetchContributions();
+  }, [user]);
 
   const handleApplyChanges = () => {
     setLanguage(tempLanguage);
@@ -75,21 +98,29 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
         </div>
 
         {/* Tab Selector */}
-        <div className="flex gap-4 p-2 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md rounded-[2.5rem] border border-slate-200 dark:border-white/5 max-w-lg mx-auto md:mx-0">
+        <div className="flex gap-4 p-2 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md rounded-[2.5rem] border border-slate-200 dark:border-white/5 max-w-2xl mx-auto md:mx-0 overflow-x-auto">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'settings' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
+            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'settings' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
           >
             <span className="material-symbols-outlined text-xl">settings</span>
             {t('settings')}
           </button>
           <button
             onClick={() => setActiveTab('trips')}
-            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'trips' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
+            className={` flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'trips' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
           >
             <span className="material-symbols-outlined text-xl">map</span>
             {t('my_trips')}
             <span className="bg-white/20 text-white w-6 h-6 rounded-full flex items-center justify-center text-[8px]">{user.savedItineraries?.length || 0}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('contributions')}
+            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'contributions' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-primary'}`}
+          >
+            <span className="material-symbols-outlined text-xl">photo_camera</span>
+            Contribuciones
+            <span className="bg-white/20 text-white w-6 h-6 rounded-full flex items-center justify-center text-[8px]">{contributionsCount.total}</span>
           </button>
         </div>
 
@@ -106,10 +137,44 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
                 />
               </div>
               <h2 className="text-4xl font-black dark:text-white tracking-tighter mb-2 uppercase italic leading-none">{user.name}</h2>
-              <div className="inline-flex items-center justify-center gap-3 px-8 py-3 bg-slate-100 dark:bg-background-dark rounded-full border border-slate-200 dark:border-white/5 mb-8">
+              <div className="inline-flex items-center justify-center gap-3 px-8 py-3 bg-slate-100 dark:bg-background-dark rounded-full border border-slate-200 dark:border-white/5 mb-4">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                 <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">{role}</span>
               </div>
+
+              {/* Rank Badge */}
+              {contributionsCount.approved > 0 && (() => {
+                const rankInfo = getUserRank(contributionsCount.approved);
+                return (
+                  <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r ${rankInfo.gradient} shadow-lg mb-4`}>
+                    <span className="text-2xl">{rankInfo.emoji}</span>
+                    <div className="text-left">
+                      <p className="text-white font-black text-xs uppercase tracking-wider">Rango</p>
+                      <p className="text-white font-black text-sm uppercase">{rankInfo.rank}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Contributions Stats */}
+              {contributionsCount.total > 0 && (
+                <div className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 mt-4 border border-amber-200 dark:border-amber-800">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{contributionsCount.total}</div>
+                      <div className="text-[8px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Fotos</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-green-600 dark:text-green-400">{contributionsCount.approved}</div>
+                      <div className="text-[8px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Aprobadas</div>
+                    </div>
+                    <div>
+                      <div className="text- 2xl font-black text-orange-600 dark:text-orange-400">{contributionsCount.approved * 10}</div>
+                      <div className="text-[8px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Puntos</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* --- ZONA DE ADMINISTRACIÓN (AGREGADA) --- */}
@@ -303,6 +368,41 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'contributions' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-right duration-500">
+                <div className="bg-white dark:bg-surface-dark rounded-[4.5rem] p-24 text-center border border-slate-100 dark:border-white/5 shadow-xl flex flex-col items-center">
+                  <span className="material-symbols-outlined text-8xl text-primary/20 mb-8">photo_camera</span>
+                  <h3 className="text-3xl font-black dark:text-white uppercase italic tracking-tighter mb-4">Mis Contribuciones</h3>
+                  <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md">
+                    Comparte tus mejores fotos de los atractivos y ayuda a otros viajeros
+                  </p>
+                  <div className="grid grid-cols-3 gap-6 mb-10">
+                    <div className="bg-slate-50 dark:bg-background-dark rounded-2xl p-6">
+                      <div className="text-4xl font-black text-primary mb-2">{contributionsCount.total}</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Subidas</div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-6">
+                      <div className="text-4xl font-black text-green-600 dark:text-green-400 mb-2">{contributionsCount.approved}</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Aprobadas</div>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-6">
+                      <div className="text-4xl font-black text-amber-600 dark:text-amber-400 mb-2">{contributionsCount.approved * 10}</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Puntos</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/profile/contributions')}
+                    className="bg-primary text-white px-12 py-6 rounded-full font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-lg shadow-primary/30"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="material-symbols-outlined">photo_library</span>
+                      Ver Todas Mis Fotos
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
 

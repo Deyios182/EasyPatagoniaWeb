@@ -164,7 +164,7 @@ const AdminDashboardScreen: React.FC = () => {
             </div>
 
             {/* Action Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                <ActionCard
                   onClick={() => navigate('/field')}
                   icon="travel_explore"
@@ -180,6 +180,14 @@ const AdminDashboardScreen: React.FC = () => {
                   description="Administrar cuentas, asignar roles de Colaborador, Dueño de Empresa o Super Admin."
                   color="bg-gradient-to-br from-purple-500 to-pink-600"
                   cta="Gestionar"
+               />
+               <ActionCard
+                  onClick={() => navigate('/admin/photos')}
+                  icon="photo_library"
+                  title="Revisar Fotos"
+                  description="Aprobar o rechazar contribuciones de usuarios para atractivos turísticos."
+                  color="bg-gradient-to-br from-green-500 to-emerald-600"
+                  cta="Ver Pendientes"
                />
                <ActionCard
                   onClick={() => navigate('/admin/landing')}

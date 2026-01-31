@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import PhotoUploadModal from '../components/PhotoUploadModal';
+import { supabase } from '../supabaseClient';
+import { getUserRank } from '../utils/rankingSystem';
 
 const AttractionDetailsScreen: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -12,6 +14,7 @@ const AttractionDetailsScreen: React.FC = () => {
     const attraction = allAttractions.find(a => a.id === id);
     const [relatedBusinesses, setRelatedBusinesses] = useState<any[]>([]);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [photoAuthors, setPhotoAuthors] = useState<Record<string, { name: string; rank: any }>>({});
 
     useEffect(() => {
         if (!attraction) return;
@@ -28,6 +31,46 @@ const AttractionDetailsScreen: React.FC = () => {
             ).slice(0, 6);
             setRelatedBusinesses(related);
         }
+
+        // Fetch photo authors and their ranks
+        const fetchPhotoAuthors = async () => {
+            if (!attraction.gallery_urls || attraction.gallery_urls.length === 0) return;
+
+            const { data: contributions } = await supabase
+                .from('user_photo_contributions')
+                .select('photo_url, user_id, profiles(full_name, first_name)')
+                .eq('attraction_id', attraction.id)
+                .eq('status', 'approved');
+
+            if (contributions) {
+                const authorsData: Record<string, { name: string; rank: any }> = {};
+
+                for (const contrib of contributions) {
+                    if (!contrib.photo_url) continue;
+
+                    // Get user's approved photos count for rank
+                    const { data: userPhotos } = await supabase
+                        .from('user_photo_contributions')
+                        .select('id')
+                        .eq('user_id', contrib.user_id)
+                        .eq('status', 'approved');
+
+                    const approvedCount = userPhotos?.length || 0;
+                    const rankInfo = getUserRank(approvedCount);
+                    const profileData = (contrib as any).profiles;
+                    const userName = profileData?.full_name || profileData?.first_name || 'Viajero';
+
+                    authorsData[contrib.photo_url] = {
+                        name: userName,
+                        rank: rankInfo
+                    };
+                }
+
+                setPhotoAuthors(authorsData);
+            }
+        };
+
+        fetchPhotoAuthors();
     }, [attraction, allBusinesses]);
 
     if (!attraction) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white">Cargando...</div>;
@@ -94,12 +137,33 @@ const AttractionDetailsScreen: React.FC = () => {
                         </div>
                     ) : (
                         <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
-                            {attraction.gallery_urls?.map((img: string, i: number) => (
-                                <div key={i} className="w-full h-full shrink-0 snap-center relative">
-                                    <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
-                                </div>
-                            )) || (
+                            {attraction.gallery_urls?.map((img: string, i: number) => {
+                                const author = photoAuthors[img];
+                                return (
+                                    <div key={i} className="w-full h-full shrink-0 snap-center relative">
+                                        <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
+
+                                        {/* Author Attribution */}
+                                        {author && (
+                                            <div className="absolute bottom-8 right-8 z-20">
+                                                <div className="bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 shadow-xl">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Foto por</p>
+                                                            <p className="text-white font-black text-sm">{author.name}</p>
+                                                        </div>
+                                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${author.rank.gradient}`}>
+                                                            <span className="text-sm">{author.rank.emoji}</span>
+                                                            <span className="text-white font-black text-[10px] uppercase">{author.rank.rank}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }) || (
                                     <div className="w-full h-full shrink-0 snap-center relative">
                                         <img src={attraction.main_image_url} className="w-full h-full object-cover" alt={attraction.name} />
                                         <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
