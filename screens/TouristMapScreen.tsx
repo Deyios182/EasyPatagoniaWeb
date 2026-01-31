@@ -588,7 +588,7 @@ const TouristMapScreen: React.FC = () => {
 
         {/* Filtros de Negocios */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
-          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte', 'Mercado'].map(cat => (
+          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
             <button
               key={cat}
               onClick={() => setActiveFilter(cat as any)}
@@ -600,25 +600,7 @@ const TouristMapScreen: React.FC = () => {
         </div>
 
         {/* Filtros de Atractivos */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
-          {[
-            { key: 'all', label: 'Todos', icon: '🗺️' },
-            { key: 'attractions', label: 'Atractivos', icon: '🏔️' },
-            { key: 'gas_stations', label: 'Bencineras', icon: '⛽' },
-            { key: 'campings', label: 'Campings', icon: '🏕️' }
-          ].map(cat => (
-            <button
-              key={cat.key}
-              onClick={() => setAttractionFilter(cat.key as any)}
-              className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${attractionFilter === cat.key
-                ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105'
-                : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'
-                }`}
-            >
-              {cat.icon} {cat.label}
-            </button>
-          ))}
-        </div>
+
       </div>
 
       {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
