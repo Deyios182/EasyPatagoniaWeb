@@ -227,34 +227,37 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Attractions (Always visible, filtered by category)
-    const attractionMarkers = allAttractions
-      .filter(a => a.latitude && a.longitude)
-      .filter(a => {
-        if (attractionFilter === 'all') return true;
-        if (attractionFilter === 'attractions') return !a.category || a.category === 'attraction';
-        if (attractionFilter === 'gas_stations') return a.category === 'gas_station';
-        if (attractionFilter === 'campings') return a.category === 'camping';
-        return true;
-      })
-      .map(a => {
-        // Determine color based on category
-        let color = '#FF6B35'; // Default orange for attractions
-        if (a.category === 'gas_station') color = '#DC2626'; // Red for gas stations
-        if (a.category === 'camping') color = '#16A34A'; // Green for campings
+    // Attractions (Visible only at Medium Zoom >= 10)
+    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 10;
 
-        return {
-          id: a.id,
-          lat: a.latitude!,
-          lng: a.longitude!,
-          title: a.name,
-          type: 'attraction',
-          category: a.category || 'attraction',
-          color: color,
-          icon: a.main_image_url,
-          data: a
-        };
-      });
+    const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD)
+      ? allAttractions
+        .filter(a => a.latitude && a.longitude)
+        .filter(a => {
+          if (attractionFilter === 'all') return true;
+          if (attractionFilter === 'attractions') return !a.category || a.category === 'attraction';
+          if (attractionFilter === 'gas_stations') return a.category === 'gas_station';
+          if (attractionFilter === 'campings') return a.category === 'camping';
+          return true;
+        })
+        .map(a => {
+          // Determine color based on category
+          let color = '#FF6B35'; // Default orange for attractions
+          if (a.category === 'gas_station') color = '#DC2626'; // Red for gas stations
+          if (a.category === 'camping') color = '#16A34A'; // Green for campings
+
+          return {
+            id: a.id,
+            lat: a.latitude!,
+            lng: a.longitude!,
+            title: a.name,
+            type: 'attraction',
+            category: a.category || 'attraction',
+            color: color,
+            icon: a.main_image_url,
+            data: a
+          };
+        }) : [];
 
 
     // Combine markers: Businesses first (bottom layer), then attractions, then localities (top layer)
