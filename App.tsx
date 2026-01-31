@@ -25,6 +25,8 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AttractionDetailsScreen from './screens/AttractionDetailsScreen';
 import AuthCallbackScreen from './screens/AuthCallbackScreen';
+import UserContributionsScreen from './screens/UserContributionsScreen';
+import AdminPhotoReviewScreen from './screens/AdminPhotoReviewScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
@@ -636,11 +638,13 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/itinerary" element={isAuthenticated ? <ItineraryScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/profile" element={isAuthenticated ? <ProfileScreen role={role} /> : <Navigate to="/auth/login" />} />
+          <Route path="/profile/contributions" element={isAuthenticated ? <UserContributionsScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/chat" element={isAuthenticated ? <ChatBotScreen /> : <Navigate to="/auth/login" />} />
 
           {/* Rutas Administrativas */}
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
+          <Route path="/admin/photos" element={user && role === 'SuperAdmin' ? <AdminPhotoReviewScreen /> : <Navigate to="/profile" />} />
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
           <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
