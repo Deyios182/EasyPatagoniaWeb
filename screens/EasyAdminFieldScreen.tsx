@@ -1048,7 +1048,9 @@ const EasyAdminFieldScreen: React.FC = () => {
                         )}
                     </div>
                 </div>
-                );
+            </div>
+        </div>
+    );
 };
 
-                export default EasyAdminFieldScreen;
+export default EasyAdminFieldScreen;
