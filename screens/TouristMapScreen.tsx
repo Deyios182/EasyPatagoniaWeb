@@ -71,8 +71,13 @@ const TouristMapScreen: React.FC = () => {
       if (!b.gps) return false;
       if (b.isOpen === false) return false;
 
+      // Check if it's a market/artesanía (Always visible like attractions)
+      const isMarket = ['Mercado', 'Artesanía', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c));
+
       let matchesFilter = false;
-      if (activeFilter === 'All') {
+      if (isMarket) {
+        matchesFilter = true;
+      } else if (activeFilter === 'All') {
         matchesFilter = true;
       } else if (activeFilter === 'Actividad') {
         matchesFilter = ['Actividad', 'Tour Operador', 'Agencia', 'Tour', 'Excursión'].some(c => b.categoria.includes(c));
@@ -82,8 +87,6 @@ const TouristMapScreen: React.FC = () => {
         matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
       } else if (activeFilter === 'Transporte') {
         matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
-      } else if (activeFilter === 'Mercado') {
-        matchesFilter = ['Mercado', 'Artesanía', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c));
       } else {
         matchesFilter = b.categoria === activeFilter;
       }
@@ -377,14 +380,20 @@ const TouristMapScreen: React.FC = () => {
         });
       }
 
+      const baseZIndex = item.type === 'business' ? 500 : item.type === 'market' ? 200 : 50;
+      const finalZIndex = isActive ? 10000 : baseZIndex;
+
       if (markersRef.current[item.id]) {
         const m = markersRef.current[item.id];
         if (m instanceof L.Marker) {
           m.setIcon(customIcon);
-          m.setZIndexOffset(isActive ? 1000 : 0);
+          m.setZIndexOffset(finalZIndex);
         }
       } else {
-        const marker = L.marker([item.lat, item.lng], { icon: customIcon })
+        const marker = L.marker([item.lat, item.lng], {
+          icon: customIcon,
+          zIndexOffset: finalZIndex
+        })
           .addTo(mapInstance)
           .on('click', () => {
             // Handle different marker types
