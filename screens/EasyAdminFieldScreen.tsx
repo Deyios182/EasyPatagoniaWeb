@@ -560,14 +560,18 @@ const EasyAdminFieldScreen: React.FC = () => {
                             </div>
                             <h1 className="text-4xl font-black text-white tracking-tight uppercase italic">Panel de Campo</h1>
                             <p className="text-slate-400">Gestión operativa de Aysén.</p>
-                            {/* TABS HEADER - Mobile Scrollable Fix */}
-                            <div className="flex bg-slate-900 p-1 rounded-2xl border border-white/10 mb-8 overflow-x-auto">
-                                <div className="flex md:grid md:grid-cols-4 gap-2 md:gap-3 w-full snap-x snap-mandatory">
-                                    <button onClick={() => setActiveTab('localidades')} className={`snap-center flex-shrink-0 px-5 md:px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Localidades</button>
-                                    <button onClick={() => setActiveTab('atractivos')} className={`snap-center flex-shrink-0 px-5 md:px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Atractivos</button>
-                                    <button onClick={() => setActiveTab('empresas')} className={`snap-center flex-shrink-0 px-5 md:px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Empresas</button>
-                                    <button onClick={() => setActiveTab('negocios')} className={`snap-center flex-shrink-0 px-5 md:px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Negocios</button>
+                            {/* TABS HEADER - Mobile Scrollable with visible scroll */}
+                            <div className="relative mb-8">
+                                <div className="bg-slate-900 p-2 rounded-2xl border border-white/10 overflow-x-auto overflow-y-hidden">
+                                    <div className="flex gap-2 md:grid md:grid-cols-4 md:gap-3 min-w-min md:min-w-0">
+                                        <button onClick={() => setActiveTab('localidades')} className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg border-transparent' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white hover:border-primary/30'}`}>Localidades</button>
+                                        <button onClick={() => setActiveTab('atractivos')} className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg border-transparent' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white hover:border-primary/30'}`}>Atractivos</button>
+                                        <button onClick={() => setActiveTab('empresas')} className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg border-transparent' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white hover:border-primary/30'}`}>Empresas</button>
+                                        <button onClick={() => setActiveTab('negocios')} className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg border-transparent' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white hover:border-primary/30'}`}>Negocios</button>
+                                    </div>
                                 </div>
+                                {/* Mobile scroll indicator */}
+                                <div className="md:hidden absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none rounded-r-2xl"></div>
                             </div>
                         </div>
                     </div>
