@@ -647,7 +647,12 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="font-bold text-lg text-white leading-tight mb-2">{att.name}</h3>
                                                     {/* @ts-ignore */}
-                                                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
+                                                        <span className={`text-xs px-2 py-1 rounded-lg font-bold border ${att.category === 'gas_station' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : att.category === 'camping' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-purple-500/20 text-purple-400 border-purple-500/30'}`}>
+                                                            {att.category === 'gas_station' ? '⛽ Bencinera' : att.category === 'camping' ? '⛺ Camping' : '📸 Atractivo'}
+                                                        </span>
+                                                    </div>
                                                     <p className="text-xs text-slate-400 mt-2 line-clamp-2">{att.short_description}</p>
                                                 </div>
                                             </div>
@@ -666,12 +671,20 @@ const EasyAdminFieldScreen: React.FC = () => {
                                     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl">
                                         <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/10">
                                             <h3 className="text-xl font-black mb-6 text-white">{editingAttraction.id ? 'Editar Atractivo' : 'Nuevo Atractivo'}</h3>
-                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                                 <div>
                                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Localidad</label>
                                                     <select className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.locality_id || ''} onChange={e => setEditingAttraction({ ...editingAttraction, locality_id: e.target.value })}>
                                                         <option value="" className="bg-slate-900">Seleccione...</option>
                                                         {localities.map(l => <option key={l.id} value={l.id} className="bg-slate-900">{l.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Categoría</label>
+                                                    <select className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.category || 'attraction'} onChange={e => setEditingAttraction({ ...editingAttraction, category: e.target.value as any })}>
+                                                        <option value="attraction" className="bg-slate-900">📸 Atractivo Turístico</option>
+                                                        <option value="gas_station" className="bg-slate-900">⛽ Bencinera</option>
+                                                        <option value="camping" className="bg-slate-900">⛺ Camping</option>
                                                     </select>
                                                 </div>
                                                 <div>
