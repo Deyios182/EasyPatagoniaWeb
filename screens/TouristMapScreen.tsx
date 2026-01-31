@@ -295,11 +295,13 @@ const TouristMapScreen: React.FC = () => {
             ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
               ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
                 ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
-                  ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? 'storefront' :
+                  ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? 'shopping_cart' :
                     'location_on';
 
+          const markerColor = ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? '#2196F3' : item.color; // Blue for Markets
+
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
+                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${markerColor}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
         } else if (item.type === 'attraction') {
           innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 14px;">star</span>`;
         }

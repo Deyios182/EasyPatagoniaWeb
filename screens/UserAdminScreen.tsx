@@ -447,21 +447,22 @@ const UserAdminScreen: React.FC = () => {
       {/* MODAL */}
       {
         showModal && (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
-            <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/10">
-
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-slate-900 rounded-3xl p-6 w-full max-w-lg shadow-2xl relative border border-white/10 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-all z-10">
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
               {/* Modal Header */}
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+              <div className="pb-4 border-b border-white/10 mb-4">
                 <h3 className="text-xl font-black text-white">
                   {modalMode === 'create' && 'Crear Nuevo Usuario'}
                   {modalMode === 'edit' && 'Editar Usuario'}
                   {modalMode === 'view' && 'Detalles de Usuario'}
                 </h3>
-                <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-red-400 transition-colors"><span className="material-symbols-outlined">close</span></button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+              <div className="space-y-4">
 
                 {modalMode === 'view' && selectedUser && (
                   <div className="space-y-4">
@@ -528,21 +529,21 @@ const UserAdminScreen: React.FC = () => {
                     {/* NEW: IMAGE UPLOADER */}
                     <ImageUploader currentImage={formData.avatar_url} onUpload={handleFileUpload} />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Nombre</label>
-                        <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary focus:border-primary text-white placeholder:text-slate-500"
+                        <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                           value={formData.first_name} onChange={e => setFormData({ ...formData, first_name: e.target.value })} placeholder="Ej. Juan" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Apellido</label>
-                        <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary focus:border-primary text-white placeholder:text-slate-500"
+                        <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                           value={formData.last_name} onChange={e => setFormData({ ...formData, last_name: e.target.value })} placeholder="Ej. Pérez" />
                       </div>
                     </div>
 
                     {modalMode === 'create' && (
-                      <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Email (Login)</label>
                           <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary focus:border-primary text-white placeholder:text-slate-500"
@@ -553,15 +554,25 @@ const UserAdminScreen: React.FC = () => {
                           <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary focus:border-primary text-white placeholder:text-slate-500"
                             value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} type="password" placeholder="******" />
                         </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Rol Inicial</label>
-                          <select className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary text-white"
-                            value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                            {ROLES.map(r => <option key={r.value} value={r.value} className="bg-slate-900">{r.label}</option>)}
-                          </select>
-                        </div>
-                      </>
+                      </div>
                     )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Rol de Usuario</label>
+                        <select className="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none"
+                          value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}
+                          style={{ backgroundImage: 'none' }} // Fix mobile safari appearance
+                        >
+                          {ROLES.map(r => <option key={r.value} value={r.value} className="bg-slate-900 py-2">{r.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Teléfono</label>
+                        <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                          value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+56 9 ..." />
+                      </div>
+                    </div>
 
                     {modalMode === 'edit' && (
                       <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
