@@ -34,19 +34,36 @@ const AttractionDetailsScreen: React.FC = () => {
 
         // Fetch photo authors and their ranks
         const fetchPhotoAuthors = async () => {
-            if (!attraction.gallery_urls || attraction.gallery_urls.length === 0) return;
+            if (!attraction.gallery_urls || attraction.gallery_urls.length === 0) {
+                console.log('📸 No gallery URLs found');
+                return;
+            }
 
-            const { data: contributions } = await supabase
+            console.log('📸 Fetching authors for gallery:', attraction.gallery_urls);
+
+            const { data: contributions, error } = await supabase
                 .from('user_photo_contributions')
-                .select('photo_url, user_id, profiles(full_name, first_name)')
+                .select(`
+                    photo_url, 
+                    user_id,
+                    profiles!user_photo_contributions_user_id_fkey (
+                        full_name,
+                        first_name
+                    )
+                `)
                 .eq('attraction_id', attraction.id)
                 .eq('status', 'approved');
+
+            console.log('📸 Contributions found:', contributions);
+            console.log('📸 Error:', error);
 
             if (contributions) {
                 const authorsData: Record<string, { name: string; rank: any }> = {};
 
                 for (const contrib of contributions) {
                     if (!contrib.photo_url) continue;
+
+                    console.log('📸 Processing contribution:', contrib);
 
                     // Get user's approved photos count for rank
                     const { data: userPhotos } = await supabase
@@ -55,10 +72,12 @@ const AttractionDetailsScreen: React.FC = () => {
                         .eq('user_id', contrib.user_id)
                         .eq('status', 'approved');
 
-                    const approvedCount = userPhotos?.length || 0;
+                    const approvedCount = userPhotos?.length || 1; // Al menos 1 si llegó aquí
                     const rankInfo = getUserRank(approvedCount);
                     const profileData = (contrib as any).profiles;
-                    const userName = profileData?.full_name || profileData?.first_name || 'Viajero';
+                    const userName = profileData?.full_name || profileData?.first_name || 'Viajero Anónimo';
+
+                    console.log(`📸 Author: ${userName}, Rank: ${rankInfo.rank}, Count: ${approvedCount}`);
 
                     authorsData[contrib.photo_url] = {
                         name: userName,
@@ -66,6 +85,7 @@ const AttractionDetailsScreen: React.FC = () => {
                     };
                 }
 
+                console.log('📸 Final authors data:', authorsData);
                 setPhotoAuthors(authorsData);
             }
         };
