@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import L from 'leaflet';
+import ReactDOMServer from 'react-dom/server';
 import { useAppAuth } from '../App';
 import { Category, Business, MapTheme } from '../types';
 import BottomNavigationBar from '../components/BottomNavigationBar';
+import { AttractionMarker, GasStationMarker, CampingMarker } from '../components/MapMarkers';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -24,6 +26,7 @@ const TouristMapScreen: React.FC = () => {
   const markersRef = useRef<{ [key: string]: L.Marker | L.CircleMarker }>({});
 
   const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
+  const [attractionFilter, setAttractionFilter] = useState<'all' | 'attractions' | 'gas_stations' | 'campings'>('all');
   const [serviceSearch, setServiceSearch] = useState('');
   const [zoom, setZoom] = useState(14);
   const [isSatellite, setIsSatellite] = useState(false); // Local state for satellite view
@@ -216,17 +219,34 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Attractions (Always visible now, as requested)
-    const attractionMarkers = allAttractions.filter(a => a.latitude && a.longitude).map(a => ({
-      id: a.id,
-      lat: a.latitude!,
-      lng: a.longitude!,
-      title: a.name,
-      type: 'attraction',
-      color: '#e67e22', // Orange
-      icon: a.main_image_url,
-      data: a
-    }));
+    // Attractions (Always visible, filtered by category)
+    const attractionMarkers = allAttractions
+      .filter(a => a.latitude && a.longitude)
+      .filter(a => {
+        if (attractionFilter === 'all') return true;
+        if (attractionFilter === 'attractions') return !a.category || a.category === 'attraction';
+        if (attractionFilter === 'gas_stations') return a.category === 'gas_station';
+        if (attractionFilter === 'campings') return a.category === 'camping';
+        return true;
+      })
+      .map(a => {
+        // Determine color based on category
+        let color = '#FF6B35'; // Default orange for attractions
+        if (a.category === 'gas_station') color = '#DC2626'; // Red for gas stations
+        if (a.category === 'camping') color = '#16A34A'; // Green for campings
+
+        return {
+          id: a.id,
+          lat: a.latitude!,
+          lng: a.longitude!,
+          title: a.name,
+          type: 'attraction',
+          category: a.category || 'attraction',
+          color: color,
+          icon: a.main_image_url,
+          data: a
+        };
+      });
 
 
     // Combine markers: Businesses first (bottom layer), then attractions, then localities (top layer)
@@ -287,10 +307,26 @@ const TouristMapScreen: React.FC = () => {
           iconSize: [120, 30],
           iconAnchor: [60, 30]
         });
+      } else if (item.type === 'attraction') {
+        // ATTRACTIONS: Use custom SVG markers based on category
+        const MarkerComponent =
+          (item as any).category === 'gas_station' ? GasStationMarker :
+            (item as any).category === 'camping' ? CampingMarker :
+              AttractionMarker;
+
+        const markerSvg = ReactDOMServer.renderToString(<MarkerComponent />);
+
+        customIcon = L.divIcon({
+          className: '',
+          html: markerSvg,
+          iconSize: [32, 42],
+          iconAnchor: [16, 42],
+          popupAnchor: [0, -42]
+        });
       } else {
-        // NEGOCIOS y ATRACTIVOS: Mantienen el diseño circular
+        // NEGOCIOS: Mantienen el diseño circular
         let innerHtml = '';
-        if (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) {
+        if (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) {
           const categoryIcon =
             ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
               ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
@@ -299,20 +335,9 @@ const TouristMapScreen: React.FC = () => {
 
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                           <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
-        } else if (item.type === 'attraction' || item.type === 'business') {
-          // Handle ATTRACTIONS and MARKETS (Small icons)
-          let iconName = 'star'; // Default for attraction
-          let iconSize = 14;
-          let bgColor = item.color;
-
-          if (item.type === 'business') {
-            // Must be Mercado/Artesanía based on condition above
-            iconName = 'shopping_cart';
-            bgColor = '#2196F3'; // Blue
-            iconSize = 16;
-          }
-
-          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: ${iconSize}px;">${iconName}</span>`;
+        } else {
+          // Markets
+          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 16px;">shopping_cart</span>`;
         }
 
         customIcon = L.divIcon({
@@ -320,8 +345,8 @@ const TouristMapScreen: React.FC = () => {
           html: `
             <div style="
               position: relative;
-              width: ${isActive ? '56px' : (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
-              height: ${isActive ? '56px' : (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
+              width: ${isActive ? '56px' : (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
+              height: ${isActive ? '56px' : (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
               border-radius: 50%; 
               border: ${isActive ? '3px' : '2px'} solid white; 
               background-color: ${['Mercado', 'Artesanía'].some(c => (item.data as any).categoria?.includes(c)) ? '#2196F3' : item.color}; 
@@ -549,7 +574,8 @@ const TouristMapScreen: React.FC = () => {
             <span className="material-symbols-outlined text-2xl">{isSatellite ? 'map' : 'satellite_alt'}</span>
           </button>
         </div>
-        {/* Filtros */}
+
+        {/* Filtros de Negocios */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
           {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte', 'Mercado'].map(cat => (
             <button
@@ -558,6 +584,27 @@ const TouristMapScreen: React.FC = () => {
               className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
             >
               {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtros de Atractivos */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
+          {[
+            { key: 'all', label: 'Todos', icon: '🗺️' },
+            { key: 'attractions', label: 'Atractivos', icon: '🏔️' },
+            { key: 'gas_stations', label: 'Bencineras', icon: '⛽' },
+            { key: 'campings', label: 'Campings', icon: '🏕️' }
+          ].map(cat => (
+            <button
+              key={cat.key}
+              onClick={() => setAttractionFilter(cat.key as any)}
+              className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${attractionFilter === cat.key
+                  ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105'
+                  : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'
+                }`}
+            >
+              {cat.icon} {cat.label}
             </button>
           ))}
         </div>

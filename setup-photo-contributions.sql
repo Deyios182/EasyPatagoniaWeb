@@ -2,6 +2,10 @@
 -- SISTEMA DE CONTRIBUCIÓN DE FOTOS POR TURISTAS
 -- =====================================================
 
+-- Drop existing objects if they exist (for idempotency)
+DROP TRIGGER IF EXISTS update_user_photo_contributions_updated_at ON public.user_photo_contributions;
+DROP TABLE IF EXISTS public.user_photo_contributions CASCADE;
+
 -- Tabla para almacenar fotos subidas por usuarios
 CREATE TABLE public.user_photo_contributions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,6 +40,12 @@ CREATE TRIGGER update_user_photo_contributions_updated_at
 -- =====================================================
 
 ALTER TABLE user_photo_contributions ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Anyone can view approved photos" ON user_photo_contributions;
+DROP POLICY IF EXISTS "Users can view own photos" ON user_photo_contributions;
+DROP POLICY IF EXISTS "Anyone can submit photos" ON user_photo_contributions;
+DROP POLICY IF EXISTS "Users can update own pending photos" ON user_photo_contributions;
 
 -- Policy: Cualquiera puede VER fotos aprobadas
 CREATE POLICY "Anyone can view approved photos"

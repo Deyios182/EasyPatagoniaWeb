@@ -37,6 +37,7 @@ export interface Attraction {
   is_active: boolean;
   latitude?: number;
   longitude?: number;
+  category?: 'attraction' | 'gas_station' | 'camping'; // Category for map display
   description?: string; // Mapped from long_description or short_description
 }
 
