@@ -129,9 +129,9 @@ const TouristMapScreen: React.FC = () => {
       attribution: '© OpenStreetMap contributors & CartoDB',
       subdomains: 'abcd', // IMPORTANT for CartoCDN
       updateWhenIdle: false,
-      keepBuffer: 10,
-      updateWhenZooming: true,
-      updateInterval: 100,
+      keepBuffer: 6,
+      updateWhenZooming: false,
+      updateInterval: 200,
       className: 'map-tiles',
       bounds: [[-49.3, -76.0], [-43.5, -71.0]]
     }).addTo(map);
@@ -190,8 +190,8 @@ const TouristMapScreen: React.FC = () => {
     // const { allLocalities, allAttractions } = useAppAuth(); // REMOVED INVALID HOOK CALL
 
     // --- 1. Prepare Data ---
-    // Businesses (ONLY at Zoom >= 13)
-    const SHOW_BUSINESS_ZOOM_THRESHOLD = 13;
+    // Businesses (ONLY at Zoom >= 14)
+    const SHOW_BUSINESS_ZOOM_THRESHOLD = 14;
     const businessMarkers = (zoom >= SHOW_BUSINESS_ZOOM_THRESHOLD)
       ? filtered.filter(b => b.gps).map(b => {
         // Check if it's a market/artesanía to treat it as attraction-style marker
@@ -227,8 +227,8 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Attractions (Visible only at Medium Zoom >= 10)
-    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 10;
+    // Attractions (Visible only at Medium Zoom >= 12)
+    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 12;
 
     const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD)
       ? allAttractions
@@ -383,7 +383,7 @@ const TouristMapScreen: React.FC = () => {
         });
       }
 
-      const baseZIndex = item.type === 'business' ? 500 : item.type === 'market' ? 200 : 50;
+      const baseZIndex = item.type === 'business' ? 500 : item.type === 'market' ? 200 : item.type === 'locality' ? 50 : 100;
       const finalZIndex = isActive ? 10000 : baseZIndex;
 
       if (markersRef.current[item.id]) {
