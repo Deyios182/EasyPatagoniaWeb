@@ -51,7 +51,7 @@ const AttractionDetailsScreen: React.FC = () => {
                 <div className="w-full h-[55vh] md:h-[75vh] bg-black overflow-hidden relative shrink-0">
                     {!attraction.main_image_url && !attraction.gallery_urls?.length ? (
                         /* Photo Placeholder - when no images */
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 relative z-20">
                             <div className="text-center max-w-xl mx-auto p-8 animate-in fade-in duration-700">
                                 <div className="mb-6 animate-pulse">
                                     <svg className="w-24 h-24 mx-auto text-primary/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
