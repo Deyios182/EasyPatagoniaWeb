@@ -129,9 +129,9 @@ const TouristMapScreen: React.FC = () => {
       attribution: '© OpenStreetMap contributors & CartoDB',
       subdomains: 'abcd', // IMPORTANT for CartoCDN
       updateWhenIdle: false,
-      keepBuffer: 6,
-      updateWhenZooming: false,
-      updateInterval: 200,
+      keepBuffer: 12,
+      updateWhenZooming: true,
+      updateInterval: 100,
       className: 'map-tiles',
       bounds: [[-49.3, -76.0], [-43.5, -71.0]]
     }).addTo(map);
