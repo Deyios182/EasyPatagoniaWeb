@@ -40,14 +40,7 @@ const AttractionDetailsScreen: React.FC = () => {
 
             const { data: contributions, error } = await supabase
                 .from('user_photo_contributions')
-                .select(`
-                    photo_url, 
-                    user_id,
-                    profiles!user_photo_contributions_user_id_fkey (
-                        full_name,
-                        first_name
-                    )
-                `)
+                .select('photo_url, user_id, user_name, user_email')
                 .eq('attraction_id', attraction.id)
                 .eq('status', 'approved');
 
@@ -69,10 +62,11 @@ const AttractionDetailsScreen: React.FC = () => {
                         .eq('user_id', contrib.user_id)
                         .eq('status', 'approved');
 
-                    const approvedCount = userPhotos?.length || 1; // Al menos 1 si llegó aquí
+                    const approvedCount = userPhotos?.length || 1;
                     const rankInfo = getUserRank(approvedCount);
-                    const profileData = (contrib as any).profiles;
-                    const userName = profileData?.full_name || profileData?.first_name || 'Viajero Anónimo';
+
+                    // Use user_name from contribution record
+                    const userName = contrib.user_name || contrib.user_email?.split('@')[0] || 'Viajero Anónimo';
 
                     console.log(`📸 Author: ${userName}, Rank: ${rankInfo.rank}, Count: ${approvedCount}`);
 
