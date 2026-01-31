@@ -47,7 +47,9 @@ const PlannerScreen: React.FC = () => {
     { id: 'Hospedaje', icon: 'hotel', label: t('hotel') },
     { id: 'Actividad', icon: 'hiking', label: t('activity') },
     { id: 'Restaurante', icon: 'restaurant', label: t('restaurant') },
-    { id: 'Transporte', icon: 'directions_bus', label: t('transport') }
+    { id: 'Restaurante', icon: 'restaurant', label: t('restaurant') },
+    { id: 'Transporte', icon: 'directions_bus', label: t('transport') },
+    { id: 'Mercado', icon: 'storefront', label: 'Mercado' }
   ];
 
   const toggleCategory = (cat: Category) => {
@@ -99,7 +101,7 @@ const PlannerScreen: React.FC = () => {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center p-6 md:p-12 overflow-y-auto no-scrollbar">
+    <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center p-4 md:p-12 overflow-y-auto no-scrollbar">
       <div className="w-full max-w-4xl space-y-12 pb-24">
 
         <div className="flex items-center justify-between">
@@ -108,7 +110,7 @@ const PlannerScreen: React.FC = () => {
           </button>
           <div className="text-center flex-1 md:flex-initial">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Easy Planner</span>
-            <h1 className="text-3xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('itinerary_title')}</h1>
+            <h1 className="text-2xl md:text-3xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('itinerary_title')}</h1>
           </div>
           {/* Botón para ver el último plan si existe */}
           {localStorage.getItem('ep_plan') ? (
@@ -124,7 +126,7 @@ const PlannerScreen: React.FC = () => {
           )}
         </div>
 
-        <div className="bg-white dark:bg-surface-dark p-10 md:p-16 rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-16">
+        <div className="bg-white dark:bg-surface-dark p-6 md:p-16 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-12 md:space-y-16">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
 

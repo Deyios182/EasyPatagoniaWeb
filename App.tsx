@@ -627,8 +627,8 @@ const AuthenticatedApp: React.FC = () => {
           {/* Rutas Públicas (Modo Invitado) */}
           <Route path="/map" element={<TouristMapScreen />} />
           <Route path="/discover" element={<DiscoveryScreen />} />
-          <Route path="/highlights" element={<HighlightsScreen />} />
-          <Route path="/directory" element={<BusinessDirectoryScreen />} />
+          <Route path="/highlights" element={isAuthenticated ? <HighlightsScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/directory" element={isAuthenticated ? <BusinessDirectoryScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/details/:id" element={<BusinessDetailsScreen />} />
           <Route path="/attraction/:id" element={<AttractionDetailsScreen />} />
 

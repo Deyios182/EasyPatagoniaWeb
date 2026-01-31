@@ -38,6 +38,8 @@ const BusinessDirectoryScreen: React.FC = () => {
         matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
       } else if (filter === 'Transporte') {
         matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
+      } else if (filter === 'Mercado') {
+        matchesFilter = ['Mercado', 'Artesanía', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c));
       } else {
         matchesFilter = b.categoria === filter;
       }
@@ -98,7 +100,7 @@ const BusinessDirectoryScreen: React.FC = () => {
 
         {/* Categories Scroller */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 scroll-smooth">
-          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte', 'Mercado'].map(cat => (
             <button
               key={cat}
               onClick={() => setFilter(cat as any)}

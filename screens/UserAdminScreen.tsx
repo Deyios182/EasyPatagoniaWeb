@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
 import { useAuth } from '../contexts/AuthContext';  // NEW: Import Supabase auth hook
 import { uploadImage } from './imageHandler';
+import { Company } from '../types';
 
 // Roles (constantes)
 const ROLES = [
@@ -53,6 +54,8 @@ const UserAdminScreen: React.FC = () => {
   const { user: currentUser } = useAppAuth();
   const supabaseAuth = useAuth();  // NEW: Access Supabase auth hook for refetchProfile
   const [users, setUsers] = useState<UserData[]>([]);
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]); // List of all companies
+  const [userCompanies, setUserCompanies] = useState<string[]>([]); // IDs of companies assigned to selectedUser
   const [loading, setLoading] = useState(true);
   // Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,7 +84,22 @@ const UserAdminScreen: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchCompanies();
   }, []);
+
+  const fetchCompanies = async () => {
+    const { data } = await supabase.from('companies').select('*').order('name');
+    if (data) setAllCompanies(data);
+  };
+
+  const fetchUserCompanies = async (userId: string) => {
+    const { data } = await supabase.from('company_owners').select('company_id').eq('owner_id', userId);
+    if (data) {
+      setUserCompanies(data.map((item: any) => item.company_id));
+    } else {
+      setUserCompanies([]);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -125,6 +143,7 @@ const UserAdminScreen: React.FC = () => {
   const handleEdit = (u: UserData) => {
     setModalMode('edit');
     setSelectedUser(u);
+    fetchUserCompanies(u.id); // Load assigned companies
     setShowPasswordReset(false);
     setNewPassword('');
     setFormData({
@@ -164,6 +183,7 @@ const UserAdminScreen: React.FC = () => {
   const handleView = (u: UserData) => {
     setModalMode('view');
     setSelectedUser(u);
+    fetchUserCompanies(u.id);
     setShowModal(true);
   };
 
@@ -280,6 +300,24 @@ const UserAdminScreen: React.FC = () => {
       fetchUsers();
     } else {
       console.log('✅ [ADMIN] Role updated successfully');
+    }
+  };
+
+  const assignCompanyToUser = async (companyId: string) => {
+    if (!selectedUser) return;
+    const { error } = await supabase.from('company_owners').insert({ owner_id: selectedUser.id, company_id: companyId });
+    if (error) alert("Error asignando empresa: " + error.message);
+    else {
+      setUserCompanies([...userCompanies, companyId]);
+    }
+  };
+
+  const removeCompanyFromUser = async (companyId: string) => {
+    if (!selectedUser) return;
+    const { error } = await supabase.from('company_owners').delete().match({ owner_id: selectedUser.id, company_id: companyId });
+    if (error) alert("Error desasignando empresa: " + error.message);
+    else {
+      setUserCompanies(userCompanies.filter(id => id !== companyId));
     }
   };
 
@@ -461,6 +499,27 @@ const UserAdminScreen: React.FC = () => {
                         <p className="text-sm bg-white/5 border border-white/10 p-4 rounded-xl mt-2 text-slate-300 italic">"{selectedUser.bio}"</p>
                       </div>
                     )}
+
+                    {/* SHOW ASSIGNED COMPANIES IN VIEW MODE */}
+                    {selectedUser.role === 'business_owner' && (
+                      <div className="mt-4 border-t border-white/10 pt-4">
+                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Empresas Asignadas</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {userCompanies.length > 0 ? (
+                            userCompanies.map(coId => {
+                              const co = allCompanies.find(c => c.id === coId);
+                              return (
+                                <span key={coId} className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg text-xs font-bold border border-blue-500/30">
+                                  {co?.name || 'Empresa Desconocida'}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <p className="text-xs text-slate-500 italic">Sin empresas asignadas.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -540,6 +599,55 @@ const UserAdminScreen: React.FC = () => {
                       <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary focus:border-primary h-24 resize-none text-white placeholder:text-slate-500"
                         value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} placeholder="Información adicional..." />
                     </div>
+
+                    {/* COMPANY ASSIGNMENT SECTION (Only for Business Owners in Edit Mode) */}
+                    {modalMode === 'edit' && formData.role === 'business_owner' && (
+                      <div className="mt-6 bg-blue-500/5 p-4 rounded-xl border border-blue-500/20">
+                        <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-sm">store</span>
+                          Gestionar Empresas
+                        </h4>
+
+                        <div className="space-y-3">
+                          {userCompanies.map(coId => {
+                            const co = allCompanies.find(c => c.id === coId);
+                            return (
+                              <div key={coId} className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg border border-white/5">
+                                <span className="text-sm font-bold text-white">{co?.name || 'Cargando...'}</span>
+                                <button onClick={() => removeCompanyFromUser(coId)} className="text-red-400 hover:bg-red-500/10 p-1 rounded-md transition-colors">
+                                  <span className="material-symbols-outlined text-base">close</span>
+                                </button>
+                              </div>
+                            );
+                          })}
+
+                          <div className="flex gap-2 mt-2">
+                            <select
+                              id="company-selector"
+                              className="flex-1 bg-slate-900 border border-white/10 rounded-lg text-xs p-2 text-white outline-none"
+                            >
+                              <option value="">Seleccionar Empresa...</option>
+                              {allCompanies.filter(c => !userCompanies.includes(c.id)).map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const select = document.getElementById('company-selector') as HTMLSelectElement;
+                                if (select.value) {
+                                  assignCompanyToUser(select.value);
+                                  select.value = "";
+                                }
+                              }}
+                              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors"
+                            >
+                              Asignar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

@@ -91,7 +91,7 @@ export interface Business extends Company {
 }
 
 // Category definition
-export type Category = 'Restaurante' | 'Hospedaje' | 'Actividad' | 'Transporte' | 'Natural';
+export type Category = 'Restaurante' | 'Hospedaje' | 'Actividad' | 'Transporte' | 'Natural' | 'Mercado';
 
 export interface ItineraryActivity {
   time: string;

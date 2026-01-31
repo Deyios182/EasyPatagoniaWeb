@@ -71,7 +71,7 @@ const ItineraryScreen: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-y-auto no-scrollbar items-center pb-32">
-      <div className="w-full max-w-4xl p-6 md:p-12 space-y-12">
+      <div className="w-full max-w-4xl p-4 md:p-12 space-y-8 md:space-y-12">
 
         <div className="flex items-center justify-between">
           <button onClick={() => navigate('/planner')} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
@@ -79,7 +79,7 @@ const ItineraryScreen: React.FC = () => {
           </button>
           <div className="text-center">
             <p className="text-[10px] uppercase font-black text-primary tracking-[0.4em] mb-2">Mi Ruta Aysén</p>
-            <h1 className="text-3xl font-black dark:text-white leading-none uppercase italic tracking-tighter">Aventura Planificada</h1>
+            <h1 className="text-2xl md:text-3xl font-black dark:text-white leading-none uppercase italic tracking-tighter">Aventura Planificada</h1>
           </div>
           <button className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-slate-200 dark:border-white/5">
             <span className="material-symbols-outlined">share</span>
@@ -109,7 +109,7 @@ const ItineraryScreen: React.FC = () => {
             return (
               <div key={idx} className="flex gap-8 relative group">
                 <div className="flex flex-col items-center">
-                  <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center z-10 shadow-xl border-4 border-white dark:border-background-dark ${idx === 0 ? 'bg-primary text-white' : 'bg-white dark:bg-surface-dark dark:text-slate-400'}`}>
+                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-col items-center justify-center z-10 shadow-xl border-4 border-white dark:border-background-dark ${idx === 0 ? 'bg-primary text-white' : 'bg-white dark:bg-surface-dark dark:text-slate-400'}`}>
                     <span className="text-[10px] font-black leading-none">{act.time.split(' ')[0]}</span>
                     <span className="text-[8px] font-bold opacity-70 mt-0.5">{act.time.split(' ')[1] || 'AM'}</span>
                   </div>
@@ -132,9 +132,9 @@ const ItineraryScreen: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-10">
+                    <div className="p-6 md:p-10">
                       <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-2xl font-black dark:text-white leading-tight flex-1 pr-6 uppercase italic tracking-tighter">{act.title}</h3>
+                        <h3 className="text-xl md:text-2xl font-black dark:text-white leading-tight flex-1 pr-4 md:pr-6 uppercase italic tracking-tighter">{act.title}</h3>
                         {act.businessName && (
                           <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 shrink-0">
                             <p className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">Verificado</p>

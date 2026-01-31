@@ -264,7 +264,7 @@ const LandingPage: React.FC = () => {
                 {!logoError ? (
                   <img
                     src={settings['logo_url'] || "/logo_easy.png"}
-                    className="h-12 md:h-20 w-auto object-contain hover:scale-105 transition-all duration-300 drop-shadow-md"
+                    className="h-14 md:h-24 w-auto max-w-[180px] md:max-w-[250px] object-contain hover:scale-105 transition-all duration-300 drop-shadow-md"
                     alt={settings['site_name'] || "Easy Patagonia"}
                     onError={() => setLogoError(true)}
                   />

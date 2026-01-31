@@ -79,6 +79,8 @@ const TouristMapScreen: React.FC = () => {
         matchesFilter = ['Restaurante', 'Cafetería', 'Bar', 'Gastronomía', 'Comida'].some(c => b.categoria.includes(c));
       } else if (activeFilter === 'Transporte') {
         matchesFilter = ['Transporte', 'Transfer', 'Taxi'].some(c => b.categoria.includes(c));
+      } else if (activeFilter === 'Mercado') {
+        matchesFilter = ['Mercado', 'Artesanía', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c));
       } else {
         matchesFilter = b.categoria === activeFilter;
       }
@@ -193,7 +195,8 @@ const TouristMapScreen: React.FC = () => {
         type: 'business',
         color: b.categoria === 'Transporte' ? '#4f6d7a' :
           ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
-            ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' : '#2ecc71',
+            ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
+              ['Mercado', 'Artesanía', 'Comercio'].some(c => b.categoria.includes(c)) ? '#9c27b0' : '#2ecc71',
         icon: b.media.logo_url,
         data: b
       }))
@@ -288,8 +291,15 @@ const TouristMapScreen: React.FC = () => {
         // NEGOCIOS y ATRACTIVOS: Mantienen el diseño circular
         let innerHtml = '';
         if (item.type === 'business') {
+          const categoryIcon =
+            ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
+              ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
+                ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
+                  ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? 'storefront' :
+                    'location_on';
+
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                        <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color};"><span style="color: white; font-weight: bold; font-size: 20px;">•</span></div>`;
+                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
         } else if (item.type === 'attraction') {
           innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 14px;">star</span>`;
         }
@@ -473,7 +483,7 @@ const TouristMapScreen: React.FC = () => {
       )}
 
       {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
-      <div className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-8 flex flex-col md:flex-row gap-3 md:gap-4 pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 z-[100] p-2 md:p-8 flex flex-col md:flex-row gap-2 md:gap-4 pointer-events-none">
 
         {/* Contenedor Superior: Buscador + Botón Perfil */}
         <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
@@ -530,13 +540,13 @@ const TouristMapScreen: React.FC = () => {
         </div>
         {/* Filtros */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
-          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte', 'Mercado'].map(cat => (
             <button
               key={cat}
               onClick={() => setActiveFilter(cat as any)}
-              className={`whitespace-nowrap px-5 py-2.5 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
+              className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
             >
-              {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : t('transport')}
+              {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
             </button>
           ))}
         </div>
