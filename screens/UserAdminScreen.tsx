@@ -447,9 +447,16 @@ const UserAdminScreen: React.FC = () => {
       {/* MODAL */}
       {
         showModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-end md:items-center justify-center md:p-4 backdrop-blur-sm">
-            <div className="bg-slate-900 md:rounded-3xl rounded-t-3xl p-6 w-full max-w-lg shadow-2xl relative border-t md:border border-white/10 animate-in slide-in-from-bottom-5 md:zoom-in-95 h-[90vh] md:max-h-[85vh] flex flex-col">
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-white/10 shrink-0">
+          <div className="fixed inset-0 bg-black/90 z-[100] flex items-end md:items-center justify-center backdrop-blur-md">
+            <div className="bg-slate-900 w-full h-[85vh] md:h-auto md:max-h-[85vh] md:max-w-lg md:rounded-3xl rounded-t-3xl border-t md:border border-white/20 shadow-2xl flex flex-col relative animate-in slide-in-from-bottom-10 md:zoom-in-95">
+              {/* Close Button Mobile */}
+              <div className="absolute -top-12 left-0 right-0 flex justify-center md:hidden">
+                <button onClick={() => setShowModal(false)} className="bg-white/20 p-2 rounded-full text-white backdrop-blur-md">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="flex justify-between items-center p-6 pb-4 border-b border-white/10 shrink-0">
                 <h3 className="text-xl font-black text-white">
                   {modalMode === 'create' && 'Crear Nuevo Usuario'}
                   {modalMode === 'edit' && 'Editar Usuario'}

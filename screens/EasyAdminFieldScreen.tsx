@@ -560,13 +560,13 @@ const EasyAdminFieldScreen: React.FC = () => {
                             </div>
                             <h1 className="text-4xl font-black text-white tracking-tight uppercase italic">Panel de Campo</h1>
                             <p className="text-slate-400">Gestión operativa de Aysén.</p>
-                            {/* TABS HEADER - Improved for Mobile */}
+                            {/* TABS HEADER - Mobile Scrollable Fix */}
                             <div className="flex bg-slate-900 p-1 rounded-2xl border border-white/10 mb-8 overflow-x-auto no-scrollbar">
-                                <div className="flex md:grid md:grid-cols-4 gap-2 min-w-max md:min-w-0 w-full">
-                                    <button onClick={() => setActiveTab('localidades')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Localidades</button>
-                                    <button onClick={() => setActiveTab('atractivos')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Atractivos</button>
-                                    <button onClick={() => setActiveTab('empresas')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Empresas</button>
-                                    <button onClick={() => setActiveTab('negocios')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Negocios</button>
+                                <div className="flex md:grid md:grid-cols-4 gap-3 w-full overflow-x-auto pb-2 snap-x">
+                                    <button onClick={() => setActiveTab('localidades')} className={`snap-center flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Localidades</button>
+                                    <button onClick={() => setActiveTab('atractivos')} className={`snap-center flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Atractivos</button>
+                                    <button onClick={() => setActiveTab('empresas')} className={`snap-center flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Empresas</button>
+                                    <button onClick={() => setActiveTab('negocios')} className={`snap-center flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all border border-transparent ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>Negocios</button>
                                 </div>
                             </div>
                         </div>
@@ -1053,4 +1053,5 @@ const EasyAdminFieldScreen: React.FC = () => {
     );
 };
 
+// Fix applied for vercel build
 export default EasyAdminFieldScreen;
