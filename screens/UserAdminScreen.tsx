@@ -388,58 +388,61 @@ const UserAdminScreen: React.FC = () => {
       {/* TABLE */}
       <div className="p-8 md:p-12 pt-0">
         <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-white/5 text-xs uppercase tracking-widest text-slate-400 font-bold">
-              <tr>
-                <th className="p-5">Usuario</th>
-                <th className="p-5">Rol</th>
-                <th className="p-5">Estado</th>
-                <th className="p-5 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.map(u => (
-                <tr key={u.id} className={`hover:bg-white/5 transition-colors ${!u.is_active ? 'opacity-50' : ''}`}>
-                  <td className="p-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white/10 text-slate-400 overflow-hidden border-2 ${u.is_active ? 'border-white/10' : 'border-red-500/50'}`}>
-                        {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <span className="material-symbols-outlined">person</span>}
-                      </div>
-                      <div>
-                        <p className="font-bold leading-tight text-white">{u.name}</p>
-                        <p className="text-xs text-slate-500">{u.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-5">
-                    <select
-                      value={u.role}
-                      onChange={(e) => updateRole(u.id, e.target.value)}
-                      className="bg-white/10 border border-white/10 rounded-xl text-xs font-bold py-2 px-3 cursor-pointer focus:ring-2 focus:ring-primary text-white"
-                    >
-                      {ROLES.map(r => <option key={r.value} value={r.value} className="bg-slate-900">{r.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="p-5">
-                    <button
-                      onClick={() => toggleStatus(u.id, u.is_active)}
-                      className={`text-[10px] font-bold px-3 py-1.5 rounded-full border flex items-center gap-1.5 w-fit ${u.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
-                    >
-                      <span className="material-symbols-outlined text-[12px]">{u.is_active ? 'check_circle' : 'block'}</span>
-                      {u.is_active ? 'ACTIVO' : 'BLOQUEADO'}
-                    </button>
-                  </td>
-                  <td className="p-5 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => handleView(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-blue-400 transition-colors" title="Ver Detalles"><span className="material-symbols-outlined">visibility</span></button>
-                      <button onClick={() => handleEdit(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-orange-400 transition-colors" title="Editar"><span className="material-symbols-outlined">edit</span></button>
-                      <button onClick={() => handleDelete(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-red-400 transition-colors" title="Eliminar"><span className="material-symbols-outlined">delete</span></button>
-                    </div>
-                  </td>
+          {/* Mobile: Horizontal scroll wrapper */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead className="bg-white/5 text-xs uppercase tracking-widest text-slate-400 font-bold">
+                <tr>
+                  <th className="p-5">Usuario</th>
+                  <th className="p-5">Rol</th>
+                  <th className="p-5">Estado</th>
+                  <th className="p-5 text-right">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filtered.map(u => (
+                  <tr key={u.id} className={`hover:bg-white/5 transition-colors ${!u.is_active ? 'opacity-50' : ''}`}>
+                    <td className="p-5">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white/10 text-slate-400 overflow-hidden border-2 ${u.is_active ? 'border-white/10' : 'border-red-500/50'}`}>
+                          {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <span className="material-symbols-outlined">person</span>}
+                        </div>
+                        <div>
+                          <p className="font-bold leading-tight text-white">{u.name}</p>
+                          <p className="text-xs text-slate-500">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <select
+                        value={u.role}
+                        onChange={(e) => updateRole(u.id, e.target.value)}
+                        className="bg-white/10 border border-white/10 rounded-xl text-xs font-bold py-2 px-3 cursor-pointer focus:ring-2 focus:ring-primary text-white min-w-[180px]"
+                      >
+                        {ROLES.map(r => <option key={r.value} value={r.value} className="bg-slate-900">{r.label}</option>)}
+                      </select>
+                    </td>
+                    <td className="p-5">
+                      <button
+                        onClick={() => toggleStatus(u.id, u.is_active)}
+                        className={`text-[10px] font-bold px-3 py-1.5 rounded-full border flex items-center gap-1.5 w-fit ${u.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                      >
+                        <span className="material-symbols-outlined text-[12px]">{u.is_active ? 'check_circle' : 'block'}</span>
+                        {u.is_active ? 'ACTIVO' : 'BLOQUEADO'}
+                      </button>
+                    </td>
+                    <td className="p-5 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleView(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-blue-400 transition-colors" title="Ver Detalles"><span className="material-symbols-outlined">visibility</span></button>
+                        <button onClick={() => handleEdit(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-orange-400 transition-colors" title="Editar"><span className="material-symbols-outlined">edit</span></button>
+                        <button onClick={() => handleDelete(u)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-red-400 transition-colors" title="Eliminar"><span className="material-symbols-outlined">delete</span></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {filtered.length === 0 && <div className="p-12 text-center text-slate-500">No se encontraron usuarios.</div>}
         </div>
       </div>
