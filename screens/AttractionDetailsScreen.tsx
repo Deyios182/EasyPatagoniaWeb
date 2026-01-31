@@ -34,12 +34,9 @@ const AttractionDetailsScreen: React.FC = () => {
 
         // Fetch photo authors and their ranks
         const fetchPhotoAuthors = async () => {
-            if (!attraction.gallery_urls || attraction.gallery_urls.length === 0) {
-                console.log('📸 No gallery URLs found');
-                return;
-            }
 
-            console.log('📸 Fetching authors for gallery:', attraction.gallery_urls);
+
+            console.log('📸 Fetching authors for attraction:', attraction.id);
 
             const { data: contributions, error } = await supabase
                 .from('user_photo_contributions')
