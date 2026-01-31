@@ -5,7 +5,7 @@ import ReactDOMServer from 'react-dom/server';
 import { useAppAuth } from '../App';
 import { Category, Business, MapTheme } from '../types';
 import BottomNavigationBar from '../components/BottomNavigationBar';
-import { AttractionMarker, GasStationMarker, CampingMarker } from '../components/MapMarkers';
+import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from '../components/MapMarkers';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -190,19 +190,24 @@ const TouristMapScreen: React.FC = () => {
     // Businesses (ONLY at Zoom >= 13)
     const SHOW_BUSINESS_ZOOM_THRESHOLD = 13;
     const businessMarkers = (zoom >= SHOW_BUSINESS_ZOOM_THRESHOLD)
-      ? filtered.filter(b => b.gps).map(b => ({
-        id: b.id,
-        lat: b.gps!.lat,
-        lng: b.gps!.lng,
-        title: b.nombre,
-        type: 'business',
-        color: b.categoria === 'Transporte' ? '#4f6d7a' :
-          ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
-            ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
-              ['Mercado', 'Artesanía', 'Comercio'].some(c => b.categoria.includes(c)) ? '#9c27b0' : '#2ecc71',
-        icon: b.media.logo_url,
-        data: b
-      }))
+      ? filtered.filter(b => b.gps).map(b => {
+        // Check if it's a market/artesanía to treat it as attraction-style marker
+        const isMarket = ['Mercado', 'Artesanía', 'Comercio'].some(c => b.categoria.includes(c));
+
+        return {
+          id: b.id,
+          lat: b.gps!.lat,
+          lng: b.gps!.lng,
+          title: b.nombre,
+          type: isMarket ? 'market' : 'business',
+          color: b.categoria === 'Transporte' ? '#4f6d7a' :
+            ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
+              ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
+                isMarket ? '#FF6B35' : '#2ecc71',
+          icon: b.media.logo_url,
+          data: b
+        };
+      })
       : [];
 
     // Localities (Visible only at LOW zoom, hide when businesses appear)
@@ -319,37 +324,43 @@ const TouristMapScreen: React.FC = () => {
         customIcon = L.divIcon({
           className: '',
           html: markerSvg,
-          iconSize: [32, 42],
-          iconAnchor: [16, 42],
-          popupAnchor: [0, -42]
+          iconSize: [26, 34],
+          iconAnchor: [13, 34],
+          popupAnchor: [0, -34]
+        });
+      } else if (item.type === 'market') {
+        // MARKETS: Use custom SVG marker (same as attractions)
+        const markerSvg = ReactDOMServer.renderToString(<MarketMarker />);
+
+        customIcon = L.divIcon({
+          className: '',
+          html: markerSvg,
+          iconSize: [26, 34],
+          iconAnchor: [13, 34],
+          popupAnchor: [0, -34]
         });
       } else {
         // NEGOCIOS: Mantienen el diseño circular
         let innerHtml = '';
-        if (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) {
-          const categoryIcon =
-            ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
-              ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
-                ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
-                  'location_on';
+        const categoryIcon =
+          ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
+            ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
+              ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
+                'location_on';
 
-          innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
-        } else {
-          // Markets
-          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 16px;">shopping_cart</span>`;
-        }
+        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
 
         customIcon = L.divIcon({
           className: "",
           html: `
             <div style="
               position: relative;
-              width: ${isActive ? '56px' : (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
-              height: ${isActive ? '56px' : (!['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
+              width: ${isActive ? '56px' : '40px'}; 
+              height: ${isActive ? '56px' : '40px'}; 
               border-radius: 50%; 
               border: ${isActive ? '3px' : '2px'} solid white; 
-              background-color: ${['Mercado', 'Artesanía'].some(c => (item.data as any).categoria?.includes(c)) ? '#2196F3' : item.color}; 
+              background-color: ${item.color}; 
               overflow: hidden;
               box-shadow: 0 4px 15px rgba(0,0,0,0.5);
               transition: all 0.3s ease;
@@ -600,8 +611,8 @@ const TouristMapScreen: React.FC = () => {
               key={cat.key}
               onClick={() => setAttractionFilter(cat.key as any)}
               className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${attractionFilter === cat.key
-                  ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105'
-                  : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'
+                ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105'
+                : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'
                 }`}
             >
               {cat.icon} {cat.label}
