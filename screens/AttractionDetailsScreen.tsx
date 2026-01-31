@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import BottomNavigationBar from '../components/BottomNavigationBar';
+import PhotoUploadModal from '../components/PhotoUploadModal';
 
 const AttractionDetailsScreen: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -10,6 +11,7 @@ const AttractionDetailsScreen: React.FC = () => {
 
     const attraction = allAttractions.find(a => a.id === id);
     const [relatedBusinesses, setRelatedBusinesses] = useState<any[]>([]);
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
     useEffect(() => {
         if (!attraction) return;
@@ -47,19 +49,64 @@ const AttractionDetailsScreen: React.FC = () => {
 
                 {/* HERO IMAGE SECTION (Scrollable) */}
                 <div className="w-full h-[55vh] md:h-[75vh] bg-black overflow-hidden relative shrink-0">
-                    <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
-                        {attraction.gallery_urls?.map((img: string, i: number) => (
-                            <div key={i} className="w-full h-full shrink-0 snap-center relative">
-                                <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
+                    {!attraction.main_image_url && !attraction.gallery_urls?.length ? (
+                        /* Photo Placeholder - when no images */
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                            <div className="text-center max-w-xl mx-auto p-8 animate-in fade-in duration-700">
+                                <div className="mb-6 animate-pulse">
+                                    <svg className="w-24 h-24 mx-auto text-primary/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mb-4 uppercase tracking-tight">
+                                    ¡Este lugar necesita tu foto!
+                                </h2>
+                                <p className="text-lg text-slate-600 dark:text-slate-400 mb-3">
+                                    Ayuda a otros turistas compartiendo tu mejor captura de
+                                </p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white mb-8">
+                                    {attraction.name}
+                                </p>
+                                <button
+                                    onClick={() => setUploadModalOpen(true)}
+                                    className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-black px-8 py-4 rounded-2xl uppercase tracking-wider text-sm transition-all hover:scale-105 shadow-lg shadow-primary/30 group"
+                                >
+                                    <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    Subir Foto
+                                </button>
+                                <div className="flex items-center justify-center gap-6 mt-6 text-sm">
+                                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                                            <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="font-semibold">Tu foto aparecerá aquí</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                        <span className="text-xl">🏆</span>
+                                        <span className="font-semibold">+10 puntos</span>
+                                    </div>
+                                </div>
                             </div>
-                        )) || (
-                                <div className="w-full h-full shrink-0 snap-center relative">
-                                    <img src={attraction.main_image_url} className="w-full h-full object-cover" alt={attraction.name} />
+                        </div>
+                    ) : (
+                        <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+                            {attraction.gallery_urls?.map((img: string, i: number) => (
+                                <div key={i} className="w-full h-full shrink-0 snap-center relative">
+                                    <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
                                     <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
                                 </div>
-                            )}
-                    </div>
+                            )) || (
+                                    <div className="w-full h-full shrink-0 snap-center relative">
+                                        <img src={attraction.main_image_url} className="w-full h-full object-cover" alt={attraction.name} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
+                                    </div>
+                                )}
+                        </div>
+                    )}
 
                     {/* TITLE OVERLAY */}
                     <div className="absolute bottom-0 left-0 right-0 p-8 md:p-20 z-10 pb-20 md:pb-32 bg-gradient-to-t from-white via-white/80 dark:from-background-dark dark:via-background-dark/80 to-transparent">
@@ -171,6 +218,20 @@ const AttractionDetailsScreen: React.FC = () => {
 
             {/* Bottom Navigation Bar */}
             <BottomNavigationBar />
+
+            {/* Photo Upload Modal */}
+            {attraction && (
+                <PhotoUploadModal
+                    isOpen={uploadModalOpen}
+                    attractionId={attraction.id}
+                    attractionName={attraction.name}
+                    onClose={() => setUploadModalOpen(false)}
+                    onSuccess={() => {
+                        // Optionally reload the attraction data
+                        window.location.reload();
+                    }}
+                />
+            )}
         </div>
     );
 };
