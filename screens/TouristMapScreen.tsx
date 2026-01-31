@@ -133,7 +133,8 @@ const TouristMapScreen: React.FC = () => {
       updateWhenZooming: true,
       updateInterval: 100,
       className: 'map-tiles',
-      bounds: [[-49.3, -76.0], [-43.5, -71.0]]
+      // Expanded bounds to avoid "black void" when zooming out
+      bounds: [[-56.0, -80.0], [-40.0, -66.0]]
     }).addTo(map);
 
     tileLayerRef.current.on('tileerror', (error) => {
@@ -170,11 +171,12 @@ const TouristMapScreen: React.FC = () => {
         attribution: '© OpenStreetMap contributors & CartoDB',
         subdomains: 'abcd',
         updateWhenIdle: false,
-        keepBuffer: 10,
+        keepBuffer: 12,
         updateWhenZooming: true,
         updateInterval: 100,
         className: 'map-tiles',
-        bounds: [[-49.3, -76.0], [-43.5, -71.0]]
+        // Expanded bounds here too
+        bounds: [[-56.0, -80.0], [-40.0, -66.0]]
       }).addTo(mapInstance);
 
       tileLayerRef.current.on('tileerror', (error) => {
