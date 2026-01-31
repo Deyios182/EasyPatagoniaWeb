@@ -183,12 +183,34 @@ const AttractionDetailsScreen: React.FC = () => {
                                         )}
                                     </div>
                                 );
-                            }) || (
+                            }) || (() => {
+                                // Fallback to main_image_url
+                                const mainAuthor = photoAuthors[attraction.main_image_url!];
+                                return (
                                     <div className="w-full h-full shrink-0 snap-center relative">
                                         <img src={attraction.main_image_url} className="w-full h-full object-cover" alt={attraction.name} />
                                         <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
+
+                                        {/* Author Attribution for main image */}
+                                        {mainAuthor && (
+                                            <div className="absolute bottom-8 right-8 z-20">
+                                                <div className="bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 shadow-xl">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Foto por</p>
+                                                            <p className="text-white font-black text-sm">{mainAuthor.name}</p>
+                                                        </div>
+                                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${mainAuthor.rank.gradient}`}>
+                                                            <span className="text-sm">{mainAuthor.rank.emoji}</span>
+                                                            <span className="text-white font-black text-[10px] uppercase">{mainAuthor.rank.rank}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                );
+                            })()}
                         </div>
                     )}
 
