@@ -290,20 +290,29 @@ const TouristMapScreen: React.FC = () => {
       } else {
         // NEGOCIOS y ATRACTIVOS: Mantienen el diseño circular
         let innerHtml = '';
-        if (item.type === 'business') {
+        if (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) {
           const categoryIcon =
             ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
               ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
                 ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
-                  ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? 'shopping_cart' :
-                    'location_on';
-
-          const markerColor = ['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c)) ? '#2196F3' : item.color; // Blue for Markets
+                  'location_on';
 
           innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${markerColor}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
-        } else if (item.type === 'attraction') {
-          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: 14px;">star</span>`;
+                          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
+        } else if (item.type === 'attraction' || item.type === 'business') {
+          // Handle ATTRACTIONS and MARKETS (Small icons)
+          let iconName = 'star'; // Default for attraction
+          let iconSize = 14;
+          let bgColor = item.color;
+
+          if (item.type === 'business') {
+            // Must be Mercado/Artesanía based on condition above
+            iconName = 'shopping_cart';
+            bgColor = '#2196F3'; // Blue
+            iconSize = 16;
+          }
+
+          innerHtml = `<span class="material-symbols-outlined" style="color: white; font-size: ${iconSize}px;">${iconName}</span>`;
         }
 
         customIcon = L.divIcon({
@@ -311,11 +320,11 @@ const TouristMapScreen: React.FC = () => {
           html: `
             <div style="
               position: relative;
-              width: ${isActive ? '56px' : (item.type === 'attraction') ? '24px' : '40px'}; 
-              height: ${isActive ? '56px' : (item.type === 'attraction') ? '24px' : '40px'}; 
+              width: ${isActive ? '56px' : (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
+              height: ${isActive ? '56px' : (item.type === 'business' && !['Mercado', 'Artesanía'].some(c => (item.data as any).categoria.includes(c))) ? '40px' : '30px'}; 
               border-radius: 50%; 
               border: ${isActive ? '3px' : '2px'} solid white; 
-              background-color: ${item.color}; 
+              background-color: ${['Mercado', 'Artesanía'].some(c => (item.data as any).categoria?.includes(c)) ? '#2196F3' : item.color}; 
               overflow: hidden;
               box-shadow: 0 4px 15px rgba(0,0,0,0.5);
               transition: all 0.3s ease;

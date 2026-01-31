@@ -318,12 +318,10 @@ const LandingPage: React.FC = () => {
           {/* 2. Menú Flotante (Sticky/Fixed) - Acompaña al usuario */}
           <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] w-auto max-w-[90%]">
             <div className="flex gap-2 md:gap-6 px-4 py-2 md:px-8 md:py-3 rounded-full bg-[#1a2a30]/80 backdrop-blur-xl border border-white/10 shadow-2xl overflow-x-auto no-scrollbar items-center justify-center">
-              <div className="flex gap-2 md:gap-6 px-4 py-2 md:px-8 md:py-3 rounded-full bg-[#1a2a30]/80 backdrop-blur-xl border border-white/10 shadow-2xl overflow-x-auto no-scrollbar items-center justify-center">
-                <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Destinos</button>
-                <div className="w-px h-3 bg-white/20 hidden md:block"></div>
-                <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Visión</button>
-                <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Contacto</button>
-              </div>
+              <button onClick={() => scrollToSection('destinos')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Destinos</button>
+              <div className="w-px h-3 bg-white/20 hidden md:block"></div>
+              <button onClick={() => scrollToSection('vision')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Visión</button>
+              <button onClick={() => scrollToSection('contacto')} className="text-white text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[#dd6e42] transition-colors whitespace-nowrap drop-shadow-sm">Contacto</button>
             </div>
           </div>
 

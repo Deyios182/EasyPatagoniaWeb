@@ -447,22 +447,21 @@ const UserAdminScreen: React.FC = () => {
       {/* MODAL */}
       {
         showModal && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-slate-900 rounded-3xl p-6 w-full max-w-lg shadow-2xl relative border border-white/10 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-all z-10">
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-              {/* Modal Header */}
-              <div className="pb-4 border-b border-white/10 mb-4">
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-end md:items-center justify-center md:p-4 backdrop-blur-sm">
+            <div className="bg-slate-900 md:rounded-3xl rounded-t-3xl p-6 w-full max-w-lg shadow-2xl relative border-t md:border border-white/10 animate-in slide-in-from-bottom-5 md:zoom-in-95 h-[90vh] md:max-h-[85vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4 pb-4 border-b border-white/10 shrink-0">
                 <h3 className="text-xl font-black text-white">
                   {modalMode === 'create' && 'Crear Nuevo Usuario'}
                   {modalMode === 'edit' && 'Editar Usuario'}
-                  {modalMode === 'view' && 'Detalles de Usuario'}
+                  {modalMode === 'view' && 'Detalles del Usuario'}
                 </h3>
+                <button onClick={() => setShowModal(false)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-all">
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
               </div>
 
               {/* Modal Body */}
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto flex-1 pb-20 custom-scrollbar">
 
                 {modalMode === 'view' && selectedUser && (
                   <div className="space-y-4">

@@ -560,494 +560,495 @@ const EasyAdminFieldScreen: React.FC = () => {
                             </div>
                             <h1 className="text-4xl font-black text-white tracking-tight uppercase italic">Panel de Campo</h1>
                             <p className="text-slate-400">Gestión operativa de Aysén.</p>
-                        </div>
-                        <div className="flex bg-white/5 backdrop-blur-xl rounded-2xl p-1.5 border border-white/10">
-                            <button onClick={() => setActiveTab('localidades')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Localidades</button>
-                            <button onClick={() => setActiveTab('atractivos')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Atractivos</button>
-                            <button onClick={() => setActiveTab('empresas')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Empresas</button>
-                            <button onClick={() => setActiveTab('negocios')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Negocios</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-8 md:p-12 pt-0">
-
-                {/* --- LOCALIDADES --- */}
-                {activeTab === 'localidades' && (
-                    <div>
-                        <button onClick={() => setEditingLocality({})} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
-                            <span className="material-symbols-outlined">add</span>
-                            Nueva Localidad
-                        </button>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {localities.map(loc => (
-                                <div key={loc.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all hover:shadow-xl group relative">
-                                    <img src={loc.image_url || 'https://via.placeholder.com/300x200'} className="w-full h-36 object-cover rounded-2xl mb-4 bg-white/5 cursor-pointer" onClick={() => setEditingLocality(loc)} />
-                                    <h3 className="font-bold text-lg text-white cursor-pointer" onClick={() => setEditingLocality(loc)}>{loc.name}</h3>
-                                    <div className="flex gap-2 mt-3">
-                                        <button onClick={() => setEditingLocality(loc)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
-                                            <span className="material-symbols-outlined text-sm">edit</span> Editar
-                                        </button>
-                                        <button onClick={() => deleteLocality(loc.id, loc.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
-                                            <span className="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {editingLocality && (
-                            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl">
-                                <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 border border-white/10">
-                                    <h3 className="text-xl font-black mb-6 text-white">{editingLocality.id ? 'Editar Localidad' : 'Nueva Localidad'}</h3>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nombre</label>
-                                    <input type="text" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 font-bold focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" value={editingLocality.name || ''} onChange={e => setEditingLocality({ ...editingLocality, name: e.target.value })} />
-
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción</label>
-                                    <textarea className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 resize-none focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" rows={3} placeholder="Breve descripción de la localidad..." value={editingLocality.description || ''} onChange={e => setEditingLocality({ ...editingLocality, description: e.target.value })} />
-
-                                    <ImageUploader label="Imagen de Portada" currentImage={editingLocality.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingLocality({ ...editingLocality, image_url: url }))} />
-
-                                    <div className="mt-4">
-                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ubicación GPS</label>
-                                        {editingLocality.latitude ? <p className="text-sm font-bold text-emerald-400 mb-2">{editingLocality.latitude.toFixed(4)}, {editingLocality.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
-                                        <button onClick={() => openMap('locality')} className="w-full bg-white/5 text-white border border-white/10 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/10 hover:border-primary/50 transition-all">
-                                            <span className="material-symbols-outlined">location_on</span>
-                                            {editingLocality.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
-                                        </button>
-                                    </div>
-
-                                    <div className="flex gap-3 mt-8">
-                                        <button onClick={() => setEditingLocality(null)} className="flex-1 bg-white/5 text-slate-400 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
-                                        <button onClick={saveLocality} className="flex-1 bg-gradient-to-r from-primary to-orange-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30">Guardar</button>
-                                    </div>
+                            {/* TABS HEADER - Improved for Mobile */}
+                            <div className="flex bg-slate-900 p-1 rounded-2xl border border-white/10 mb-8 overflow-x-auto no-scrollbar">
+                                <div className="flex md:grid md:grid-cols-4 gap-2 min-w-max md:min-w-0 w-full">
+                                    <button onClick={() => setActiveTab('localidades')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'localidades' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Localidades</button>
+                                    <button onClick={() => setActiveTab('atractivos')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'atractivos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Atractivos</button>
+                                    <button onClick={() => setActiveTab('empresas')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'empresas' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Empresas</button>
+                                    <button onClick={() => setActiveTab('negocios')} className={`flex-1 px-4 md:px-5 py-3 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap transition-all ${activeTab === 'negocios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Negocios</button>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                )}
-
-                {/* --- ATRACTIVOS --- */}
-                {activeTab === 'atractivos' && (
-                    <div>
-                        <button onClick={() => setEditingAttraction({})} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
-                            <span className="material-symbols-outlined">add</span>
-                            Nuevo Atractivo
-                        </button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {attractions.map(att => (
-                                <div key={att.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all group">
-                                    <div className="flex gap-4 cursor-pointer" onClick={() => setEditingAttraction(att)}>
-                                        <img src={att.main_image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-2xl bg-white/5" />
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-lg text-white leading-tight mb-2">{att.name}</h3>
-                                            {/* @ts-ignore */}
-                                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
-                                            <p className="text-xs text-slate-400 mt-2 line-clamp-2">{att.short_description}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2 mt-3">
-                                        <button onClick={() => setEditingAttraction(att)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
-                                            <span className="material-symbols-outlined text-sm">edit</span> Editar
-                                        </button>
-                                        <button onClick={() => deleteAttraction(att.id, att.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
-                                            <span className="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
-                        {editingAttraction && (
-                            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl">
-                                <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/10">
-                                    <h3 className="text-xl font-black mb-6 text-white">{editingAttraction.id ? 'Editar Atractivo' : 'Nuevo Atractivo'}</h3>
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Localidad</label>
-                                            <select className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.locality_id || ''} onChange={e => setEditingAttraction({ ...editingAttraction, locality_id: e.target.value })}>
-                                                <option value="" className="bg-slate-900">Seleccione...</option>
-                                                {localities.map(l => <option key={l.id} value={l.id} className="bg-slate-900">{l.name}</option>)}
-                                            </select>
+                    </div>
+
+                    <div className="p-8 md:p-12 pt-0">
+
+                        {/* --- LOCALIDADES --- */}
+                        {activeTab === 'localidades' && (
+                            <div>
+                                <button onClick={() => setEditingLocality({})} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
+                                    <span className="material-symbols-outlined">add</span>
+                                    Nueva Localidad
+                                </button>
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {localities.map(loc => (
+                                        <div key={loc.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all hover:shadow-xl group relative">
+                                            <img src={loc.image_url || 'https://via.placeholder.com/300x200'} className="w-full h-36 object-cover rounded-2xl mb-4 bg-white/5 cursor-pointer" onClick={() => setEditingLocality(loc)} />
+                                            <h3 className="font-bold text-lg text-white cursor-pointer" onClick={() => setEditingLocality(loc)}>{loc.name}</h3>
+                                            <div className="flex gap-2 mt-3">
+                                                <button onClick={() => setEditingLocality(loc)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
+                                                    <span className="material-symbols-outlined text-sm">edit</span> Editar
+                                                </button>
+                                                <button onClick={() => deleteLocality(loc.id, loc.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div>
+                                    ))}
+                                </div>
+                                {editingLocality && (
+                                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl">
+                                        <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 border border-white/10">
+                                            <h3 className="text-xl font-black mb-6 text-white">{editingLocality.id ? 'Editar Localidad' : 'Nueva Localidad'}</h3>
                                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nombre</label>
-                                            <input type="text" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.name || ''} onChange={e => setEditingAttraction({ ...editingAttraction, name: e.target.value })} />
-                                        </div>
-                                    </div>
+                                            <input type="text" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 font-bold focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" value={editingLocality.name || ''} onChange={e => setEditingLocality({ ...editingLocality, name: e.target.value })} />
 
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción Corta</label>
-                                    <textarea className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 resize-none focus:ring-2 focus:ring-primary outline-none" rows={3} value={editingAttraction.short_description || ''} onChange={e => setEditingAttraction({ ...editingAttraction, short_description: e.target.value })} />
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción</label>
+                                            <textarea className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 resize-none focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder:text-slate-500" rows={3} placeholder="Breve descripción de la localidad..." value={editingLocality.description || ''} onChange={e => setEditingLocality({ ...editingLocality, description: e.target.value })} />
 
-                                    <ImageUploader label="Foto del Atractivo" currentImage={editingAttraction.main_image_url} onUpload={(e) => handleFileUpload(e, url => setEditingAttraction({ ...editingAttraction, main_image_url: url }))} />
+                                            <ImageUploader label="Imagen de Portada" currentImage={editingLocality.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingLocality({ ...editingLocality, image_url: url }))} />
 
-                                    <div className="mt-4">
-                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ubicación GPS</label>
-                                        {editingAttraction.latitude ? <p className="text-sm font-bold text-emerald-400 mb-2">{editingAttraction.latitude.toFixed(4)}, {editingAttraction.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
-                                        <button onClick={() => openMap('attraction')} className="w-full bg-white/5 text-white border border-white/10 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/10 hover:border-primary/50 transition-all">
-                                            <span className="material-symbols-outlined">location_on</span>
-                                            {editingAttraction.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
-                                        </button>
-                                    </div>
-
-                                    <div className="flex gap-3 mt-8">
-                                        <button onClick={() => setEditingAttraction(null)} className="flex-1 bg-white/5 text-slate-400 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
-                                        <button onClick={saveAttraction} className="flex-1 bg-gradient-to-r from-primary to-orange-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30">Guardar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* --- EMPRESAS --- */}
-                {activeTab === 'empresas' && (
-                    <div>
-                        <button onClick={() => setEditingCompany({ category: 'Actividad' as Category, gallery_urls: [] })} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
-                            <span className="material-symbols-outlined">add</span>
-                            Nueva Empresa
-                        </button>
-                        <div className="space-y-4">
-                            {companies.filter(c => c.category !== 'Mercado').map(comp => (
-                                <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-primary/50 transition-all group">
-                                    <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
-                                        <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
-                                        <div>
-                                            <h3 className="font-bold text-white text-lg">{comp.name}</h3>
-                                            <div className="flex gap-2 text-xs mt-1">
-                                                <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-lg font-bold border border-primary/30">{comp.category}</span>
-                                                <span className="text-slate-400">{localities.find(l => l.id === comp.locality_id)?.name || 'Sin Localidad'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2 mt-4 md:mt-0">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
-                                            className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">inventory_2</span>
-                                            Servicios
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
-                                            className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
-                                            className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* --- NEGOCIOS (MERCADOS) --- */}
-                {activeTab === 'negocios' && (
-                    <div>
-                        <button onClick={() => setEditingCompany({ category: 'Mercado' as Category, gallery_urls: [] })} className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all flex items-center gap-2">
-                            <span className="material-symbols-outlined">storefront</span>
-                            Nuevo Negocio
-                        </button>
-                        <div className="space-y-4">
-                            {companies.filter(c => c.category === 'Mercado').map(comp => (
-                                <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-blue-500/50 transition-all group">
-                                    <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
-                                        <div className="relative">
-                                            <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
-                                            <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border border-black">
-                                                <span className="material-symbols-outlined text-[10px] text-white">storefront</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-white text-lg">{comp.name}</h3>
-                                            <div className="flex gap-2 text-xs mt-1">
-                                                <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-lg font-bold border border-blue-500/30">Mercado / Artesanía</span>
-                                                <span className="text-slate-400">{localities.find(l => l.id === comp.locality_id)?.name || 'Sin Localidad'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2 mt-4 md:mt-0">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
-                                            className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-blue-600 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
-                                            className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* MODAL EMPRESA / NEGOCIO */}
-                {editingCompany && (
-                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl overflow-y-auto">
-                        <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10 animate-in zoom-in-95 border border-white/10">
-                            <h3 className="text-2xl font-black text-white mb-6 border-b border-white/10 pb-4">
-                                {activeTab === 'negocios' ? (editingCompany.id ? 'Editar Negocio' : 'Nuevo Negocio') : (editingCompany.id ? 'Editar Empresa' : 'Nueva Empresa')}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <input type="text" placeholder="Nombre Fantasía" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.name || ''} onChange={e => setEditingCompany({ ...editingCompany, name: e.target.value })} />
-
-                                    {/* Selector de Categoría (Restringido si es Negocio) */}
-                                    {activeTab === 'negocios' ? (
-                                        <div className="bg-blue-500/20 text-blue-300 p-3 rounded-xl border border-blue-500/30 font-bold text-center">
-                                            Categoría: Mercado / Artesanía
-                                        </div>
-                                    ) : (
-                                        <select
-                                            className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none"
-                                            value={editingCompany.category || 'Actividad'}
-                                            onChange={e => setEditingCompany({ ...editingCompany, category: e.target.value as Category })}
-                                        >
-                                            <option value="Actividad" className="bg-slate-900">Actividad / Tour</option>
-                                            <option value="Restaurante" className="bg-slate-900">Restaurante</option>
-                                            <option value="Hospedaje" className="bg-slate-900">Hospedaje</option>
-                                            <option value="Transporte" className="bg-slate-900">Transporte</option>
-                                        </select>
-                                    )}
-
-                                    {/* SELECTOR DE LOCALIDAD PARA LA EMPRESA */}
-                                    <div className="bg-primary/10 p-3 rounded-xl border border-primary/30">
-                                        <label className="text-xs font-bold text-primary uppercase tracking-wider block mb-2">Localidad Base (Importante)</label>
-                                        <select className="w-full bg-white/5 border border-white/10 text-white rounded-lg p-2 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingCompany.locality_id || ''} onChange={e => setEditingCompany({ ...editingCompany, locality_id: e.target.value })}>
-                                            <option value="" className="bg-slate-900">-- Seleccionar Localidad --</option>
-                                            {localities.map(l => <option key={l.id} value={l.id} className="bg-slate-900">{l.name}</option>)}
-                                        </select>
-                                    </div>
-
-                                    <input type="text" placeholder="WhatsApp" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({ ...editingCompany, whatsapp: e.target.value })} />
-                                    <input type="text" placeholder="Dirección" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.address || ''} onChange={e => setEditingCompany({ ...editingCompany, address: e.target.value })} />
-                                </div>
-                                <div className="space-y-6">
-                                    <ImageUploader label="Logo Empresa" isSmall currentImage={editingCompany.logo_url} onUpload={(e) => handleFileUpload(e, url => setEditingCompany({ ...editingCompany, logo_url: url }))} />
-
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Galería</label>
-                                        <div className="grid grid-cols-4 gap-2 mb-2">
-                                            {editingCompany.gallery_urls?.map((url, i) => (
-                                                <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-white/10 bg-white/5">
-                                                    <img src={url} className="w-full h-full object-cover" />
-                                                    <button onClick={() => setEditingCompany(prev => ({ ...prev, gallery_urls: prev?.gallery_urls?.filter((_, idx) => idx !== i) }))} className="absolute top-0 right-0 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-lg">
-                                                        <span className="material-symbols-outlined text-[14px]">close</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <label className="border-2 border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-primary hover:text-primary text-slate-500 transition-colors aspect-square">
-                                                <span className="material-symbols-outlined">add_photo_alternate</span>
-                                                <input type="file" className="hidden" onChange={e => handleFileUpload(e, url => setEditingCompany(prev => ({ ...prev, gallery_urls: [...(prev?.gallery_urls || []), url] })))} />
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/30">
-                                        <label className="text-xs font-bold text-orange-400 uppercase tracking-wider block mb-3">Dueños de la Empresa</label>
-
-                                        {/* Lista de dueños actuales */}
-                                        {companyOwners.length > 0 ? (
-                                            <div className="space-y-2 mb-4">
-                                                {companyOwners.map((owner: any) => (
-                                                    <div key={owner.owner_id} className="flex items-center justify-between bg-white/5 p-2 rounded-lg group">
-                                                        <div className="flex-1">
-                                                            <p className="text-sm text-white font-bold">
-                                                                {owner.profiles?.full_name ||
-                                                                    `${owner.profiles?.first_name || ''} ${owner.profiles?.last_name || ''}`.trim() ||
-                                                                    'Sin nombre'}
-                                                            </p>
-                                                            <p className="text-[10px] text-slate-400">{owner.profiles?.email}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => removeOwnerFromCompany(owner.owner_id)}
-                                                            className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
-                                                            title="Quitar dueño"
-                                                        >
-                                                            <span className="material-symbols-outlined text-sm">close</span>
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400 mb-3 italic">No hay dueños asignados a esta empresa</p>
-                                        )}
-
-                                        {/* Buscar y agregar nuevo dueño */}
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] text-slate-500 uppercase font-bold">Agregar Nuevo Dueño</p>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Email del dueño..."
-                                                    className="flex-1 bg-white/5 border border-white/10 p-2 rounded-lg text-sm text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-400"
-                                                    value={ownerEmailSearch}
-                                                    onChange={e => setOwnerEmailSearch(e.target.value)}
-                                                />
-                                                <button
-                                                    onClick={searchOwner}
-                                                    className="bg-orange-500 text-white px-3 py-2 rounded-lg font-bold text-xs hover:bg-orange-600 transition-colors"
-                                                >
-                                                    Buscar
+                                            <div className="mt-4">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ubicación GPS</label>
+                                                {editingLocality.latitude ? <p className="text-sm font-bold text-emerald-400 mb-2">{editingLocality.latitude.toFixed(4)}, {editingLocality.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
+                                                <button onClick={() => openMap('locality')} className="w-full bg-white/5 text-white border border-white/10 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/10 hover:border-primary/50 transition-all">
+                                                    <span className="material-symbols-outlined">location_on</span>
+                                                    {editingLocality.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
                                                 </button>
                                             </div>
 
-                                            {ownerSearchResult && (
-                                                <div className="flex items-center justify-between bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/30">
-                                                    <div className="flex-1">
-                                                        <p className="text-xs text-emerald-400 font-bold">✓ {ownerSearchResult.email}</p>
-                                                        <p className="text-[10px] text-slate-400">{ownerSearchResult.name}</p>
+                                            <div className="flex gap-3 mt-8">
+                                                <button onClick={() => setEditingLocality(null)} className="flex-1 bg-white/5 text-slate-400 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
+                                                <button onClick={saveLocality} className="flex-1 bg-gradient-to-r from-primary to-orange-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30">Guardar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* --- ATRACTIVOS --- */}
+                        {activeTab === 'atractivos' && (
+                            <div>
+                                <button onClick={() => setEditingAttraction({})} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
+                                    <span className="material-symbols-outlined">add</span>
+                                    Nuevo Atractivo
+                                </button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {attractions.map(att => (
+                                        <div key={att.id} className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 hover:border-primary/50 transition-all group">
+                                            <div className="flex gap-4 cursor-pointer" onClick={() => setEditingAttraction(att)}>
+                                                <img src={att.main_image_url || 'https://via.placeholder.com/100'} className="w-24 h-24 object-cover rounded-2xl bg-white/5" />
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-lg text-white leading-tight mb-2">{att.name}</h3>
+                                                    {/* @ts-ignore */}
+                                                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-lg font-bold border border-primary/30">{att.locality_name}</span>
+                                                    <p className="text-xs text-slate-400 mt-2 line-clamp-2">{att.short_description}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-3">
+                                                <button onClick={() => setEditingAttraction(att)} className="flex-1 bg-white/10 text-white py-2 rounded-xl text-xs font-bold hover:bg-primary transition-colors flex items-center justify-center gap-1">
+                                                    <span className="material-symbols-outlined text-sm">edit</span> Editar
+                                                </button>
+                                                <button onClick={() => deleteAttraction(att.id, att.name)} className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {editingAttraction && (
+                                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl">
+                                        <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 border border-white/10">
+                                            <h3 className="text-xl font-black mb-6 text-white">{editingAttraction.id ? 'Editar Atractivo' : 'Nuevo Atractivo'}</h3>
+                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Localidad</label>
+                                                    <select className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.locality_id || ''} onChange={e => setEditingAttraction({ ...editingAttraction, locality_id: e.target.value })}>
+                                                        <option value="" className="bg-slate-900">Seleccione...</option>
+                                                        {localities.map(l => <option key={l.id} value={l.id} className="bg-slate-900">{l.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nombre</label>
+                                                    <input type="text" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingAttraction.name || ''} onChange={e => setEditingAttraction({ ...editingAttraction, name: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción Corta</label>
+                                            <textarea className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 mb-4 resize-none focus:ring-2 focus:ring-primary outline-none" rows={3} value={editingAttraction.short_description || ''} onChange={e => setEditingAttraction({ ...editingAttraction, short_description: e.target.value })} />
+
+                                            <ImageUploader label="Foto del Atractivo" currentImage={editingAttraction.main_image_url} onUpload={(e) => handleFileUpload(e, url => setEditingAttraction({ ...editingAttraction, main_image_url: url }))} />
+
+                                            <div className="mt-4">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ubicación GPS</label>
+                                                {editingAttraction.latitude ? <p className="text-sm font-bold text-emerald-400 mb-2">{editingAttraction.latitude.toFixed(4)}, {editingAttraction.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold mb-2">No definida</p>}
+                                                <button onClick={() => openMap('attraction')} className="w-full bg-white/5 text-white border border-white/10 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/10 hover:border-primary/50 transition-all">
+                                                    <span className="material-symbols-outlined">location_on</span>
+                                                    {editingAttraction.latitude ? 'Ubicación Ajustada' : 'Seleccionar en Mapa'}
+                                                </button>
+                                            </div>
+
+                                            <div className="flex gap-3 mt-8">
+                                                <button onClick={() => setEditingAttraction(null)} className="flex-1 bg-white/5 text-slate-400 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
+                                                <button onClick={saveAttraction} className="flex-1 bg-gradient-to-r from-primary to-orange-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30">Guardar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* --- EMPRESAS --- */}
+                        {activeTab === 'empresas' && (
+                            <div>
+                                <button onClick={() => setEditingCompany({ category: 'Actividad' as Category, gallery_urls: [] })} className="mb-6 bg-gradient-to-r from-primary to-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all flex items-center gap-2">
+                                    <span className="material-symbols-outlined">add</span>
+                                    Nueva Empresa
+                                </button>
+                                <div className="space-y-4">
+                                    {companies.filter(c => c.category !== 'Mercado').map(comp => (
+                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-primary/50 transition-all group">
+                                            <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
+                                                <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
+                                                <div>
+                                                    <h3 className="font-bold text-white text-lg">{comp.name}</h3>
+                                                    <div className="flex gap-2 text-xs mt-1">
+                                                        <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-lg font-bold border border-primary/30">{comp.category}</span>
+                                                        <span className="text-slate-400">{localities.find(l => l.id === comp.locality_id)?.name || 'Sin Localidad'}</span>
                                                     </div>
-                                                    <button
-                                                        onClick={addOwnerToCompany}
-                                                        className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-600 transition-colors flex items-center gap-1"
-                                                    >
-                                                        <span className="material-symbols-outlined text-sm">add</span>
-                                                        Agregar
-                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-4 md:mt-0">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
+                                                    className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">inventory_2</span>
+                                                    Servicios
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
+                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
+                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- NEGOCIOS (MERCADOS) --- */}
+                        {activeTab === 'negocios' && (
+                            <div>
+                                <button onClick={() => setEditingCompany({ category: 'Mercado' as Category, gallery_urls: [] })} className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all flex items-center gap-2">
+                                    <span className="material-symbols-outlined">storefront</span>
+                                    Nuevo Negocio
+                                </button>
+                                <div className="space-y-4">
+                                    {companies.filter(c => c.category === 'Mercado').map(comp => (
+                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-blue-500/50 transition-all group">
+                                            <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
+                                                <div className="relative">
+                                                    <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
+                                                    <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border border-black">
+                                                        <span className="material-symbols-outlined text-[10px] text-white">storefront</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-white text-lg">{comp.name}</h3>
+                                                    <div className="flex gap-2 text-xs mt-1">
+                                                        <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-lg font-bold border border-blue-500/30">Mercado / Artesanía</span>
+                                                        <span className="text-slate-400">{localities.find(l => l.id === comp.locality_id)?.name || 'Sin Localidad'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-4 md:mt-0">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
+                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-blue-600 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
+                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MODAL EMPRESA / NEGOCIO */}
+                        {editingCompany && (
+                            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl overflow-y-auto">
+                                <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10 animate-in zoom-in-95 border border-white/10">
+                                    <h3 className="text-2xl font-black text-white mb-6 border-b border-white/10 pb-4">
+                                        {activeTab === 'negocios' ? (editingCompany.id ? 'Editar Negocio' : 'Nuevo Negocio') : (editingCompany.id ? 'Editar Empresa' : 'Nueva Empresa')}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <input type="text" placeholder="Nombre Fantasía" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.name || ''} onChange={e => setEditingCompany({ ...editingCompany, name: e.target.value })} />
+
+                                            {/* Selector de Categoría (Restringido si es Negocio) */}
+                                            {activeTab === 'negocios' ? (
+                                                <div className="bg-blue-500/20 text-blue-300 p-3 rounded-xl border border-blue-500/30 font-bold text-center">
+                                                    Categoría: Mercado / Artesanía
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none"
+                                                    value={editingCompany.category || 'Actividad'}
+                                                    onChange={e => setEditingCompany({ ...editingCompany, category: e.target.value as Category })}
+                                                >
+                                                    <option value="Actividad" className="bg-slate-900">Actividad / Tour</option>
+                                                    <option value="Restaurante" className="bg-slate-900">Restaurante</option>
+                                                    <option value="Hospedaje" className="bg-slate-900">Hospedaje</option>
+                                                    <option value="Transporte" className="bg-slate-900">Transporte</option>
+                                                </select>
+                                            )}
+
+                                            {/* SELECTOR DE LOCALIDAD PARA LA EMPRESA */}
+                                            <div className="bg-primary/10 p-3 rounded-xl border border-primary/30">
+                                                <label className="text-xs font-bold text-primary uppercase tracking-wider block mb-2">Localidad Base (Importante)</label>
+                                                <select className="w-full bg-white/5 border border-white/10 text-white rounded-lg p-2 font-bold focus:ring-2 focus:ring-primary outline-none" value={editingCompany.locality_id || ''} onChange={e => setEditingCompany({ ...editingCompany, locality_id: e.target.value })}>
+                                                    <option value="" className="bg-slate-900">-- Seleccionar Localidad --</option>
+                                                    {localities.map(l => <option key={l.id} value={l.id} className="bg-slate-900">{l.name}</option>)}
+                                                </select>
+                                            </div>
+
+                                            <input type="text" placeholder="WhatsApp" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({ ...editingCompany, whatsapp: e.target.value })} />
+                                            <input type="text" placeholder="Dirección" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.address || ''} onChange={e => setEditingCompany({ ...editingCompany, address: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-6">
+                                            <ImageUploader label="Logo Empresa" isSmall currentImage={editingCompany.logo_url} onUpload={(e) => handleFileUpload(e, url => setEditingCompany({ ...editingCompany, logo_url: url }))} />
+
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Galería</label>
+                                                <div className="grid grid-cols-4 gap-2 mb-2">
+                                                    {editingCompany.gallery_urls?.map((url, i) => (
+                                                        <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                                                            <img src={url} className="w-full h-full object-cover" />
+                                                            <button onClick={() => setEditingCompany(prev => ({ ...prev, gallery_urls: prev?.gallery_urls?.filter((_, idx) => idx !== i) }))} className="absolute top-0 right-0 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-lg">
+                                                                <span className="material-symbols-outlined text-[14px]">close</span>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <label className="border-2 border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-primary hover:text-primary text-slate-500 transition-colors aspect-square">
+                                                        <span className="material-symbols-outlined">add_photo_alternate</span>
+                                                        <input type="file" className="hidden" onChange={e => handleFileUpload(e, url => setEditingCompany(prev => ({ ...prev, gallery_urls: [...(prev?.gallery_urls || []), url] })))} />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/30">
+                                                <label className="text-xs font-bold text-orange-400 uppercase tracking-wider block mb-3">Dueños de la Empresa</label>
+
+                                                {/* Lista de dueños actuales */}
+                                                {companyOwners.length > 0 ? (
+                                                    <div className="space-y-2 mb-4">
+                                                        {companyOwners.map((owner: any) => (
+                                                            <div key={owner.owner_id} className="flex items-center justify-between bg-white/5 p-2 rounded-lg group">
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm text-white font-bold">
+                                                                        {owner.profiles?.full_name ||
+                                                                            `${owner.profiles?.first_name || ''} ${owner.profiles?.last_name || ''}`.trim() ||
+                                                                            'Sin nombre'}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-slate-400">{owner.profiles?.email}</p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => removeOwnerFromCompany(owner.owner_id)}
+                                                                    className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                                                    title="Quitar dueño"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-sm">close</span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400 mb-3 italic">No hay dueños asignados a esta empresa</p>
+                                                )}
+
+                                                {/* Buscar y agregar nuevo dueño */}
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Agregar Nuevo Dueño</p>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Email del dueño..."
+                                                            className="flex-1 bg-white/5 border border-white/10 p-2 rounded-lg text-sm text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-400"
+                                                            value={ownerEmailSearch}
+                                                            onChange={e => setOwnerEmailSearch(e.target.value)}
+                                                        />
+                                                        <button
+                                                            onClick={searchOwner}
+                                                            className="bg-orange-500 text-white px-3 py-2 rounded-lg font-bold text-xs hover:bg-orange-600 transition-colors"
+                                                        >
+                                                            Buscar
+                                                        </button>
+                                                    </div>
+
+                                                    {ownerSearchResult && (
+                                                        <div className="flex items-center justify-between bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/30">
+                                                            <div className="flex-1">
+                                                                <p className="text-xs text-emerald-400 font-bold">✓ {ownerSearchResult.email}</p>
+                                                                <p className="text-[10px] text-slate-400">{ownerSearchResult.name}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={addOwnerToCompany}
+                                                                className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-600 transition-colors flex items-center gap-1"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">add</span>
+                                                                Agregar
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <textarea placeholder="Descripción..." className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 resize-none mt-4 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" rows={2} value={editingCompany.description || ''} onChange={e => setEditingCompany({ ...editingCompany, description: e.target.value })} />
+                                    <div className="mt-4 p-4 border border-white/10 rounded-2xl bg-white/5 flex items-center justify-between">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Ubicación GPS</label>
+                                            {editingCompany.latitude ? <p className="text-sm font-bold text-emerald-400">{editingCompany.latitude.toFixed(4)}, {editingCompany.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold">No definida</p>}
+                                        </div>
+                                        <button onClick={() => openMap('company')} className="bg-white/10 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-white/20 border border-white/10 transition-all"><span className="material-symbols-outlined text-sm">map</span> Seleccionar Mapa</button>
+                                    </div>
+                                    <div className="flex gap-4 mt-8 pt-4 border-t border-white/10">
+                                        <button onClick={() => setEditingCompany(null)} className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-bold hover:bg-white/10 border border-white/10 transition-colors">Cancelar</button>
+                                        <button onClick={saveCompany} className="flex-1 py-3 bg-gradient-to-r from-primary to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-primary/30">Guardar Empresa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MODAL SERVICIOS */}
+                        {showServiceModal && (
+                            <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
+                                <div className="bg-slate-900/95 backdrop-blur-2xl p-6 rounded-3xl w-full max-w-3xl shadow-2xl h-[90vh] flex flex-col animate-in slide-in-from-bottom-5 border border-white/10">
+                                    <div className="flex justify-between items-center mb-6 shrink-0 border-b border-white/10 pb-4">
+                                        <div>
+                                            <h3 className="text-xl font-black text-white">Servicios de {showServiceModal.name}</h3>
+                                            <p className="text-xs text-slate-400">Administra los productos que ofrece esta empresa.</p>
+                                        </div>
+                                        <button onClick={() => setShowServiceModal(null)} className="text-slate-400 font-bold hover:text-red-400 bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:border-red-400/50 transition-colors">CERRAR</button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                                        {companyServices.map(srv => (
+                                            <div key={srv.id} className="border border-white/10 p-4 rounded-2xl flex gap-4 items-center bg-white/5 hover:bg-white/10 transition-colors">
+                                                <img src={srv.image_url || 'https://via.placeholder.com/80'} className="w-16 h-16 rounded-xl object-cover bg-white/5 border border-white/10" />
+                                                <div className="flex-1">
+                                                    <h4 className="font-bold text-white">{srv.name}</h4>
+                                                    <p className="text-xs text-primary font-bold">{srv.price}</p>
+                                                    <p className="text-[10px] text-slate-400 line-clamp-1">{srv.description}</p>
+                                                    {srv.attraction_id && attractions.find(a => a.id === srv.attraction_id) && (
+                                                        <span className="inline-flex items-center gap-1 mt-1 bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-lg text-[10px] font-bold border border-purple-500/30">
+                                                            <span className="material-symbols-outlined text-[12px]">location_on</span>
+                                                            {attractions.find(a => a.id === srv.attraction_id)?.name}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <button onClick={() => setEditingService(srv)} className="bg-primary/20 text-primary p-2 rounded-xl hover:bg-primary/30 border border-primary/30 transition-colors"><span className="material-symbols-outlined text-sm">edit</span></button>
+                                                <button onClick={() => deleteService(srv.id)} className="bg-red-500/20 text-red-400 p-2 rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors"><span className="material-symbols-outlined text-sm">delete</span></button>
+                                            </div>
+                                        ))}
+                                        {companyServices.length === 0 && <p className="text-center text-slate-500 py-10 border-2 border-dashed border-white/10 rounded-2xl">No hay servicios registrados aún.</p>}
+                                    </div>
+                                    <div className="shrink-0 mt-4 pt-4 border-t border-white/10 bg-white/5 p-4 rounded-2xl">
+                                        <h4 className="font-bold text-sm text-white mb-3">{editingService?.id ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</h4>
+
+                                        {/* FILTRO INTELIGENTE DE ATRACTIVOS */}
+                                        <div className="mb-3">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">¿Este servicio visita un Atractivo?</label>
+                                            {showServiceModal.locality_id ? (
+                                                <select
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none"
+                                                    value={editingService?.attraction_id || ''}
+                                                    onChange={e => setEditingService(prev => ({ ...prev, attraction_id: e.target.value }))}
+                                                >
+                                                    <option value="" className="bg-slate-900">No, es un servicio general</option>
+                                                    {attractions
+                                                        .filter(a => a.locality_id === showServiceModal.locality_id)
+                                                        .map(att => (
+                                                            <option key={att.id} value={att.id} className="bg-slate-900">📍 {att.name}</option>
+                                                        ))}
+                                                </select>
+                                            ) : (
+                                                <div className="text-xs text-red-400 font-bold bg-red-500/10 p-3 rounded-xl border border-red-500/30">
+                                                    ⚠️ Primero debes asignar una Localidad a esta Empresa para ver sus atractivos cercanos.
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <textarea placeholder="Descripción..." className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 resize-none mt-4 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" rows={2} value={editingCompany.description || ''} onChange={e => setEditingCompany({ ...editingCompany, description: e.target.value })} />
-                            <div className="mt-4 p-4 border border-white/10 rounded-2xl bg-white/5 flex items-center justify-between">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Ubicación GPS</label>
-                                    {editingCompany.latitude ? <p className="text-sm font-bold text-emerald-400">{editingCompany.latitude.toFixed(4)}, {editingCompany.longitude?.toFixed(4)}</p> : <p className="text-sm text-red-400 font-bold">No definida</p>}
-                                </div>
-                                <button onClick={() => openMap('company')} className="bg-white/10 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-white/20 border border-white/10 transition-all"><span className="material-symbols-outlined text-sm">map</span> Seleccionar Mapa</button>
-                            </div>
-                            <div className="flex gap-4 mt-8 pt-4 border-t border-white/10">
-                                <button onClick={() => setEditingCompany(null)} className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-bold hover:bg-white/10 border border-white/10 transition-colors">Cancelar</button>
-                                <button onClick={saveCompany} className="flex-1 py-3 bg-gradient-to-r from-primary to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-primary/30">Guardar Empresa</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* MODAL SERVICIOS */}
-                {showServiceModal && (
-                    <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
-                        <div className="bg-slate-900/95 backdrop-blur-2xl p-6 rounded-3xl w-full max-w-3xl shadow-2xl h-[90vh] flex flex-col animate-in slide-in-from-bottom-5 border border-white/10">
-                            <div className="flex justify-between items-center mb-6 shrink-0 border-b border-white/10 pb-4">
-                                <div>
-                                    <h3 className="text-xl font-black text-white">Servicios de {showServiceModal.name}</h3>
-                                    <p className="text-xs text-slate-400">Administra los productos que ofrece esta empresa.</p>
-                                </div>
-                                <button onClick={() => setShowServiceModal(null)} className="text-slate-400 font-bold hover:text-red-400 bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:border-red-400/50 transition-colors">CERRAR</button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                                {companyServices.map(srv => (
-                                    <div key={srv.id} className="border border-white/10 p-4 rounded-2xl flex gap-4 items-center bg-white/5 hover:bg-white/10 transition-colors">
-                                        <img src={srv.image_url || 'https://via.placeholder.com/80'} className="w-16 h-16 rounded-xl object-cover bg-white/5 border border-white/10" />
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-white">{srv.name}</h4>
-                                            <p className="text-xs text-primary font-bold">{srv.price}</p>
-                                            <p className="text-[10px] text-slate-400 line-clamp-1">{srv.description}</p>
-                                            {srv.attraction_id && attractions.find(a => a.id === srv.attraction_id) && (
-                                                <span className="inline-flex items-center gap-1 mt-1 bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-lg text-[10px] font-bold border border-purple-500/30">
-                                                    <span className="material-symbols-outlined text-[12px]">location_on</span>
-                                                    {attractions.find(a => a.id === srv.attraction_id)?.name}
-                                                </span>
-                                            )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                            <input type="text" placeholder="Nombre (ej. Tour Mármol)" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingService?.name || ''} onChange={e => setEditingService(prev => ({ ...prev, name: e.target.value }))} />
+                                            <input type="text" placeholder="Precio (ej. CLP 20.000)" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingService?.price || ''} onChange={e => setEditingService(prev => ({ ...prev, price: e.target.value }))} />
                                         </div>
-                                        <button onClick={() => setEditingService(srv)} className="bg-primary/20 text-primary p-2 rounded-xl hover:bg-primary/30 border border-primary/30 transition-colors"><span className="material-symbols-outlined text-sm">edit</span></button>
-                                        <button onClick={() => deleteService(srv.id)} className="bg-red-500/20 text-red-400 p-2 rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors"><span className="material-symbols-outlined text-sm">delete</span></button>
-                                    </div>
-                                ))}
-                                {companyServices.length === 0 && <p className="text-center text-slate-500 py-10 border-2 border-dashed border-white/10 rounded-2xl">No hay servicios registrados aún.</p>}
-                            </div>
-                            <div className="shrink-0 mt-4 pt-4 border-t border-white/10 bg-white/5 p-4 rounded-2xl">
-                                <h4 className="font-bold text-sm text-white mb-3">{editingService?.id ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</h4>
+                                        <textarea placeholder="Descripción..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm mb-3 resize-none text-white focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" rows={2} value={editingService?.description || ''} onChange={e => setEditingService(prev => ({ ...prev, description: e.target.value }))}></textarea>
 
-                                {/* FILTRO INTELIGENTE DE ATRACTIVOS */}
-                                <div className="mb-3">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">¿Este servicio visita un Atractivo?</label>
-                                    {showServiceModal.locality_id ? (
-                                        <select
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none"
-                                            value={editingService?.attraction_id || ''}
-                                            onChange={e => setEditingService(prev => ({ ...prev, attraction_id: e.target.value }))}
-                                        >
-                                            <option value="" className="bg-slate-900">No, es un servicio general</option>
-                                            {attractions
-                                                .filter(a => a.locality_id === showServiceModal.locality_id)
-                                                .map(att => (
-                                                    <option key={att.id} value={att.id} className="bg-slate-900">📍 {att.name}</option>
-                                                ))}
-                                        </select>
-                                    ) : (
-                                        <div className="text-xs text-red-400 font-bold bg-red-500/10 p-3 rounded-xl border border-red-500/30">
-                                            ⚠️ Primero debes asignar una Localidad a esta Empresa para ver sus atractivos cercanos.
+                                        <div className="flex gap-3 items-end">
+                                            <div className="flex-1">
+                                                <ImageUploader label="Foto Servicio" isSmall currentImage={editingService?.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingService(prev => ({ ...prev, image_url: url })))} />
+                                            </div>
+                                            <div className="flex gap-2 pb-1">
+                                                {editingService?.id && <button onClick={() => setEditingService(null)} className="bg-white/5 px-4 py-3 rounded-xl text-xs font-bold text-slate-400 border border-white/10 hover:bg-white/10 transition-colors">Cancelar</button>}
+                                                <button onClick={saveService} className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-emerald-500/30 transition-all">{editingService?.id ? 'Actualizar' : 'Agregar'}</button>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                    <input type="text" placeholder="Nombre (ej. Tour Mármol)" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingService?.name || ''} onChange={e => setEditingService(prev => ({ ...prev, name: e.target.value }))} />
-                                    <input type="text" placeholder="Precio (ej. CLP 20.000)" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingService?.price || ''} onChange={e => setEditingService(prev => ({ ...prev, price: e.target.value }))} />
-                                </div>
-                                <textarea placeholder="Descripción..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm mb-3 resize-none text-white focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" rows={2} value={editingService?.description || ''} onChange={e => setEditingService(prev => ({ ...prev, description: e.target.value }))}></textarea>
-
-                                <div className="flex gap-3 items-end">
-                                    <div className="flex-1">
-                                        <ImageUploader label="Foto Servicio" isSmall currentImage={editingService?.image_url} onUpload={(e) => handleFileUpload(e, url => setEditingService(prev => ({ ...prev, image_url: url })))} />
-                                    </div>
-                                    <div className="flex gap-2 pb-1">
-                                        {editingService?.id && <button onClick={() => setEditingService(null)} className="bg-white/5 px-4 py-3 rounded-xl text-xs font-bold text-slate-400 border border-white/10 hover:bg-white/10 transition-colors">Cancelar</button>}
-                                        <button onClick={saveService} className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-3 rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-emerald-500/30 transition-all">{editingService?.id ? 'Actualizar' : 'Agregar'}</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                )}
+                        )}
 
-                {/* MODAL MAPA (RESTORED) */}
-                {showMapModal && (
-                    <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
-                        <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh] border border-white/10 shadow-2xl">
-                            <div className="p-4 border-b border-white/10">
-                                <h3 className="text-lg font-black text-white">Seleccionar Ubicación</h3>
-                                <p className="text-xs text-slate-400">Haz clic en el mapa para marcar la ubicación exacta.</p>
-                            </div>
-                            <div className="flex-1 relative bg-slate-800">
-                                {/* @ts-ignore */}
-                                <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
-                                    <MapRecenter />
-                                    {/* @ts-ignore */}
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
-                                    <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
-                                </MapContainer>
-                            </div>
-                            <div className="p-4 bg-slate-900/90 border-t border-white/10 flex justify-between items-center gap-4">
-                                {tempCoords && (
-                                    <p className="text-xs text-emerald-400 font-bold">
-                                        📍 {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
-                                    </p>
-                                )}
-                                <div className="flex gap-3 ml-auto">
-                                    <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
-                                    <button onClick={confirmLocation} className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30">Confirmar</button>
+                        {/* MODAL MAPA (RESTORED) */}
+                        {showMapModal && (
+                            <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
+                                <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh] border border-white/10 shadow-2xl">
+                                    <div className="p-4 border-b border-white/10">
+                                        <h3 className="text-lg font-black text-white">Seleccionar Ubicación</h3>
+                                        <p className="text-xs text-slate-400">Haz clic en el mapa para marcar la ubicación exacta.</p>
+                                    </div>
+                                    <div className="flex-1 relative bg-slate-800">
+                                        {/* @ts-ignore */}
+                                        <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                                            <MapRecenter />
+                                            {/* @ts-ignore */}
+                                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
+                                            <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
+                                        </MapContainer>
+                                    </div>
+                                    <div className="p-4 bg-slate-900/90 border-t border-white/10 flex justify-between items-center gap-4">
+                                        {tempCoords && (
+                                            <p className="text-xs text-emerald-400 font-bold">
+                                                📍 {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
+                                            </p>
+                                        )}
+                                        <div className="flex gap-3 ml-auto">
+                                            <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
+                                            <button onClick={confirmLocation} className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30">Confirmar</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
-                )}
-            </div>
-        </div>
-    );
+                </div>
+                );
 };
 
-export default EasyAdminFieldScreen;
+                export default EasyAdminFieldScreen;

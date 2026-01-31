@@ -44,6 +44,11 @@ const BusinessDirectoryScreen: React.FC = () => {
         matchesFilter = b.categoria === filter;
       }
 
+      // EXCLUIR SIEMPRE LOS MERCADOS/NEGOCIOS DEL DIRECTORIO
+      if (b.categoria === 'Mercado' || ['Mercado', 'Artesanía'].some(c => b.categoria.includes(c))) {
+        return false;
+      }
+
       // Filtro por localidad
       const matchesLocality = localityFilter === 'all' || b.locality_id === localityFilter;
 
