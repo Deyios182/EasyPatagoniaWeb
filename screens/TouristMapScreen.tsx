@@ -203,7 +203,7 @@ const TouristMapScreen: React.FC = () => {
           color: b.categoria === 'Transporte' ? '#4f6d7a' :
             ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
               ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
-                isMarket ? '#FF6B35' : '#2ecc71',
+                isMarket ? '#2196F3' : '#2ecc71',
           icon: b.media.logo_url,
           data: b
         };

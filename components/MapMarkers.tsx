@@ -21,23 +21,22 @@ export const AttractionMarker: React.FC = () => (
     </svg>
 );
 
-// Marcador para mercados/artesanías (naranja con estrella, igual que atractivos)
+// Marcador para mercados/artesanías (azul con carrito)
 export const MarketMarker: React.FC = () => (
     <svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg">
         {/* Pin exterior */}
         <path
             d="M13 0C5.82 0 0 5.82 0 13c0 7.18 13 21 13 21s13-13.82 13-21C26 5.82 20.18 0 13 0z"
-            fill="#FF6B35"
+            fill="#2196F3"
             stroke="#fff"
             strokeWidth="2"
         />
-        {/* Icono de estrella */}
-        <g transform="translate(6, 5)">
-            <path
-                d="M7 0l2.1 4.3 4.7.7-3.4 3.3.8 4.7L7 10.9 2.8 13l.8-4.7L0 5l4.7-.7L7 0z"
-                fill="white"
-                transform="scale(0.9)"
-            />
+        {/* Icono de carrito de compras */}
+        <g transform="translate(5, 5)" fill="white">
+            <path d="M0 0h2l1 2h11l-1.5 6H4L2 2H0V0z" />
+            <circle cx="5" cy="12" r="1.2" />
+            <circle cx="12" cy="12" r="1.2" />
+            <rect x="4" y="2" width="10" height="5" rx="0.5" />
         </g>
     </svg>
 );
