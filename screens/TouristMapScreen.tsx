@@ -129,12 +129,11 @@ const TouristMapScreen: React.FC = () => {
       attribution: '© OpenStreetMap contributors & CartoDB',
       subdomains: 'abcd', // IMPORTANT for CartoCDN
       updateWhenIdle: false,
-      keepBuffer: 12,
-      updateWhenZooming: true,
-      updateInterval: 100,
+      keepBuffer: 6,
+      updateWhenZooming: false,
+      updateInterval: 200,
       className: 'map-tiles',
-      // Expanded bounds to avoid "black void" when zooming out
-      bounds: [[-56.0, -80.0], [-40.0, -66.0]]
+      bounds: [[-49.3, -76.0], [-43.5, -71.0]]
     }).addTo(map);
 
     tileLayerRef.current.on('tileerror', (error) => {
@@ -171,12 +170,11 @@ const TouristMapScreen: React.FC = () => {
         attribution: '© OpenStreetMap contributors & CartoDB',
         subdomains: 'abcd',
         updateWhenIdle: false,
-        keepBuffer: 12,
+        keepBuffer: 10,
         updateWhenZooming: true,
         updateInterval: 100,
         className: 'map-tiles',
-        // Expanded bounds here too
-        bounds: [[-56.0, -80.0], [-40.0, -66.0]]
+        bounds: [[-49.3, -76.0], [-43.5, -71.0]]
       }).addTo(mapInstance);
 
       tileLayerRef.current.on('tileerror', (error) => {
@@ -192,8 +190,8 @@ const TouristMapScreen: React.FC = () => {
     // const { allLocalities, allAttractions } = useAppAuth(); // REMOVED INVALID HOOK CALL
 
     // --- 1. Prepare Data ---
-    // Businesses (ONLY at Zoom >= 15)
-    const SHOW_BUSINESS_ZOOM_THRESHOLD = 15;
+    // Businesses (ONLY at Zoom >= 14)
+    const SHOW_BUSINESS_ZOOM_THRESHOLD = 14;
     const businessMarkers = (zoom >= SHOW_BUSINESS_ZOOM_THRESHOLD)
       ? filtered.filter(b => b.gps).map(b => {
         // Check if it's a market/artesanía to treat it as attraction-style marker
@@ -215,9 +213,8 @@ const TouristMapScreen: React.FC = () => {
       })
       : [];
 
-    // Localities (Visible only at LOW zoom < 14)
-    const SHOW_LOCALITY_MAX_ZOOM = 14;
-    const localityMarkers = (zoom < SHOW_LOCALITY_MAX_ZOOM)
+    // Localities (Visible only at LOW zoom, hide when businesses appear)
+    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD)
       ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
         id: l.id,
         lat: l.latitude!,
@@ -230,8 +227,8 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Attractions (Visible only at Medium Zoom >= 14)
-    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 14;
+    // Attractions (Visible only at Medium Zoom >= 12)
+    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 12;
 
     const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD)
       ? allAttractions
