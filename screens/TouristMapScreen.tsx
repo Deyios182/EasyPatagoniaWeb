@@ -215,8 +215,8 @@ const TouristMapScreen: React.FC = () => {
       })
       : [];
 
-    // Localities (Visible only at LOW zoom < 13)
-    const SHOW_LOCALITY_MAX_ZOOM = 13;
+    // Localities (Visible only at LOW zoom < 14)
+    const SHOW_LOCALITY_MAX_ZOOM = 14;
     const localityMarkers = (zoom < SHOW_LOCALITY_MAX_ZOOM)
       ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
         id: l.id,
@@ -230,8 +230,8 @@ const TouristMapScreen: React.FC = () => {
       }))
       : [];
 
-    // Attractions (Visible only at Medium Zoom >= 13)
-    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 13;
+    // Attractions (Visible only at Medium Zoom >= 14)
+    const SHOW_ATTRACTION_ZOOM_THRESHOLD = 14;
 
     const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD)
       ? allAttractions
