@@ -6,6 +6,7 @@ import { useAppAuth } from '../App';
 import { Category, Business, MapTheme } from '../types';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from '../components/MapMarkers';
+import SEO from '../components/SEO';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -456,246 +457,253 @@ const TouristMapScreen: React.FC = () => {
       : `https://www.google.com/maps/dir/?api=1&destination=Puerto+Rio+Tranquilo`;
 
   return (
-    <div className="relative h-screen w-full bg-background-light dark:bg-background-dark overflow-hidden flex flex-col transition-colors duration-300">
-      <div ref={containerRef} className="absolute inset-0 z-0 h-full w-full"></div>
+    <>
+      <SEO
+        title="Mapa Interactivo de la Patagonia"
+        description="Explora la Región de Aysén con nuestro mapa satelital. Encuentra atractivos turísticos, restaurantes, hoteles, actividades y servicios en tiempo real."
+        keywords={['mapa patagonia', 'turismo aysén', 'carretera austral mapa', 'coyhaique mapa', 'atractivos aysén']}
+      />
+      <div className="relative h-screen w-full bg-background-light dark:bg-background-dark overflow-hidden flex flex-col transition-colors duration-300">
+        <div ref={containerRef} className="absolute inset-0 z-0 h-full w-full"></div>
 
-      {showRouteAssistant && (
-        <div className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-xl flex items-end md:items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-white dark:bg-surface-dark w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom duration-500 my-auto">
-            <div className="p-6 md:p-12 space-y-8 md:space-y-10">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-tight">Guía de Aysén</h2>
-                  <p className="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">{t('how_to_get')}</p>
-                </div>
-                <button onClick={() => setShowRouteAssistant(false)} className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl">
-                  <span className="material-symbols-outlined text-2xl">close</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-primary/5 border-2 border-primary/20 p-6 md:p-8 rounded-[2rem] space-y-4">
-                  <div className="flex justify-between items-center text-primary">
-                    <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">navigation</span>
-                    <span className="bg-primary text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg leading-none">LIVE</span>
-                  </div>
+        {showRouteAssistant && (
+          <div className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-xl flex items-end md:items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
+            <div className="bg-white dark:bg-surface-dark w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom duration-500 my-auto">
+              <div className="p-6 md:p-12 space-y-8 md:space-y-10">
+                <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Ir a {selectedBusiness?.nombre || selectedAttraction?.name || 'Destino'}</h3>
-                    <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Ubicación Actual</p>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-tight">Guía de Aysén</h2>
+                    <p className="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">{t('how_to_get')}</p>
                   </div>
-                  <a
-                    href={selectedBusiness?.gps ? `https://www.google.com/maps/dir/?api=1&destination=${selectedBusiness.gps.lat},${selectedBusiness.gps.lng}` : selectedAttraction?.latitude ? `https://www.google.com/maps/dir/?api=1&destination=${selectedAttraction.latitude},${selectedAttraction.longitude}` : '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none ${(!selectedBusiness && !selectedAttraction) ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
-                  >
-                    Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
-                  </a>
+                  <button onClick={() => setShowRouteAssistant(false)} className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl">
+                    <span className="material-symbols-outlined text-2xl">close</span>
+                  </button>
                 </div>
-                <div className="bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] space-y-4">
-                  <div className="flex justify-between items-center text-slate-400">
-                    <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">flight</span>
-                    <span className="bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest leading-none">VUELOS</span>
-                  </div>
-                  <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Vuelos a Balmaceda</h3>
-                    <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Acceso Regional</p>
-                  </div>
-                  <a href="https://www.google.com/travel/flights?q=Vuelos+a+Balmaceda" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 dark:bg-white text-white dark:text-background-dark font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none">
-                    Ver Vuelos <span className="material-symbols-outlined leading-none text-base">open_in_new</span>
-                  </a>
-                </div>
-              </div>
 
-              {/* LOCAL TRANSFERS SECTION */}
-              {localTransfers.length > 0 && (
-                <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="material-symbols-outlined text-green-500 text-3xl">airport_shuttle</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div className="bg-primary/5 border-2 border-primary/20 p-6 md:p-8 rounded-[2rem] space-y-4">
+                    <div className="flex justify-between items-center text-primary">
+                      <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">navigation</span>
+                      <span className="bg-primary text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg leading-none">LIVE</span>
+                    </div>
                     <div>
-                      <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white leading-none">Traslados & Tours</h3>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Servicios Locales Disponibles</p>
+                      <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Ir a {selectedBusiness?.nombre || selectedAttraction?.name || 'Destino'}</h3>
+                      <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Ubicación Actual</p>
+                    </div>
+                    <a
+                      href={selectedBusiness?.gps ? `https://www.google.com/maps/dir/?api=1&destination=${selectedBusiness.gps.lat},${selectedBusiness.gps.lng}` : selectedAttraction?.latitude ? `https://www.google.com/maps/dir/?api=1&destination=${selectedAttraction.latitude},${selectedAttraction.longitude}` : '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full bg-primary text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none ${(!selectedBusiness && !selectedAttraction) ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                    >
+                      Navegar <span className="material-symbols-outlined leading-none text-base">directions</span>
+                    </a>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 p-6 md:p-8 rounded-[2rem] space-y-4">
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span className="material-symbols-outlined text-4xl md:text-5xl leading-none">flight</span>
+                      <span className="bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest leading-none">VUELOS</span>
+                    </div>
+                    <div>
+                      <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-800 dark:text-white leading-tight">Vuelos a Balmaceda</h3>
+                      <p className="text-[10px] md:text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest leading-none">Acceso Regional</p>
+                    </div>
+                    <a href="https://www.google.com/travel/flights?q=Vuelos+a+Balmaceda" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 dark:bg-white text-white dark:text-background-dark font-black py-4 rounded-xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.15em] shadow-xl transition-all no-underline leading-none">
+                      Ver Vuelos <span className="material-symbols-outlined leading-none text-base">open_in_new</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* LOCAL TRANSFERS SECTION */}
+                {localTransfers.length > 0 && (
+                  <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="material-symbols-outlined text-green-500 text-3xl">airport_shuttle</span>
+                      <div>
+                        <h3 className="text-xl font-black uppercase italic text-slate-800 dark:text-white leading-none">Traslados & Tours</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Servicios Locales Disponibles</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {localTransfers.map(tr => (
+                        <div
+                          key={tr.id}
+                          onClick={() => { setSelectedBusiness(tr); setShowRouteAssistant(false); }}
+                          className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-white hover:shadow-lg transition-all group"
+                        >
+                          <img src={tr.media.logo_url} className="w-14 h-14 rounded-xl object-cover bg-white shadow-sm" alt={tr.nombre} />
+                          <div>
+                            <h4 className="font-black text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors">{tr.nombre}</h4>
+                            <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1 line-clamp-1">{tr.info.descripcion}</p>
+                          </div>
+                          <span className="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary">chevron_right</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {localTransfers.map(tr => (
-                      <div
-                        key={tr.id}
-                        onClick={() => { setSelectedBusiness(tr); setShowRouteAssistant(false); }}
-                        className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-white hover:shadow-lg transition-all group"
-                      >
-                        <img src={tr.media.logo_url} className="w-14 h-14 rounded-xl object-cover bg-white shadow-sm" alt={tr.nombre} />
-                        <div>
-                          <h4 className="font-black text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors">{tr.nombre}</h4>
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1 line-clamp-1">{tr.info.descripcion}</p>
-                        </div>
-                        <span className="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary">chevron_right</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
+        <div className="absolute top-0 left-0 right-0 z-[100] p-2 md:p-8 flex flex-col md:flex-row gap-2 md:gap-4 pointer-events-none">
+
+          {/* Contenedor Superior: Buscador + Botón Perfil */}
+          <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
+            <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-4 py-3 md:px-8 md:py-5 flex items-center gap-3 shadow-2xl group focus-within:border-primary/50 transition-all">
+              <span className="material-symbols-outlined text-primary leading-none text-xl md:text-2xl">location_on</span>
+              <select
+                onChange={handleLocalityChange}
+                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none uppercase tracking-wider"
+                defaultValue=""
+              >
+                <option value="" disabled>📍 Descubre la Patagonia</option>
+                {allLocalities.map(loc => (
+                  <option key={loc.id} value={loc.id} className="text-slate-800">
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* BOTÓN PERFIL MÓVIL (Solo visible en MÓVIL) */}
+            <Link to={user ? "/profile" : "/auth/login"} className={`md:hidden w-12 h-12 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all overflow-hidden relative shrink-0 ${user ? 'bg-white/90 dark:bg-surface-dark/90' : 'bg-primary text-white'}`}>
+              {user ? (
+                <>
+                  <img
+                    src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`}
+                    alt="Perfil"
+                    className="w-full h-full object-cover backdrop-blur-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      if (target.nextElementSibling) (target.nextElementSibling as HTMLElement).style.display = 'block';
+                    }}
+                  />
+                  <span className="material-symbols-outlined text-slate-700 dark:text-white absolute inset-0 m-auto flex items-center justify-center pointer-events-none" style={{ display: user.avatar ? 'none' : 'flex' }}>person</span>
+                </>
+              ) : (
+                <span className="material-symbols-outlined text-2xl">login</span>
               )}
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
-      <div className="absolute top-0 left-0 right-0 z-[100] p-2 md:p-8 flex flex-col md:flex-row gap-2 md:gap-4 pointer-events-none">
-
-        {/* Contenedor Superior: Buscador + Botón Perfil */}
-        <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
-          <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-4 py-3 md:px-8 md:py-5 flex items-center gap-3 shadow-2xl group focus-within:border-primary/50 transition-all">
-            <span className="material-symbols-outlined text-primary leading-none text-xl md:text-2xl">location_on</span>
-            <select
-              onChange={handleLocalityChange}
-              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none uppercase tracking-wider"
-              defaultValue=""
-            >
-              <option value="" disabled>📍 Descubre la Patagonia</option>
-              {allLocalities.map(loc => (
-                <option key={loc.id} value={loc.id} className="text-slate-800">
-                  {loc.name}
-                </option>
-              ))}
-            </select>
+            </Link>
           </div>
 
-          {/* BOTÓN PERFIL MÓVIL (Solo visible en MÓVIL) */}
-          <Link to={user ? "/profile" : "/auth/login"} className={`md:hidden w-12 h-12 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all overflow-hidden relative shrink-0 ${user ? 'bg-white/90 dark:bg-surface-dark/90' : 'bg-primary text-white'}`}>
-            {user ? (
-              <>
-                <img
-                  src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`}
-                  alt="Perfil"
-                  className="w-full h-full object-cover backdrop-blur-sm"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    if (target.nextElementSibling) (target.nextElementSibling as HTMLElement).style.display = 'block';
-                  }}
-                />
-                <span className="material-symbols-outlined text-slate-700 dark:text-white absolute inset-0 m-auto flex items-center justify-center pointer-events-none" style={{ display: user.avatar ? 'none' : 'flex' }}>person</span>
-              </>
-            ) : (
-              <span className="material-symbols-outlined text-2xl">login</span>
-            )}
-          </Link>
-        </div>
 
 
 
-
-        {/* Toggle Satelital - Moved lower to avoid overlap */}
-        <div className="absolute top-32 left-4 md:left-8 z-[90] pointer-events-auto">
-          <button
-            onClick={() => setIsSatellite(!isSatellite)}
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isSatellite ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
-            title={isSatellite ? "Ver Mapa" : "Ver Satélite"}
-          >
-            <span className="material-symbols-outlined text-2xl">{isSatellite ? 'map' : 'satellite_alt'}</span>
-          </button>
-        </div>
-
-        {/* Filtros de Negocios */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
-          {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+          {/* Toggle Satelital - Moved lower to avoid overlap */}
+          <div className="absolute top-32 left-4 md:left-8 z-[90] pointer-events-auto">
             <button
-              key={cat}
-              onClick={() => setActiveFilter(cat as any)}
-              className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
+              onClick={() => setIsSatellite(!isSatellite)}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isSatellite ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
+              title={isSatellite ? "Ver Mapa" : "Ver Satélite"}
             >
-              {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
-            </button>
-          ))}
-        </div>
-
-        {/* Filtros de Atractivos */}
-
-      </div>
-
-      {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
-      <div className="mt-auto relative z-[100] p-4 md:p-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 pointer-events-none mb-[70px] md:mb-0">
-
-        {/* TARJETA DE NEGOCIO */}
-        {selectedBusiness && (
-          <div
-            className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
-            onClick={() => navigate(`/details/${selectedBusiness.id}`)}
-          >
-            <div
-              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
-              onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-            </div>
-
-            <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
-              <img src={selectedBusiness.media.fotos_url[0] || selectedBusiness.media.logo_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Selected" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[8px] md:text-[9px] text-primary font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-1 md:mb-2 leading-none">{selectedBusiness.categoria}</p>
-              <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedBusiness.nombre}</h3>
-              <div className="flex items-center gap-2 text-primary text-[10px] md:text-xs font-black mt-2 md:mt-3 leading-none">
-                <span className="material-symbols-outlined text-xs md:text-sm leading-none">star</span>
-                {selectedBusiness.rating}
-                <span className="text-slate-400 font-bold ml-1 uppercase tracking-widest text-[8px] md:text-[9px] leading-none">({selectedBusiness.reviewCount})</span>
-              </div>
-            </div>
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-md">
-              <span className="material-symbols-outlined text-lg md:text-2xl leading-none">arrow_forward</span>
-            </div>
-          </div>
-        )}
-
-        {/* TARJETA DE ATRACTIVO (Nuevo) */}
-        {selectedAttraction && (
-          <div
-            className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
-            onClick={() => navigate(`/attraction/${selectedAttraction.id}`)}
-          >
-            <div
-              className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
-              onClick={(e) => { e.stopPropagation(); setSelectedAttraction(null); }}
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-            </div>
-
-            <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
-              <img src={selectedAttraction.main_image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Selected" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[8px] md:text-[9px] text-orange-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-1 md:mb-2 leading-none">Atractivo Turístico</p>
-              <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedAttraction.name}</h3>
-              <div className="flex items-center gap-2 text-slate-400 text-[10px] md:text-xs font-bold mt-2 md:mt-3 leading-none">
-                <span className="material-symbols-outlined text-xs md:text-sm leading-none">location_on</span>
-                Ver Tours Disponibles
-              </div>
-            </div>
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-orange-100 dark:bg-white/5 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-md">
-              <span className="material-symbols-outlined text-lg md:text-2xl leading-none">explore</span>
-            </div>
-          </div>
-        )}
-
-        {/* BOTÓN CÓMO LLEGAR (Se muestra siempre ahora, o condicional si se prefiere) */}
-        {((selectedBusiness || selectedAttraction) || !isMobile) && (
-          <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
-            <button
-              onClick={() => setShowRouteAssistant(true)}
-              className="w-full bg-primary text-white font-black h-14 md:h-20 rounded-2xl md:rounded-[2rem] shadow-2xl flex items-center justify-center gap-3 md:gap-4 active:scale-95 transition-all uppercase tracking-[0.15em] text-[10px] md:text-xs shadow-primary/30 border-2 md:border-4 border-white/20 dark:border-white/10 px-4 py-2 leading-tight text-center"
-            >
-              <span className="material-symbols-outlined text-2xl md:text-3xl leading-none">directions_car</span>
-              {t('how_to_get')}
+              <span className="material-symbols-outlined text-2xl">{isSatellite ? 'map' : 'satellite_alt'}</span>
             </button>
           </div>
-        )}
-      </div>
 
-      {/* MENÚ MÓVIL */}
-      <BottomNavigationBar />
-    </div >
+          {/* Filtros de Negocios */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
+            {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveFilter(cat as any)}
+                className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
+              >
+                {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
+              </button>
+            ))}
+          </div>
+
+          {/* Filtros de Atractivos */}
+
+        </div>
+
+        {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
+        <div className="mt-auto relative z-[100] p-4 md:p-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 pointer-events-none mb-[70px] md:mb-0">
+
+          {/* TARJETA DE NEGOCIO */}
+          {selectedBusiness && (
+            <div
+              className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
+              onClick={() => navigate(`/details/${selectedBusiness.id}`)}
+            >
+              <div
+                className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
+                onClick={(e) => { e.stopPropagation(); setSelectedBusiness(null); }}
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </div>
+
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
+                <img src={selectedBusiness.media.fotos_url[0] || selectedBusiness.media.logo_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Selected" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[8px] md:text-[9px] text-primary font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-1 md:mb-2 leading-none">{selectedBusiness.categoria}</p>
+                <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedBusiness.nombre}</h3>
+                <div className="flex items-center gap-2 text-primary text-[10px] md:text-xs font-black mt-2 md:mt-3 leading-none">
+                  <span className="material-symbols-outlined text-xs md:text-sm leading-none">star</span>
+                  {selectedBusiness.rating}
+                  <span className="text-slate-400 font-bold ml-1 uppercase tracking-widest text-[8px] md:text-[9px] leading-none">({selectedBusiness.reviewCount})</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-md">
+                <span className="material-symbols-outlined text-lg md:text-2xl leading-none">arrow_forward</span>
+              </div>
+            </div>
+          )}
+
+          {/* TARJETA DE ATRACTIVO (Nuevo) */}
+          {selectedAttraction && (
+            <div
+              className="w-full md:max-w-md bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 shadow-2xl flex items-center gap-4 md:gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto cursor-pointer group"
+              onClick={() => navigate(`/attraction/${selectedAttraction.id}`)}
+            >
+              <div
+                className="md:hidden absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer hover:bg-primary transition-colors"
+                onClick={(e) => { e.stopPropagation(); setSelectedAttraction(null); }}
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </div>
+
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] overflow-hidden shrink-0 border border-slate-100 dark:border-white/5 relative bg-slate-200">
+                <img src={selectedAttraction.main_image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Selected" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[8px] md:text-[9px] text-orange-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-1 md:mb-2 leading-none">Atractivo Turístico</p>
+                <h3 className="text-slate-800 dark:text-white font-black text-lg md:text-2xl truncate leading-none tracking-tighter uppercase italic">{selectedAttraction.name}</h3>
+                <div className="flex items-center gap-2 text-slate-400 text-[10px] md:text-xs font-bold mt-2 md:mt-3 leading-none">
+                  <span className="material-symbols-outlined text-xs md:text-sm leading-none">location_on</span>
+                  Ver Tours Disponibles
+                </div>
+              </div>
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-orange-100 dark:bg-white/5 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-md">
+                <span className="material-symbols-outlined text-lg md:text-2xl leading-none">explore</span>
+              </div>
+            </div>
+          )}
+
+          {/* BOTÓN CÓMO LLEGAR (Se muestra siempre ahora, o condicional si se prefiere) */}
+          {((selectedBusiness || selectedAttraction) || !isMobile) && (
+            <div className="w-full md:w-80 pointer-events-auto animate-in fade-in duration-300">
+              <button
+                onClick={() => setShowRouteAssistant(true)}
+                className="w-full bg-primary text-white font-black h-14 md:h-20 rounded-2xl md:rounded-[2rem] shadow-2xl flex items-center justify-center gap-3 md:gap-4 active:scale-95 transition-all uppercase tracking-[0.15em] text-[10px] md:text-xs shadow-primary/30 border-2 md:border-4 border-white/20 dark:border-white/10 px-4 py-2 leading-tight text-center"
+              >
+                <span className="material-symbols-outlined text-2xl md:text-3xl leading-none">directions_car</span>
+                {t('how_to_get')}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* MENÚ MÓVIL */}
+        <BottomNavigationBar />
+      </div>
+    </>
   );
 };
 

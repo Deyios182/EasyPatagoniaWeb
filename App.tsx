@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { supabase } from './supabaseClient';
+import { initGA, initMetaPixel, trackPageView } from './src/analytics/analytics';
 
 // Importación de pantallas
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -655,15 +657,36 @@ const AuthenticatedApp: React.FC = () => {
   );
 };
 
+// Track route changes
+const RouteTracker: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
+  // Initialize analytics on app mount
+  useEffect(() => {
+    initGA();
+    initMetaPixel();
+  }, []);
+
   return (
-    <SupabaseAuthProvider>
-      <AppAuthProvider>
-        <HashRouter>
-          <AuthenticatedApp />
-        </HashRouter>
-      </AppAuthProvider>
-    </SupabaseAuthProvider>
+    <HelmetProvider>
+      <SupabaseAuthProvider>
+        <AppAuthProvider>
+          <HashRouter>
+            <RouteTracker>
+              <AuthenticatedApp />
+            </RouteTracker>
+          </HashRouter>
+        </AppAuthProvider>
+      </SupabaseAuthProvider>
+    </HelmetProvider>
   );
 };
 export default App;

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAppAuth } from '../App';  // Dynamic Data Link
 import { supabase } from '../supabaseClient';
 import LogoTicker from '../components/LogoTicker';
+import SEO from '../components/SEO';
 
 interface LandingContent {
   key: string;
@@ -199,6 +200,11 @@ const LandingPage: React.FC = () => {
 
   return (
     <>
+      <SEO
+        title="Guía Turística Inteligente de la Patagonia Chilena"
+        description="Descubre Aysén con Easy Patagonia: mapas satelitales, atractivos turísticos, empresas locales, planificador de viaje y asistente IA para tu aventura en la Carretera Austral."
+        keywords={['patagonia chilena', 'aysén turismo', 'carretera austral', 'guía turística', 'mapa interactivo', 'coyhaique', 'puerto cisnes', 'chile sur']}
+      />
       <div className="min-h-screen bg-[#eaeaea] font-body text-[#1a2a30] overflow-x-hidden">
 
         {/* HERO SECTION WITH CAROUSEL */}

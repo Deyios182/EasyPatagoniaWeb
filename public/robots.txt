@@ -1,0 +1,15 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin routes
+Disallow: /admin/
+Disallow: /portal/
+Disallow: /field/
+Disallow: /auth/callback
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://easypatagonia.com/sitemap.xml
