@@ -8,10 +8,18 @@ export const META_PIXEL_ID = '1013240253378766';
 export const initGA = () => {
     if (typeof window === 'undefined') return;
 
+    console.log('🔄 Inicializando Google Analytics 4...');
+
     // Google Analytics 4
     const gaScript = document.createElement('script');
     gaScript.async = true;
     gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    gaScript.onload = () => {
+        console.log('✅ Google Analytics 4 cargado exitosamente');
+    };
+    gaScript.onerror = () => {
+        console.error('❌ Error cargando Google Analytics 4 - Posible bloqueador de ads');
+    };
     document.head.appendChild(gaScript);
 
     window.dataLayer = window.dataLayer || [];
@@ -23,6 +31,8 @@ export const initGA = () => {
         page_path: window.location.pathname,
     });
 
+    console.log(`✅ GA4 configurado con ID: ${GA_MEASUREMENT_ID}`);
+
     // Make gtag globally available
     (window as any).gtag = gtag;
 };
@@ -30,6 +40,8 @@ export const initGA = () => {
 // Initialize Meta Pixel
 export const initMetaPixel = () => {
     if (typeof window === 'undefined') return;
+
+    console.log('🔄 Inicializando Meta Pixel...');
 
     // Meta Pixel Base Code
     !(function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
@@ -45,12 +57,20 @@ export const initMetaPixel = () => {
         t = b.createElement(e);
         t.async = !0;
         t.src = v;
+        t.onload = () => {
+            console.log('✅ Meta Pixel cargado exitosamente');
+        };
+        t.onerror = () => {
+            console.error('❌ Error cargando Meta Pixel - Posible bloqueador de ads');
+        };
         s = b.getElementsByTagName(e)[0];
         s.parentNode.insertBefore(t, s);
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
     (window as any).fbq('init', META_PIXEL_ID);
     (window as any).fbq('track', 'PageView');
+
+    console.log(`✅ Meta Pixel configurado con ID: ${META_PIXEL_ID}`);
 };
 
 // Track custom events in GA4
@@ -75,17 +95,25 @@ export const trackCustomEvent = (eventName: string, eventParams?: Record<string,
 
 // Page view tracking
 export const trackPageView = (url: string) => {
+    console.log(`📊 Tracking PageView: ${url}`);
+
     if (typeof window !== 'undefined') {
         // GA4
         if ((window as any).gtag) {
             (window as any).gtag('config', GA_MEASUREMENT_ID, {
                 page_path: url,
             });
+            console.log('✅ GA4 PageView enviado');
+        } else {
+            console.warn('⚠️ GA4 no disponible (bloqueado o no cargado)');
         }
 
         // Meta Pixel
         if ((window as any).fbq) {
             (window as any).fbq('track', 'PageView');
+            console.log('✅ Meta Pixel PageView enviado');
+        } else {
+            console.warn('⚠️ Meta Pixel no disponible (bloqueado o no cargado)');
         }
     }
 };
