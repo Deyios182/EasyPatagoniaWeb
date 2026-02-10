@@ -10,13 +10,13 @@
     "scope": "/",
     "icons": [
         {
-            "src": "/logo_easy.png",
+            "src": "/logo-icon.png",
             "sizes": "any",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/logo_easy.png",
+            "src": "/logo-icon.png",
             "sizes": "192x192 512x512",
             "type": "image/png",
             "purpose": "maskable"

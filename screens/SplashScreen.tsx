@@ -25,9 +25,9 @@ const SplashScreen: React.FC<SplashProps> = ({ onFinish }) => {
       >
         {/* LOGO SOLO (Sin texto adicional) */}
         <div className="relative w-80 h-80 md:w-[35rem] md:h-[35rem] flex items-center justify-center">
-          <motion.img 
-            src="/logo_easy.png" 
-            alt="Easy Patagonia" 
+          <motion.img
+            src="/logo-icon.png"
+            alt="Easy Patagonia"
             className="w-full h-full object-contain"
             initial={{ y: 25 }}
             animate={{ y: 0 }}
