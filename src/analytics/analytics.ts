@@ -1,8 +1,8 @@
 // Google Analytics 4 Configuration
-export const GA_MEASUREMENT_ID = 'G-ZAM3CD1DZ1';
+export const GA_MEASUREMENT_ID = 'G-Z6MSCD1DZ1';
 
 // Meta Pixel Configuration
-export const META_PIXEL_ID = '1013240253378766';
+export const META_PIXEL_ID = '1613240233378766';
 
 // Initialize Google Analytics
 export const initGA = () => {

@@ -608,11 +608,17 @@ const AuthenticatedApp: React.FC = () => {
     localStorage.setItem('ep_splash_seen', 'true'); // Changed to localStorage
   };
 
+  // Track if analytics has been initialized
+  const analyticsInitialized = React.useRef(false);
+
   // Initialize Analytics on app mount
   useEffect(() => {
-    console.log('🚀 Inicializando Analytics...');
-    initGA();
-    initMetaPixel();
+    if (!analyticsInitialized.current) {
+      console.log('🚀 Inicializando Analytics...');
+      initGA();
+      initMetaPixel();
+      analyticsInitialized.current = true;
+    }
   }, []);
 
   if (showSplash) return <SplashScreen onFinish={handleSplashFinish} />;
