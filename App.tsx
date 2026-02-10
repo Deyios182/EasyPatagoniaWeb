@@ -642,8 +642,8 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/discover" element={<DiscoveryScreen />} />
           <Route path="/highlights" element={isAuthenticated ? <HighlightsScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/directory" element={isAuthenticated ? <BusinessDirectoryScreen /> : <Navigate to="/auth/login" />} />
-          <Route path="/details/:id" element={<BusinessDetailsScreen />} />
-          <Route path="/attraction/:id" element={<AttractionDetailsScreen />} />
+          <Route path="/details/:id" element={isAuthenticated ? <BusinessDetailsScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/attraction/:id" element={isAuthenticated ? <AttractionDetailsScreen /> : <Navigate to="/auth/login" />} />
 
           {/* Rutas Privadas (Requieren Login) */}
           <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
