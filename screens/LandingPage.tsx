@@ -6,6 +6,7 @@ import { useAppAuth } from '../App';  // Dynamic Data Link
 import { supabase } from '../supabaseClient';
 import LogoTicker from '../components/LogoTicker';
 import SEO from '../components/SEO';
+import { trackConversion, trackCustomEvent } from '../src/analytics/analytics';
 
 interface LandingContent {
   key: string;
@@ -161,6 +162,12 @@ const LandingPage: React.FC = () => {
   const selectedLocalityDetails = allLocalities.find(l => l.id === selectedLocality);
 
   const handleEnterApp = () => {
+    // RASTREO: Track app entry attempts
+    trackCustomEvent('enter_app_click', {
+      location: 'hero_section',
+      auth_status: isAuthenticated ? 'logged_in' : 'guest'
+    });
+
     if (isAuthenticated) navigate('/map');
     else navigate('/welcome');
   };
@@ -168,6 +175,9 @@ const LandingPage: React.FC = () => {
   const openLink = (url: string) => window.open(url, '_blank');
 
   const handleWhatsApp = () => {
+    // RASTREO: Track WhatsApp contact conversion
+    trackConversion('contact_whatsapp', 1);
+
     const telefono = settings['contact_whatsapp'] || "56993059789";
     const mensaje = "¡Hola! Escribo desde la web EasyPatagonia.";
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -176,6 +186,9 @@ const LandingPage: React.FC = () => {
   };
 
   const handleEmail = () => {
+    // RASTREO: Track email contact conversion
+    trackConversion('contact_email');
+
     const email = settings['contact_email'] || 'contacto@easypatagonia.com';
     const subject = "Consulta desde EasyPatagonia";
     const body = "Hola, me gustaría recibir más información.";
