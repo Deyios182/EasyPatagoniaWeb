@@ -726,7 +726,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                 </button>
                                 <div className="space-y-4">
                                     {companies.filter(c => c.category !== 'Mercado').map(comp => (
-                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-primary/50 transition-all group">
+                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-primary/50 transition-all group">
                                             <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
                                                 <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
                                                 <div>
@@ -737,7 +737,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 mt-4 md:mt-0">
+                                            <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
                                                     className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
@@ -773,7 +773,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                 </button>
                                 <div className="space-y-4">
                                     {companies.filter(c => c.category === 'Mercado').map(comp => (
-                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center hover:border-blue-500/50 transition-all group">
+                                        <div key={comp.id} className="bg-white/5 backdrop-blur-xl p-5 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-blue-500/50 transition-all group">
                                             <div className="flex items-center gap-4 w-full cursor-pointer" onClick={() => { setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}>
                                                 <div className="relative">
                                                     <img src={comp.logo_url || 'https://via.placeholder.com/50'} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/10 group-hover:scale-105 transition-transform" />
@@ -789,7 +789,7 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 mt-4 md:mt-0">
+                                            <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
                                                     className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-blue-600 transition-colors"
