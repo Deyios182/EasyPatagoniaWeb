@@ -628,8 +628,8 @@ const AuthenticatedApp: React.FC = () => {
       <main className="flex-1 relative h-screen overflow-y-auto no-scrollbar transition-all duration-300">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          {/* Pantalla de bienvenida */}
-          <Route path="/welcome" element={<WelcomeScreen />} />
+          {/* Pantalla de bienvenida - solo para usuarios no autenticados */}
+          <Route path="/welcome" element={isAuthenticated ? <Navigate to="/map" /> : <WelcomeScreen />} />
           {/* Auth callback */}
           <Route path="/auth/callback" element={<AuthCallbackScreen />} />
 
