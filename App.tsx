@@ -556,12 +556,17 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Navegación</p>}
         <NavItem to="/map" icon="map" label={t('map')} />
 
-        <NavItem to="/highlights" icon="grade" label="Imperdibles" />
-        <NavItem to="/directory" icon="list_alt" label={t('list')} />
-        <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
-        {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
-        <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
-        <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
+        {/* Rutas protegidas - solo si está autenticado */}
+        {(user || supabaseUser) && (
+          <>
+            <NavItem to="/highlights" icon="grade" label="Imperdibles" />
+            <NavItem to="/directory" icon="list_alt" label={t('list')} />
+            <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
+            {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
+            <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
+            <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
+          </>
+        )}
 
         {/* SECCIÓN MI EMPRESA - Solo para DueñoEmpresa y SuperAdmin */}
         {(displayRole === 'DueñoEmpresa' || displayRole === 'SuperAdmin') && (
