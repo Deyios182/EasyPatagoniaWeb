@@ -612,8 +612,10 @@ const AuthenticatedApp: React.FC = () => {
   // and the sidebar/profile will update when the data arrives.
 
   // Sidebar visible on main app pages (Map, Directory, etc) even for guests
-  const isAuthPage = location.pathname === '/' || location.pathname === '/auth/login' || location.pathname === '/auth/register' || location.pathname === '/auth/callback';
+  const isAuthPage = location.pathname === '/' || location.pathname === '/auth/callback';
   const shouldShowSidebar = !isAuthPage;
+  const isLoginModalOpen = location.pathname === '/auth/login';
+  const isRegisterModalOpen = location.pathname === '/auth/register';
 
   return (
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-body selection:bg-primary/30 overflow-hidden transition-colors duration-300">
@@ -623,10 +625,12 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/" element={<LandingPage />} />
           {/* Pantalla de bienvenida */}
           <Route path="/welcome" element={<WelcomeScreen />} />
-          {/* Rutas de Supabase Auth */}
-          <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <LoginScreen />} />
-          <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <RegisterScreen />} />
+          {/* Auth callback */}
           <Route path="/auth/callback" element={<AuthCallbackScreen />} />
+
+          {/* Las rutas de login/register ahora son "virtuales" - solo activan el modal */}
+          <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <Navigate to="/map" />} />
+          <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <Navigate to="/map" />} />
 
           {/* Rutas Públicas (Modo Invitado) */}
           <Route path="/map" element={<TouristMapScreen />} />
@@ -652,6 +656,10 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+
+        {/* Modales de autenticación (renderizados FUERA de Routes) */}
+        {isLoginModalOpen && !isAuthenticated && <LoginScreen />}
+        {isRegisterModalOpen && !isAuthenticated && <RegisterScreen />}
       </main>
     </div>
   );

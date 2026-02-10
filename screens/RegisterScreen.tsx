@@ -71,12 +71,13 @@ const RegisterScreen: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm font-body overflow-y-auto py-8">
             <div className="relative w-full max-w-md mx-4">
                 {/* Close button */}
-                <Link
-                    to="/"
-                    className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+                <button
+                    onClick={() => navigate(-1)}
+                    className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors bg-white/10 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/20"
+                    aria-label="Cerrar"
                 >
-                    <span className="material-symbols-outlined text-3xl">close</span>
-                </Link>
+                    <span className="material-symbols-outlined text-2xl">close</span>
+                </button>
 
                 {/* Register Card */}
                 <div className="bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
