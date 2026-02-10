@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Debug - EasyPatagonia</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+
+        .test-item {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .status-ok {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .status-error {
+            color: #ff0000;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #00cc00;
+        }
+
+        pre {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .console-output {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 Analytics Debugger - EasyPatagonia</h1>
+
+    <div class="test-item">
+        <h2>Estado del Sistema</h2>
+        <div id="system-status"></div>
+    </div>
+
+    <div class="test-item">
+        <h2>Pruebas Automatizadas</h2>
+        <button onclick="runAllTests()">🚀 Ejecutar Todas las Pruebas</button>
+        <button onclick="testGA4()">Test GA4</button>
+        <button onclick="testMetaPixel()">Test Meta Pixel</button>
+        <button onclick="sendTestEvent()">Enviar Evento Test</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-item">
+        <h2>Console Log</h2>
+        <div id="console-output" class="console-output"></div>
+    </div>
+
+    <script>
+        const GA_ID = 'G-ZAM3CD1DZ1';
+        const META_ID = '1013240253378766';
+
+        const consoleDiv = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        // Interceptar console.log
+        function interceptConsole() {
+            console.log = function (...args) {
+                originalLog.apply(console, args);
+                consoleDiv.innerHTML += `<div style="color: #0f0;">[LOG] ${args.join(' ')}</div>`;
+            };
+            console.error = function (...args) {
+                originalError.apply(console, args);
+                consoleDiv.innerHTML += `<div style="color: #f00;">[ERROR] ${args.join(' ')}</div>`;
+            };
+            console.warn = function (...args) {
+                originalWarn.apply(console, args);
+                consoleDiv.innerHTML += `<div style="color: #fa0;">[WARN] ${args.join(' ')}</div>`;
+            };
+        }
+
+        function testGA4() {
+            const results = [];
+
+            // 1. Verificar script cargado
+            const scriptLoaded = document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_ID}"]`);
+            results.push({
+                name: 'Script GA4 en DOM',
+                status: scriptLoaded ? 'ok' : 'error',
+                message: scriptLoaded ? 'Script tag encontrado' : 'Script NO encontrado en el DOM'
+            });
+
+            // 2. Verificar window.gtag
+            results.push({
+                name: 'window.gtag disponible',
+                status: typeof window.gtag === 'function' ? 'ok' : 'error',
+                message: typeof window.gtag === 'function' ? 'Función gtag existe' : 'window.gtag NO es una función'
+            });
+
+            // 3. Verificar dataLayer
+            results.push({
+                name: 'window.dataLayer',
+                status: Array.isArray(window.dataLayer) ? 'ok' : 'error',
+                message: Array.isArray(window.dataLayer) ? `dataLayer tiene ${window.dataLayer.length} items` : 'dataLayer NO es un array'
+            });
+
+            // 4. Intentar enviar evento de prueba
+            try {
+                if (window.gtag) {
+                    window.gtag('event', 'debug_test', { test: 'manual' });
+                    results.push({
+                        name: 'Envío de evento test',
+                        status: 'ok',
+                        message: 'Evento debug_test enviado correctamente'
+                    });
+                }
+            } catch (e) {
+                results.push({
+                    name: 'Envío de evento test',
+                    status: 'error',
+                    message: `Error al enviar evento: ${e.message}`
+                });
+            }
+
+            displayResults('Google Analytics 4', results);
+        }
+
+        function testMetaPixel() {
+            const results = [];
+
+            // 1. Verificar script cargado
+            const scriptLoaded = document.querySelector(`script[src*="facebook.net/en_US/fbevents.js"]`);
+            results.push({
+                name: 'Script Meta Pixel en DOM',
+                status: scriptLoaded ? 'ok' : 'error',
+                message: scriptLoaded ? 'Script tag encontrado' : 'Script NO encontrado en el DOM'
+            });
+
+            // 2. Verificar window.fbq
+            results.push({
+                name: 'window.fbq disponible',
+                status: typeof window.fbq === 'function' ? 'ok' : 'error',
+                message: typeof window.fbq === 'function' ? 'Función fbq existe' : 'window.fbq NO es una función'
+            });
+
+            // 3. Intentar enviar evento de prueba
+            try {
+                if (window.fbq) {
+                    window.fbq('track', 'ViewContent', { content_name: 'Debug Test' });
+                    results.push({
+                        name: 'Envío de evento test',
+                        status: 'ok',
+                        message: 'Evento ViewContent enviado correctamente'
+                    });
+                }
+            } catch (e) {
+                results.push({
+                    name: 'Envío de evento test',
+                    status: 'error',
+                    message: `Error al enviar evento: ${e.message}`
+                });
+            }
+
+            displayResults('Meta Pixel', results);
+        }
+
+        function sendTestEvent() {
+            console.log('🚀 Enviando eventos de prueba...');
+
+            if (window.gtag) {
+                window.gtag('event', 'manual_test', {
+                    event_category: 'debug',
+                    event_label: 'manual_trigger',
+                    value: 1
+                });
+                console.log('✅ Evento GA4 enviado: manual_test');
+            } else {
+                console.error('❌ window.gtag no disponible');
+            }
+
+            if (window.fbq) {
+                window.fbq('track', 'CustomEvent', { test: 'manual' });
+                console.log('✅ Evento Meta Pixel enviado: CustomEvent');
+            } else {
+                console.error('❌ window.fbq no disponible');
+            }
+        }
+
+        function runAllTests() {
+            document.getElementById('test-results').innerHTML = '';
+            consoleDiv.innerHTML = '<div style="color: #0ff;">=== INICIANDO DIAGNÓSTICO ===</div>';
+
+            updateSystemStatus();
+            testGA4();
+            setTimeout(() => testMetaPixel(), 500);
+        }
+
+        function updateSystemStatus() {
+            const status = document.getElementById('system-status');
+            const url = window.location.href;
+            const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+
+            status.innerHTML = `
+                <pre>
+URL Actual: ${url}
+Entorno: ${isLocal ? '<span class="status-warning">LOCAL</span>' : '<span class="status-ok">PRODUCCIÓN</span>'}
+User Agent: ${navigator.userAgent.substring(0, 80)}...
+Hora: ${new Date().toLocaleString('es-CL')}
+                </pre>
+            `;
+        }
+
+        function displayResults(title, results) {
+            const container = document.getElementById('test-results');
+            let html = `<h3>${title}</h3><ul>`;
+
+            results.forEach(r => {
+                const statusClass = r.status === 'ok' ? 'status-ok' : r.status === 'warning' ? 'status-warning' : 'status-error';
+                const icon = r.status === 'ok' ? '✅' : r.status === 'warning' ? '⚠️' : '❌';
+                html += `<li>${icon} <strong>${r.name}:</strong> <span class="${statusClass}">${r.message}</span></li>`;
+            });
+
+            html += '</ul>';
+            container.innerHTML += html;
+        }
+
+        // Auto-ejecutar al cargar
+        window.addEventListener('load', () => {
+            interceptConsole();
+            console.log('🔍 Analytics Debugger cargado');
+            console.log(`🎯 GA4 ID configurado: ${GA_ID}`);
+            console.log(`🎯 Meta Pixel ID configurado: ${META_ID}`);
+            updateSystemStatus();
+        });
+    </script>
+</body>
+
+</html>
