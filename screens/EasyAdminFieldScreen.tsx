@@ -737,23 +737,23 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                                            <div className="flex flex-nowrap gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); openServiceManager(comp); }}
-                                                    className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all"
+                                                    className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20 flex items-center gap-2 shrink-0 border border-white/10 transition-all whitespace-nowrap"
                                                 >
                                                     <span className="material-symbols-outlined text-sm">inventory_2</span>
                                                     Servicios
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
-                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors"
+                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-primary transition-colors shrink-0"
                                                 >
                                                     <span className="material-symbols-outlined text-sm">edit</span>
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
-                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors shrink-0"
                                                 >
                                                     <span className="material-symbols-outlined text-sm">delete</span>
                                                 </button>
@@ -789,16 +789,16 @@ const EasyAdminFieldScreen: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                                            <div className="flex flex-nowrap gap-2 mt-4 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingCompany(comp); if (comp.id) loadCompanyOwners(comp.id); }}
-                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-blue-600 transition-colors"
+                                                    className="bg-white/10 text-white px-3 py-2 rounded-xl hover:bg-blue-600 transition-colors shrink-0"
                                                 >
                                                     <span className="material-symbols-outlined text-sm">edit</span>
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); deleteCompany(comp.id, comp.name); }}
-                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                                    className="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors shrink-0"
                                                 >
                                                     <span className="material-symbols-outlined text-sm">delete</span>
                                                 </button>
