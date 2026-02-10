@@ -608,6 +608,13 @@ const AuthenticatedApp: React.FC = () => {
     localStorage.setItem('ep_splash_seen', 'true'); // Changed to localStorage
   };
 
+  // Initialize Analytics on app mount
+  useEffect(() => {
+    console.log('🚀 Inicializando Analytics...');
+    initGA();
+    initMetaPixel();
+  }, []);
+
   if (showSplash) return <SplashScreen onFinish={handleSplashFinish} />;
 
   // NEW: Use supabaseUser OR appUser for auth checks to prevent race condition
