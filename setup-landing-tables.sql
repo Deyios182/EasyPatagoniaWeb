@@ -79,7 +79,7 @@ ON CONFLICT (key) DO UPDATE SET
 -- =====================================================
 INSERT INTO landing_settings (key, value, type, category) VALUES
   -- CONTACTO
-  ('contact_whatsapp', '56956425005', 'text', 'contact'),
+  ('contact_whatsapp', '56993059789', 'text', 'contact'),
   ('contact_email', 'infoeasypatagonia@gmail.com', 'email', 'contact'),
   ('contact_address', 'Puerto Río Tranquilo, Aysén', 'text', 'contact'),
   

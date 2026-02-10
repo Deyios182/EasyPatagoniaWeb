@@ -872,10 +872,10 @@ const LandingAdminScreen: React.FC = () => {
                     <label className="text-sm font-bold text-slate-700 block mb-2">Teléfono WhatsApp</label>
                     <input
                       type="text"
-                      value={getSetting('contact_whatsapp') || '56956425005'}
+                      value={getSetting('contact_whatsapp') || '56993059789'}
                       onChange={(e) => updateSetting('contact_whatsapp', e.target.value)}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                      placeholder="56956425005"
+                      placeholder="56993059789"
                     />
                   </div>
 

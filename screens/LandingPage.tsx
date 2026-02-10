@@ -168,7 +168,7 @@ const LandingPage: React.FC = () => {
   const openLink = (url: string) => window.open(url, '_blank');
 
   const handleWhatsApp = () => {
-    const telefono = settings['contact_whatsapp'] || "56956425005";
+    const telefono = settings['contact_whatsapp'] || "56993059789";
     const mensaje = "¡Hola! Escribo desde la web EasyPatagonia.";
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const url = isMobile ? `whatsapp://send?phone=${telefono}&text=${encodeURIComponent(mensaje)}` : `https://web.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;

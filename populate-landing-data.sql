@@ -30,7 +30,7 @@ INSERT INTO landing_content (key, title, subtitle, body, image_url) VALUES
 DELETE FROM landing_settings;
 
 INSERT INTO landing_settings (key, value, type, category) VALUES
-  ('contact_whatsapp', '56956425005', 'text', 'contact'),
+  ('contact_whatsapp', '56993059789', 'text', 'contact'),
   ('contact_email', 'infoeasypatagonia@gmail.com', 'email', 'contact'),
   ('contact_address', 'Puerto Río Tranquilo, Aysén', 'text', 'contact'),
   ('social_instagram', 'https://www.instagram.com/easy.patagonia', 'url', 'social'),
