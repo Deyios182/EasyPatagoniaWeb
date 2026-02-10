@@ -628,9 +628,9 @@ const AuthenticatedApp: React.FC = () => {
           {/* Auth callback */}
           <Route path="/auth/callback" element={<AuthCallbackScreen />} />
 
-          {/* Las rutas de login/register ahora son "virtuales" - solo activan el modal */}
-          <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <Navigate to="/map" />} />
-          <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <Navigate to="/map" />} />
+          {/* Las rutas de login/register muestran el mapa de fondo */}
+          <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <TouristMapScreen />} />
+          <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <TouristMapScreen />} />
 
           {/* Rutas Públicas (Modo Invitado) */}
           <Route path="/map" element={<TouristMapScreen />} />
@@ -657,7 +657,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
-        {/* Modales de autenticación (renderizados FUERA de Routes) */}
+        {/* Modales de autenticación (renderizados FUERA de Routes, sobre el contenido) */}
         {isLoginModalOpen && !isAuthenticated && <LoginScreen />}
         {isRegisterModalOpen && !isAuthenticated && <RegisterScreen />}
       </main>
