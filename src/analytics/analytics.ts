@@ -8,33 +8,14 @@ export const META_PIXEL_ID = '1613240233378766';
 export const initGA = () => {
     if (typeof window === 'undefined') return;
 
-    console.log('🔄 Inicializando Google Analytics 4...');
+    console.log('🔄 Verificando Google Analytics 4...');
 
-    // Google Analytics 4
-    const gaScript = document.createElement('script');
-    gaScript.async = true;
-    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-    gaScript.onload = () => {
-        console.log('✅ Google Analytics 4 cargado exitosamente');
-    };
-    gaScript.onerror = () => {
-        console.error('❌ Error cargando Google Analytics 4 - Posible bloqueador de ads');
-    };
-    document.head.appendChild(gaScript);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag(...args: any[]) {
-        window.dataLayer.push(args);
+    // GA4 is now loaded in index.html for better reliability
+    if ((window as any).gtag) {
+        console.log('✅ Google Analytics 4 detectado (cargado desde index.html)');
+    } else {
+        console.warn('⚠️ Google Analytics 4 no detectado - Posible bloqueador de anuncios');
     }
-    gtag('js', new Date());
-    gtag('config', GA_MEASUREMENT_ID, {
-        page_path: window.location.pathname,
-    });
-
-    console.log(`✅ GA4 configurado con ID: ${GA_MEASUREMENT_ID}`);
-
-    // Make gtag globally available
-    (window as any).gtag = gtag;
 };
 
 // Initialize Meta Pixel
