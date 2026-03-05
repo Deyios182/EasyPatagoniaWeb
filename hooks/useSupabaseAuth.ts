@@ -57,20 +57,20 @@ export const useSupabaseAuth = () => {
 
             const fetchPromise = (async () => {
                 try {
-                    // Use direct REST API but with the user's JWT token (not anon key)
-                    // This ensures RLS policies recognize the user as 'authenticated'
+                    // Use direct fetch to REST API instead of Supabase client
+                    // This bypasses any potential issues with the JS client
                     // @ts-ignore - Vite env vars
                     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
                     // @ts-ignore - Vite env vars
                     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-                    // Get the current session's JWT token for proper RLS authentication
-                    const { data: sessionData } = await supabase.auth.getSession();
-                    const accessToken = sessionData?.session?.access_token || supabaseKey;
-
                     const url = `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=*`;
 
-                    console.log('📤 [PROFILE] Fetching via REST API with session token...');
+                    // FIX: Use user's JWT session token for RLS (falls back to anon key if no session)
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const authToken = sessionData?.session?.access_token || supabaseKey;
+
+                    console.log('📤 [PROFILE] Fetching via REST API...');
 
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -79,9 +79,9 @@ export const useSupabaseAuth = () => {
                         method: 'GET',
                         headers: {
                             'apikey': supabaseKey,
-                            'Authorization': `Bearer ${accessToken}`,
+                            'Authorization': `Bearer ${authToken}`,
                             'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.pgrst.object+json'
+                            'Accept': 'application/vnd.pgrst.object+json' // Get single object instead of array
                         },
                         signal: controller.signal
                     });
@@ -132,6 +132,8 @@ export const useSupabaseAuth = () => {
                     } else {
                         console.error('❌ [PROFILE] Error:', err?.message || err);
                     }
+                    // Only cache errors that are NOT 406 (profile not found)
+                    // This allows retry for new users
                     return null;
                 } finally {
                     delete pendingFetches.current[userId];
