@@ -56,6 +56,9 @@ export interface Company {
   address?: string;
   whatsapp?: string;
   locality_id?: string;
+  // Horarios
+  opening_time?: string;
+  closing_time?: string;
   // Relaciones
   owner_email?: string;
   services?: Service[];

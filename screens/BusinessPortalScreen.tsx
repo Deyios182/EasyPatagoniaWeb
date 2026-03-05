@@ -135,7 +135,9 @@ const BusinessPortalScreen: React.FC = () => {
         category: editedCompany.category,
         whatsapp: editedCompany.whatsapp,
         address: editedCompany.address,
-        description: editedCompany.description
+        description: editedCompany.description,
+        opening_time: editedCompany.opening_time || '09:00',
+        closing_time: editedCompany.closing_time || '19:00'
       })
       .eq('id', selectedCompany.id);
 
@@ -425,6 +427,62 @@ const BusinessPortalScreen: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Horarios */}
+                <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10">
+                  <h2 className="text-lg font-bold mb-6 text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">schedule</span>
+                    Horarios
+                  </h2>
+
+                  {/* Estado actual */}
+                  {(() => {
+                    const now = new Date();
+                    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    const open = editedCompany?.opening_time || '09:00';
+                    const close = editedCompany?.closing_time || '19:00';
+                    const isCurrentlyOpen = currentTime >= open && currentTime < close;
+                    return (
+                      <div className={`flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border ${isCurrentlyOpen
+                          ? 'bg-green-500/10 border-green-500/30'
+                          : 'bg-red-500/10 border-red-500/30'
+                        }`}>
+                        <div className={`w-3 h-3 rounded-full ${isCurrentlyOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                        <span className={`text-sm font-bold ${isCurrentlyOpen ? 'text-green-400' : 'text-red-400'}`}>
+                          {isCurrentlyOpen ? 'Actualmente ABIERTO' : 'Actualmente CERRADO'}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-auto">
+                          Hora actual: {currentTime}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Hora Apertura</label>
+                      <input
+                        type="time"
+                        value={editedCompany?.opening_time || '09:00'}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, opening_time: e.target.value } : null)}
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none [color-scheme:dark]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Hora Cierre</label>
+                      <input
+                        type="time"
+                        value={editedCompany?.closing_time || '19:00'}
+                        onChange={(e) => setEditedCompany(prev => prev ? { ...prev, closing_time: e.target.value } : null)}
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none [color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">info</span>
+                    El estado "Abierto/Cerrado" se mostrará automáticamente en el directorio según estos horarios.
+                  </p>
                 </div>
 
                 {/* Descripción */}

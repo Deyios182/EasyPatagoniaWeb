@@ -232,7 +232,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           gallery_urls: c.gallery_urls,
           logo_url: c.logo_url
         })));
-        const mapped: Business[] = companies.map(c => ({
+        const mapped: Business[] = companies.map((c: any) => ({
           id: c.id,
           name: c.name,
           nombre: c.name, // Legacy
@@ -277,7 +277,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           info: {
             descripcion: c.description,
             direccion: c.address,
-            horario: "09:00 - 19:00" // Default for now
+            horario: `${c.opening_time || '09:00'} - ${c.closing_time || '19:00'}`
           },
 
           // Media
@@ -287,7 +287,14 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
           },
           // Important for Map
           priority: 0,
-          isOpen: c.is_active,
+          isOpen: (() => {
+            if (!c.is_active) return false;
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const open = c.opening_time || '09:00';
+            const close = c.closing_time || '19:00';
+            return currentTime >= open && currentTime < close;
+          })(),
           is_active: c.is_active, // Fix lint error
 
           // Services
