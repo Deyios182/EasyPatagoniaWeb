@@ -57,25 +57,45 @@ export const useSupabaseAuth = () => {
 
             const fetchPromise = (async () => {
                 try {
-                    // Use Supabase JS client which automatically includes the user's JWT token
-                    // This ensures RLS policies work correctly (authenticated role)
-                    console.log('📤 [PROFILE] Fetching via Supabase client...');
+                    // Use direct REST API but with the user's JWT token (not anon key)
+                    // This ensures RLS policies recognize the user as 'authenticated'
+                    // @ts-ignore - Vite env vars
+                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+                    // @ts-ignore - Vite env vars
+                    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-                    const { data, error } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', userId)
-                        .single();
+                    // Get the current session's JWT token for proper RLS authentication
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const accessToken = sessionData?.session?.access_token || supabaseKey;
 
-                    if (error) {
-                        if (error.code === 'PGRST116') {
-                            // No rows found - new user without profile yet
-                            console.warn('⚠️ [PROFILE] Profile not in DB, will use OAuth fallback');
-                            return null;
-                        }
-                        console.error('❌ [PROFILE] Supabase error:', error.message);
-                        throw error;
+                    const url = `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=*`;
+
+                    console.log('📤 [PROFILE] Fetching via REST API with session token...');
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.pgrst.object+json'
+                        },
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ [PROFILE] REST API error:', response.status, errorText);
+                        throw new Error(`REST API error: ${response.status}`);
                     }
+
+                    const data = await response.json();
+                    console.log('📦 [PROFILE] REST API result:', data);
 
                     if (data && data.id) {
                         console.log('✅ [PROFILE] Found profile with role:', data.role);
@@ -99,10 +119,19 @@ export const useSupabaseAuth = () => {
                         return profile;
                     }
 
+                    // Profile not found - try to create it
                     console.warn('⚠️ [PROFILE] No profile found, will use fallback for userId:', userId);
                     return null;
                 } catch (err: any) {
-                    console.error('❌ [PROFILE] Error:', err?.message || err);
+                    if (err.name === 'AbortError') {
+                        console.error('❌ [PROFILE] Request aborted (timeout)');
+                    } else if (err?.message?.includes('406')) {
+                        // 406 = No rows found - don't cache this as it might be a new user
+                        console.warn('⚠️ [PROFILE] Profile not in DB (406), will use OAuth fallback');
+                        return null; // Don't cache - let fallback handle it
+                    } else {
+                        console.error('❌ [PROFILE] Error:', err?.message || err);
+                    }
                     return null;
                 } finally {
                     delete pendingFetches.current[userId];
