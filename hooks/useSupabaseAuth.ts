@@ -41,7 +41,7 @@ export const useSupabaseAuth = () => {
 
     // Fetch user profile from our custom tables
     // 2025-12-21: MIGRATED TO UNIFIED 'profiles' TABLE
-    const fetchUserProfile = async (userId: string, userEmail?: string): Promise<UserProfile | null> => {
+    const fetchUserProfile = async (userId: string, userEmail?: string, accessToken?: string): Promise<UserProfile | null> => {
         try {
             // Check cache first
             const cached = profileCache.current[userId];
@@ -66,10 +66,6 @@ export const useSupabaseAuth = () => {
 
                     const url = `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=*`;
 
-                    // FIX: Use user's JWT session token for RLS (falls back to anon key if no session)
-                    const { data: sessionData } = await supabase.auth.getSession();
-                    const authToken = sessionData?.session?.access_token || supabaseKey;
-
                     console.log('📤 [PROFILE] Fetching via REST API...');
 
                     const controller = new AbortController();
@@ -79,7 +75,7 @@ export const useSupabaseAuth = () => {
                         method: 'GET',
                         headers: {
                             'apikey': supabaseKey,
-                            'Authorization': `Bearer ${authToken}`,
+                            'Authorization': `Bearer ${accessToken || supabaseKey}`,
                             'Content-Type': 'application/json',
                             'Accept': 'application/vnd.pgrst.object+json' // Get single object instead of array
                         },
@@ -179,7 +175,7 @@ export const useSupabaseAuth = () => {
                     }
 
                     // Try to fetch profile from database
-                    const profile = await fetchUserProfile(session.user.id, session.user.email);
+                    const profile = await fetchUserProfile(session.user.id, session.user.email, session.access_token);
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
                     // Assign super_admin role to known admin emails
@@ -269,7 +265,7 @@ export const useSupabaseAuth = () => {
                         }));
                     }
 
-                    const profile = await fetchUserProfile(session.user.id, session.user.email);
+                    const profile = await fetchUserProfile(session.user.id, session.user.email, session.access_token);
 
                     // FALLBACK: If profile fetch fails, create one from OAuth metadata
                     // Assign super_admin role to known admin emails
