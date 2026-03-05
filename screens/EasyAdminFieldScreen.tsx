@@ -101,7 +101,7 @@ const EasyAdminFieldScreen: React.FC = () => {
         // 3. Cargar Empresas
         const { data: comps } = await supabase
             .from('companies')
-            .select('id, name, description, logo_url, category, address, whatsapp, latitude, longitude, gallery_urls, locality_id, owner_id, is_active')
+            .select('id, name, description, logo_url, category, address, whatsapp, latitude, longitude, gallery_urls, locality_id, owner_id, is_active, opening_time, closing_time')
             .order('name');
         if (comps) {
             setCompanies(comps.map(c => ({ ...c, owner_email: '' })));
@@ -232,7 +232,9 @@ const EasyAdminFieldScreen: React.FC = () => {
             locality_id: editingCompany.locality_id && editingCompany.locality_id !== ""
                 ? editingCompany.locality_id
                 : null,
-            owner_id: finalOwnerId
+            owner_id: finalOwnerId,
+            opening_time: editingCompany.opening_time || '09:00',
+            closing_time: editingCompany.closing_time || '19:00'
         };
 
         console.log("🔵 [SAVE] editingCompany.locality_id:", editingCompany.locality_id);
@@ -847,6 +849,21 @@ const EasyAdminFieldScreen: React.FC = () => {
 
                                             <input type="text" placeholder="WhatsApp" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.whatsapp || ''} onChange={e => setEditingCompany({ ...editingCompany, whatsapp: e.target.value })} />
                                             <input type="text" placeholder="Dirección" className="w-full bg-white/5 border border-white/10 text-white rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder:text-slate-500" value={editingCompany.address || ''} onChange={e => setEditingCompany({ ...editingCompany, address: e.target.value })} />
+
+                                            {/* Horarios */}
+                                            <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/30">
+                                                <label className="text-xs font-bold text-blue-400 uppercase tracking-wider block mb-3">Horarios</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-slate-500 block mb-1">Apertura</label>
+                                                        <input type="time" value={editingCompany.opening_time || '09:00'} onChange={e => setEditingCompany({ ...editingCompany, opening_time: e.target.value })} className="w-full bg-white/5 border border-white/10 text-white rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none [color-scheme:dark]" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-slate-500 block mb-1">Cierre</label>
+                                                        <input type="time" value={editingCompany.closing_time || '19:00'} onChange={e => setEditingCompany({ ...editingCompany, closing_time: e.target.value })} className="w-full bg-white/5 border border-white/10 text-white rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none [color-scheme:dark]" />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div className="space-y-6">
                                             <ImageUploader label="Logo Empresa" isSmall currentImage={editingCompany.logo_url} onUpload={(e) => handleFileUpload(e, url => setEditingCompany({ ...editingCompany, logo_url: url }))} />

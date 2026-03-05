@@ -214,6 +214,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
         .select(`
                 id, name, description, logo_url, category, address, whatsapp, 
                 latitude, longitude, gallery_urls, locality_id, owner_id, is_active, created_at,
+                opening_time, closing_time,
                 services (*)
             `)
         .eq('is_active', true);
