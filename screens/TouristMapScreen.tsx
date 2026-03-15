@@ -70,7 +70,8 @@ const TouristMapScreen: React.FC = () => {
     return allBusinesses.filter(b => {
       // Robust checks
       if (!b.gps) return false;
-      if (b.isOpen === false) return false;
+      // NOTE: Removed isOpen filter - businesses should always be visible on the map
+      // even when closed. The open/closed status is shown visually on the card instead.
 
       // Check if it's a market/artesanía (Always visible like attractions)
       const isMarket = ['Mercado', 'Artesanía', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c));
@@ -204,6 +205,7 @@ const TouristMapScreen: React.FC = () => {
           lng: b.gps!.lng,
           title: b.nombre,
           type: isMarket ? 'market' : 'business',
+          isOpen: b.isOpen,
           color: b.categoria === 'Transporte' ? '#4f6d7a' :
             ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
               ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
@@ -348,6 +350,7 @@ const TouristMapScreen: React.FC = () => {
         });
       } else {
         // NEGOCIOS: Mantienen el diseño circular
+        const isClosed = (item as any).isOpen === false;
         let innerHtml = '';
         const categoryIcon =
           ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
@@ -355,32 +358,62 @@ const TouristMapScreen: React.FC = () => {
               ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
                 'location_on';
 
-        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;${isClosed ? ' filter: grayscale(60%) opacity(0.7);' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                         <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
+
+        // Badge "CERRADO" que se muestra encima del pin
+        const closedBadge = isClosed ? `
+          <div style="
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #DC2626, #B91C1C);
+            color: white;
+            font-size: 7px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 6px;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.5);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            letter-spacing: 0.5px;
+            z-index: 10;
+            pointer-events: none;
+          ">CERRADO</div>
+        ` : '';
 
         customIcon = L.divIcon({
           className: "",
           html: `
             <div style="
               position: relative;
-              width: ${isActive ? '56px' : '40px'}; 
-              height: ${isActive ? '56px' : '40px'}; 
-              border-radius: 50%; 
-              border: ${isActive ? '3px' : '2px'} solid white; 
-              background-color: ${item.color}; 
-              overflow: hidden;
-              box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-              transition: all 0.3s ease;
-              z-index: ${isActive ? 1000 : 1};
               display: flex;
+              flex-direction: column;
               align-items: center;
-              justify-content: center;
             ">
-              ${innerHtml}
+              ${closedBadge}
+              <div style="
+                position: relative;
+                width: ${isActive ? '56px' : '40px'}; 
+                height: ${isActive ? '56px' : '40px'}; 
+                border-radius: 50%; 
+                border: ${isActive ? '3px' : '2px'} solid ${isClosed ? '#9CA3AF' : 'white'}; 
+                background-color: ${isClosed ? '#6B7280' : item.color}; 
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0,0,0,${isClosed ? '0.3' : '0.5'});
+                transition: all 0.3s ease;
+                z-index: ${isActive ? 1000 : 1};
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                ${innerHtml}
+              </div>
             </div>
           `,
-          iconSize: isActive ? [56, 56] : [40, 40],
-          iconAnchor: isActive ? [28, 28] : [20, 20]
+          iconSize: isActive ? [56, 70] : [40, 54],
+          iconAnchor: isActive ? [28, 42] : [20, 34]
         });
       }
 
