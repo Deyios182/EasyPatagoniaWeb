@@ -68,10 +68,11 @@ const CarpetasTab: React.FC = () => {
     if (existing && existing.length > 0) return alert(`La carpeta ${year} ya existe`);
 
     // Create year folder
-    const { data: yearFolder } = await supabase.from('intranet_folders')
-      .insert([{ name: String(year), folder_year: year, icon: 'calendar_today', color: '#6366f1', created_by: user?.uid ?? null }])
+    const { data: yearFolder, error: yearError } = await supabase.from('intranet_folders')
+      .insert([{ name: String(year), folder_year: year, icon: 'calendar_today', color: '#6366f1' }])
       .select().single();
 
+    if (yearError) { console.error('Error creating year folder:', yearError); alert('Error: ' + yearError.message); return; }
     if (!yearFolder) return;
 
     // Create monthly subfolders
@@ -81,10 +82,10 @@ const CarpetasTab: React.FC = () => {
       folder_year: year,
       folder_month: i + 1,
       icon: 'folder',
-      color: '#3b82f6',
-      created_by: user?.uid ?? null
+      color: '#3b82f6'
     }));
-    await supabase.from('intranet_folders').insert(monthFolders);
+    const { error: monthError } = await supabase.from('intranet_folders').insert(monthFolders);
+    if (monthError) console.error('Error creating month folders:', monthError);
     fetchFolders(currentFolder?.id || null);
   };
 
@@ -137,14 +138,14 @@ const CarpetasTab: React.FC = () => {
 
     const { data: urlData } = supabase.storage.from('intranet').getPublicUrl(filePath);
 
-    await supabase.from('intranet_files').insert([{
+    const { error: fileError } = await supabase.from('intranet_files').insert([{
       folder_id: currentFolder.id,
       name: file.name,
       file_url: urlData.publicUrl,
       file_size: file.size,
-      file_type: file.type,
-      uploaded_by: user?.uid ?? null
+      file_type: file.type
     }]);
+    if (fileError) console.error('Error saving file record:', fileError);
 
     setUploading(false);
     e.target.value = '';
@@ -159,13 +160,13 @@ const CarpetasTab: React.FC = () => {
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
-    await supabase.from('intranet_folders').insert([{
+    const { error: folderError } = await supabase.from('intranet_folders').insert([{
       name: newFolderName.trim(),
       parent_id: currentFolder?.id || null,
       icon: 'folder',
-      color: '#3b82f6',
-      created_by: user?.uid ?? null
+      color: '#3b82f6'
     }]);
+    if (folderError) { console.error('Error creating folder:', folderError); alert('Error: ' + folderError.message); return; }
     setNewFolderName('');
     setShowNewFolder(false);
     fetchFolders(currentFolder?.id || null);

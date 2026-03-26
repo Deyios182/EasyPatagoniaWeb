@@ -67,14 +67,15 @@ const ContabilidadTab: React.FC = () => {
       amount: parseFloat(form.amount),
       description: form.description,
       date: form.date,
-      notes: form.notes,
-      created_by: user?.uid ?? null
+      notes: form.notes
     };
 
     if (editId) {
-      await supabase.from('intranet_transactions').update(payload).eq('id', editId);
+      const { error } = await supabase.from('intranet_transactions').update(payload).eq('id', editId);
+      if (error) { console.error('Error updating:', error); alert('Error: ' + error.message); }
     } else {
-      await supabase.from('intranet_transactions').insert([payload]);
+      const { error } = await supabase.from('intranet_transactions').insert([payload]);
+      if (error) { console.error('Error inserting:', error); alert('Error: ' + error.message); }
     }
 
     setForm({ type: 'expense', category: 'Operaciones', amount: '', description: '', date: new Date().toISOString().split('T')[0], notes: '' });
