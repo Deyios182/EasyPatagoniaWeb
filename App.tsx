@@ -29,6 +29,7 @@ import AttractionDetailsScreen from './screens/AttractionDetailsScreen';
 import AuthCallbackScreen from './screens/AuthCallbackScreen';
 import UserContributionsScreen from './screens/UserContributionsScreen';
 import AdminPhotoReviewScreen from './screens/AdminPhotoReviewScreen';
+import IntranetScreen from './screens/intranet/IntranetScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
@@ -584,6 +585,16 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
             <NavItem to="/portal" icon="storefront" label="Mi Empresa" />
           </>
         )}
+
+        {/* SECCIÓN INTRANET - Solo para SuperAdmin */}
+        {displayRole === 'SuperAdmin' && (
+          <>
+            <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
+            {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Gestión Interna</p>}
+            <NavItem to="/admin" icon="dashboard" label="Dashboard" />
+            <NavItem to="/admin/intranet" icon="business_center" label="Intranet" />
+          </>
+        )}
       </div>
       <div className="mt-auto pt-6 border-t border-slate-300 dark:border-white/5 shrink-0">
         {user || supabaseUser ? (
@@ -680,6 +691,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/field" element={user && (role === 'EasyColaborador' || role === 'SuperAdmin') ? <EasyAdminFieldScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
           <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
+          <Route path="/admin/intranet" element={user && user.rol === 'SuperAdmin' ? <IntranetScreen /> : <Navigate to="/" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 

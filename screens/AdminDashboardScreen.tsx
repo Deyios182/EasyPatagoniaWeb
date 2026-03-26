@@ -197,6 +197,14 @@ const AdminDashboardScreen: React.FC = () => {
                   color="bg-gradient-to-br from-orange-500 to-red-500"
                   cta="Editar Web"
                />
+               <ActionCard
+                  onClick={() => navigate('/admin/intranet')}
+                  icon="business_center"
+                  title="Intranet Easy"
+                  description="Contabilidad, carpetas compartidas, calendario y presupuesto para gestión interna."
+                  color="bg-gradient-to-br from-emerald-500 to-teal-600"
+                  cta="Abrir Intranet"
+               />
             </div>
 
             {/* Quick Links */}
