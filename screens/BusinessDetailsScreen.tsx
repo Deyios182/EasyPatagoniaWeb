@@ -5,6 +5,7 @@ import { Service } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import SEO from '../components/SEO';
+import { supabase } from '../supabaseClient';
 
 const variants = {
   enter: (direction: number) => {
@@ -39,6 +40,29 @@ const BusinessDetailsScreen: React.FC = () => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const business = allBusinesses.find(b => b.id === id) || allBusinesses[0];
+
+  const [realRating, setRealRating] = useState<number | string>(business.rating);
+  const [realReviewCount, setRealReviewCount] = useState<number>(business.reviewCount);
+
+  React.useEffect(() => {
+    const fetchReviews = async () => {
+      if (!business.id) return;
+      
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('rating')
+        .eq('business_id', business.id)
+        .eq('post_type', 'review')
+        .not('rating', 'is', null);
+        
+      if (data && data.length > 0) {
+        const avg = data.reduce((acc: number, curr: any) => acc + curr.rating, 0) / data.length;
+        setRealRating(avg.toFixed(1));
+        setRealReviewCount(data.length);
+      }
+    };
+    fetchReviews();
+  }, [business.id]);
 
   // Carousel State
   const [[page, direction], setPage] = useState([0, 0]);
@@ -205,10 +229,10 @@ const BusinessDetailsScreen: React.FC = () => {
               <span className="px-6 py-2.5 rounded-full bg-primary/10 text-primary text-[10px] font-black border border-primary/20 uppercase tracking-[0.25em] leading-none">
                 {t(business.categoria.toLowerCase())}
               </span>
-              <div className="flex items-center gap-2 text-primary font-black bg-slate-50 dark:bg-white/5 px-5 py-2.5 rounded-full border border-slate-100 dark:border-white/5 leading-none">
+              <div className="flex items-center gap-2 text-primary font-black bg-slate-50 dark:bg-white/5 px-5 py-2.5 rounded-full border border-slate-100 dark:border-white/5 leading-none cursor-pointer" onClick={() => navigate('/community')}>
                 <span className="material-symbols-outlined text-sm">star</span>
-                {business.rating}
-                <span className="text-slate-400 text-[10px] font-bold ml-1">({business.reviewCount})</span>
+                {realRating}
+                <span className="text-slate-400 text-[10px] font-bold ml-1">({realReviewCount} {realReviewCount === 1 ? 'reseña' : 'reseñas'})</span>
               </div>
               <span className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${business.isOpen ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                 {business.isOpen ? t('business_status_open') : t('business_status_closed')}

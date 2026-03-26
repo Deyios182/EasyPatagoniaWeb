@@ -39,20 +39,31 @@ const timeAgo = (dateStr: string) => {
 
 const CommunityFeedScreen: React.FC = () => {
     const navigate = useNavigate();
-    const { user, supabaseUser } = useAppAuth();
+    const { user, supabaseUser, allBusinesses } = useAppAuth();
     const [posts, setPosts] = useState<CommunityPost[]>([]);
+    const [attractions, setAttractions] = useState<{ id: string, name: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Form state for creating a new post
     const [isCreatingText, setIsCreatingText] = useState(false);
-    const [newPostType, setNewPostType] = useState<'review' | 'alert' | 'story'>('story');
+    const [newPostType, setNewPostType] = useState<'review' | 'alert' | 'story' | 'photo'>('story');
     const [newPostContent, setNewPostContent] = useState('');
     const [newPostLocation, setNewPostLocation] = useState('');
+    const [newPostAttractionId, setNewPostAttractionId] = useState('');
+    const [newPostBusinessId, setNewPostBusinessId] = useState('');
+    const [newPostRating, setNewPostRating] = useState<number>(5);
+    const [newPostImage, setNewPostImage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         fetchPosts();
+        fetchAttractions();
     }, []);
+
+    const fetchAttractions = async () => {
+        const { data } = await supabase.from('attractions').select('id, name').order('name');
+        if (data) setAttractions(data);
+    };
 
     const fetchPosts = async () => {
         setLoading(true);
@@ -149,7 +160,11 @@ const CommunityFeedScreen: React.FC = () => {
                 post_type: newPostType,
                 content: newPostContent,
                 location_name: newPostLocation || null,
-                status: 'approved' // Automatically approve text-based alerts/stories for now
+                attraction_id: newPostAttractionId || null,
+                business_id: newPostType === 'review' ? (newPostBusinessId || null) : null,
+                rating: newPostType === 'review' ? newPostRating : null,
+                media_urls: newPostImage ? [newPostImage] : [],
+                status: 'approved' // Automatically approve text-based alerts/stories/photos for now
             }]);
 
             if (error) throw error;
@@ -157,6 +172,10 @@ const CommunityFeedScreen: React.FC = () => {
             // Clean up and refresh
             setNewPostContent('');
             setNewPostLocation('');
+            setNewPostAttractionId('');
+            setNewPostBusinessId('');
+            setNewPostRating(5);
+            setNewPostImage(null);
             setIsCreatingText(false);
             fetchPosts();
         } catch (error) {
@@ -181,14 +200,9 @@ const CommunityFeedScreen: React.FC = () => {
             <div className="w-full max-w-2xl h-full flex flex-col bg-slate-50 dark:bg-surface-dark pb-[70px] shadow-2xl overflow-y-auto no-scrollbar relative">
 
                 {/* Header */}
-                <div className="sticky top-0 z-50 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 py-6 px-6 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Mural Global</h1>
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">En vivo • Comunidad Aysén</p>
-                    </div>
-                    <button onClick={() => navigate('/map')} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-background-dark flex items-center justify-center dark:text-white text-slate-600">
-                        <span className="material-symbols-outlined">map</span>
-                    </button>
+                <div className="bg-white/90 dark:bg-surface-dark/90 py-6 px-6">
+                    <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Mural Global</h1>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">En vivo • Comunidad Aysén</p>
                 </div>
 
                 {/* Create Post Area */}
@@ -217,26 +231,93 @@ const CommunityFeedScreen: React.FC = () => {
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                             <div className="flex gap-2">
-                                {(['story', 'alert', 'review'] as const).map(type => (
+                                {(['story', 'alert', 'review', 'photo'] as const).map(type => (
                                     <button
                                         key={type}
                                         onClick={() => setNewPostType(type)}
-                                        className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${newPostType === type ? 'bg-primary text-white shadow-lg' : 'bg-slate-100 dark:bg-background-dark text-slate-500'}`}
+                                        className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex flex-col items-center justify-center gap-1 transition-all ${newPostType === type ? 'bg-primary text-white shadow-lg' : 'bg-slate-100 dark:bg-background-dark text-slate-500'}`}
                                     >
                                         {getPostIcon(type)}
                                         {type}
                                     </button>
                                 ))}
                             </div>
+
+                            {newPostType === 'photo' && (
+                                <div className="space-y-3 animate-in fade-in">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">¿De qué lugar es esta foto?</p>
+                                    <select
+                                        value={newPostAttractionId}
+                                        onChange={e => setNewPostAttractionId(e.target.value)}
+                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        <option value="">Seleccionar Atractivo Turístico (Opcional)</option>
+                                        {attractions.map(a => (
+                                            <option key={a.id} value={a.id}>{a.name}</option>
+                                        ))}
+                                    </select>
+
+                                    <div className="flex items-center justify-center w-full">
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-slate-100 dark:border-gray-600 dark:hover:border-gray-500 overflow-hidden relative">
+                                            {newPostImage ? (
+                                                <img src={newPostImage} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">cloud_upload</span>
+                                                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Sube una imagen</span></p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">PNG o JPG (Max 2MB)</p>
+                                                </div>
+                                            )}
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (re) => setNewPostImage(re.target?.result as string);
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {newPostType === 'review' && (
+                                <div className="space-y-3 animate-in fade-in">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">¿Qué negocio estás valorando?</p>
+                                    <select
+                                        value={newPostBusinessId}
+                                        onChange={e => setNewPostBusinessId(e.target.value)}
+                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-amber-500/50"
+                                    >
+                                        <option value="">Seleccionar Empresa / Local (Opcional)</option>
+                                        {allBusinesses.map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                    
+                                    <div className="flex items-center justify-center gap-2 py-2">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <button
+                                                key={star}
+                                                onClick={() => setNewPostRating(star)}
+                                                className={`text-3xl transition-all ${star <= newPostRating ? 'text-amber-400 drop-shadow-sm scale-110' : 'text-slate-200 dark:text-slate-700'}`}
+                                            >
+                                                ★
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <input
                                 type="text"
-                                placeholder="📍 Ubicación (Ej: Cerca de Coyhaique)"
+                                placeholder="📍 Ubicación o Título (Ej: Capillas de Mármol)"
                                 value={newPostLocation}
                                 onChange={e => setNewPostLocation(e.target.value)}
                                 className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-0"
                             />
                             <textarea
-                                placeholder={newPostType === 'alert' ? "Describe la alerta de ruta..." : "Cuenta tu experiencia..."}
+                                placeholder={newPostType === 'alert' ? "Describe la alerta de ruta..." : newPostType === 'photo' ? "Añade una descripción a tu foto..." : "Cuenta tu experiencia..."}
                                 value={newPostContent}
                                 onChange={e => setNewPostContent(e.target.value)}
                                 rows={3}
@@ -244,14 +325,14 @@ const CommunityFeedScreen: React.FC = () => {
                             ></textarea>
                             <div className="flex justify-end gap-2">
                                 <button
-                                    onClick={() => { setIsCreatingText(false); setNewPostContent(''); setNewPostLocation(''); }}
+                                    onClick={() => { setIsCreatingText(false); setNewPostContent(''); setNewPostLocation(''); setNewPostImage(null); setNewPostAttractionId(''); setNewPostBusinessId(''); setNewPostRating(5); }}
                                     className="px-6 py-3 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleSubmitPost}
-                                    disabled={!newPostContent.trim() || isSubmitting}
+                                    disabled={!newPostContent.trim() || isSubmitting || (newPostType === 'photo' && !newPostImage) || (newPostType === 'review' && !newPostBusinessId)}
                                     className="px-6 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest shadow-lg disabled:opacity-50"
                                 >
                                     {isSubmitting ? 'Publicando...' : 'Publicar'}
@@ -305,6 +386,15 @@ const CommunityFeedScreen: React.FC = () => {
                                         <span className="text-[10px] font-black uppercase tracking-widest">
                                             {post.attractions?.name || post.companies?.name || post.location_name}
                                         </span>
+                                    </div>
+                                )}
+
+                                {/* Rating Stars if Review */}
+                                {post.post_type === 'review' && (post as any).rating && (
+                                    <div className="flex gap-1 mb-3">
+                                        {[1,2,3,4,5].map(star => (
+                                            <span key={star} className={`text-lg ${star <= (post as any).rating ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'}`}>★</span>
+                                        ))}
                                     </div>
                                 )}
 

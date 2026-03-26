@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { generateActivityPreview } from '../geminiService';
 import { useAppAuth } from '../App';
 import { SavedItinerary, ItineraryDay } from '../types';
+import { supabase } from '../supabaseClient';
 
 const ItineraryScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { allBusinesses, saveItinerary, t } = useAppAuth();
+  const { allBusinesses, saveItinerary, t, supabaseUser } = useAppAuth();
   const [activityImages, setActivityImages] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [currentDay, setCurrentDay] = useState(1);
 
   const storedPlan = localStorage.getItem('ep_plan');
@@ -57,6 +59,38 @@ const ItineraryScreen: React.FC = () => {
     navigate('/profile');
   };
 
+  const handleShareToMural = async () => {
+    if (!plan || !meta || !supabaseUser) {
+      alert("Debes iniciar sesión para compartir en el mural.");
+      return;
+    }
+    
+    setIsSharing(true);
+    try {
+      const locationsText = meta.localities?.length > 0 ? ` en ${meta.localities.join(', ')}` : '';
+      const text = `¡Acabo de armar una hoja de ruta de ${meta.days} días${locationsText} usando el planificador inteligente! 🎒🏔️ ¿Alguien más por la zona estas fechas?`;
+      
+      const { error } = await supabase.from('community_posts').insert([{
+        user_id: supabaseUser.id,
+        post_type: 'story',
+        content: text,
+        location_name: meta.localities?.[0] || 'Carretera Austral',
+        status: 'approved'
+      }]);
+
+      if (error) throw error;
+      
+      if (window.confirm("¡Tu itinerario ha sido publicado en el Mural Global! ¿Quieres ir al Mural a verlo?")) {
+        navigate('/community');
+      }
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo compartir en el mural.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   if (plan.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-8 text-center bg-background-dark">
@@ -81,8 +115,15 @@ const ItineraryScreen: React.FC = () => {
             <p className="text-[10px] uppercase font-black text-primary tracking-[0.4em] mb-2">Mi Ruta Aysén</p>
             <h1 className="text-2xl md:text-3xl font-black dark:text-white leading-none uppercase italic tracking-tighter">Aventura Planificada</h1>
           </div>
-          <button className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-slate-200 dark:border-white/5">
-            <span className="material-symbols-outlined">share</span>
+          <button 
+            onClick={handleShareToMural}
+            disabled={isSharing}
+            className={`w-14 h-14 flex items-center justify-center rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-slate-200 dark:border-white/5 hover:bg-blue-500 hover:text-white transition-all group ${isSharing ? 'opacity-50' : ''}`}
+            title="Compartir en el Mural Global"
+          >
+            <span className={`material-symbols-outlined ${isSharing ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`}>
+              {isSharing ? 'sync' : 'share'}
+            </span>
           </button>
         </div>
 
