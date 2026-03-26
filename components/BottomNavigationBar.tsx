@@ -57,14 +57,14 @@ const BottomNavigationBar: React.FC = () => {
                 <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Mural</span>
             </Link>
 
-            {/* 5. EL PATAGÓN (Far Right) */}
+            {/* 5. PATAGONIA (Far Right) */}
             <Link
                 to="/chat"
                 className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/chat') || isActive('/planner') ? 'text-primary' : 'text-slate-400 hover:text-primary'
                     }`}
             >
                 <span className="material-symbols-outlined text-2xl leading-none">smart_toy</span>
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90 whitespace-nowrap">El Patagón</span>
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90 whitespace-nowrap">PatagonIA</span>
             </Link>
         </div>
     );

@@ -167,7 +167,7 @@ const ChatBotScreen: React.FC = () => {
             </div>
             <div className="flex-1">
               <h2 className="font-black text-lg tracking-tight uppercase italic">
-                El Patagón<span className="text-primary text-[10px] font-bold ml-2 not-italic bg-primary/20 px-2 py-1 rounded-full uppercase tracking-widest">IA</span>
+                Patagon<span className="text-primary text-[10px] font-bold ml-2 not-italic bg-primary/20 px-2 py-1 rounded-full uppercase tracking-widest">IA</span>
               </h2>
               <div className="flex items-center gap-1.5 mt-1">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
