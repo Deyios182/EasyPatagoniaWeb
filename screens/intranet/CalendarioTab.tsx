@@ -220,8 +220,16 @@ const CalendarioTab: React.FC = () => {
                   className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold outline-none focus:border-primary/50" />
               </div>
             </div>
-            <input type="text" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="📍 Ubicación (opcional)"
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-primary/50" />
+            <div className="relative">
+              <input type="text" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="📍 Ubicación o Enlace (opcional)"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-primary/50 pr-32" />
+              {form.event_type === 'reunión' && !form.location?.includes('meet.jit.si') && (
+                <button type="button" onClick={() => setForm({ ...form, location: `https://meet.jit.si/EasyPatagonia-Direct-${Math.random().toString(36).substring(2, 10)}` })}
+                  className="absolute right-2 top-2 px-3 py-1.5 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-indigo-500/30 transition-all">
+                  + Sala Virtual
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tipo</label>
@@ -263,21 +271,30 @@ const CalendarioTab: React.FC = () => {
       {events.length > 0 && (
         <div className="space-y-2">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Eventos del mes ({events.length})</p>
-          {events.map(ev => (
-            <div key={ev.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => handleEdit(ev)}>
-              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ev.color }}></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm truncate">{ev.title}</p>
-                <p className="text-slate-500 text-[10px]">
-                  {new Date(ev.start_date).toLocaleDateString('es-CL')} {new Date(ev.start_date).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                  {ev.location && ` • 📍 ${ev.location}`}
-                </p>
+          {events.map(ev => {
+            const hasMeeting = ev.location?.includes('meet.jit.si');
+            return (
+              <div key={ev.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => handleEdit(ev)}>
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ev.color }}></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-sm truncate">{ev.title}</p>
+                  <p className="text-slate-500 text-[10px] break-words">
+                    {new Date(ev.start_date).toLocaleDateString('es-CL')} {new Date(ev.start_date).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                    {ev.location && !hasMeeting && ` • 📍 ${ev.location}`}
+                  </p>
+                </div>
+                {hasMeeting && (
+                  <button onClick={e => { e.stopPropagation(); window.open(ev.location, '_blank', 'noopener,noreferrer'); }} 
+                    className="flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-500 rounded-lg text-[10px] font-bold text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">
+                    <span className="material-symbols-outlined text-[14px]">videocam</span> Unirse
+                  </button>
+                )}
+                <button onClick={e => { e.stopPropagation(); exportICS(ev); }} className={`p-1.5 hover:bg-white/10 rounded-lg transition-all ${hasMeeting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} title="Exportar .ics">
+                  <span className="material-symbols-outlined text-sm text-slate-400">download</span>
+                </button>
               </div>
-              <button onClick={e => { e.stopPropagation(); exportICS(ev); }} className="p-1.5 hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100" title="Exportar .ics">
-                <span className="material-symbols-outlined text-sm text-slate-400">download</span>
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
