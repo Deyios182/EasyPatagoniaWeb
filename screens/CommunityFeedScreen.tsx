@@ -17,14 +17,18 @@ interface CommunityPost {
     likes_count: number;
     status: 'pending' | 'approved' | 'rejected';
     created_at: string;
-    // Joined relations (optional)
+    link_url?: string | null;
+    // Joined relations
     auth_users?: { raw_user_meta_data: { full_name?: string, avatar_url?: string } };
     attractions?: { name: string };
     companies?: { name: string };
-    user_has_liked?: boolean; // Appended by our logic
+    user_has_liked?: boolean;
 }
 
-// Custom helper para no depender de librerías externas
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+
 const timeAgo = (dateStr: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 1000);
     if (seconds < 60) return 'hace un momento';
@@ -37,6 +41,106 @@ const timeAgo = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
 };
 
+/** Detect video platform and extract embed ID */
+const parseVideoUrl = (url: string): { platform: 'youtube' | 'tiktok' | 'instagram' | null, id: string | null, original: string } => {
+    if (!url) return { platform: null, id: null, original: url };
+
+    // YouTube
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    if (ytMatch) return { platform: 'youtube', id: ytMatch[1], original: url };
+
+    // TikTok
+    const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+    if (ttMatch) return { platform: 'tiktok', id: ttMatch[1], original: url };
+
+    // Instagram Reels
+    const igMatch = url.match(/instagram\.com\/(?:reel|reels|p)\/([A-Za-z0-9_-]+)/);
+    if (igMatch) return { platform: 'instagram', id: igMatch[1], original: url };
+
+    return { platform: null, id: null, original: url };
+};
+
+const getPlatformIcon = (platform: string | null) => {
+    if (platform === 'youtube') return '▶️';
+    if (platform === 'tiktok') return '🎵';
+    if (platform === 'instagram') return '📸';
+    return '🔗';
+};
+
+const getPlatformLabel = (platform: string | null) => {
+    if (platform === 'youtube') return 'YouTube';
+    if (platform === 'tiktok') return 'TikTok';
+    if (platform === 'instagram') return 'Instagram';
+    return 'Ver enlace';
+};
+
+/** Inline video card: embeds YouTube, shows TikTok/Reels "play on social + preview" */
+const VideoCard: React.FC<{ url: string }> = ({ url }) => {
+    const [expanded, setExpanded] = useState(false);
+    const { platform, id, original } = parseVideoUrl(url);
+
+    if (platform === 'youtube' && id) {
+        return (
+            <div className="mb-4 rounded-2xl overflow-hidden bg-black aspect-video relative">
+                {expanded ? (
+                    <iframe
+                        className="w-full h-full"
+                        src={`https://www.youtube.com/embed/${id}?autoplay=1`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    />
+                ) : (
+                    <button onClick={() => setExpanded(true)} className="relative w-full h-full group">
+                        <img
+                            src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
+                            alt="YouTube thumbnail"
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                                <span className="text-white text-2xl ml-1">▶</span>
+                            </div>
+                        </div>
+                        <div className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-bold px-3 py-1 rounded-full">YouTube</div>
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    // TikTok / Instagram – show platform card with redirect
+    return (
+        <a
+            href={original}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-4 flex items-center gap-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl px-5 py-4 shadow-lg hover:brightness-110 transition-all group"
+        >
+            <span className="text-4xl">{getPlatformIcon(platform)}</span>
+            <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{getPlatformLabel(platform)}</p>
+                <p className="text-sm font-bold truncate">{original}</p>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">open_in_new</span>
+        </a>
+    );
+};
+
+// ─────────────────────────────────────────────
+// MAIN SCREEN
+// ─────────────────────────────────────────────
+
+const resetForm = {
+    content: '',
+    location: '',
+    attractionId: '',
+    businessId: '',
+    rating: 5 as number,
+    image: null as string | null,
+    linkUrl: '',
+    type: 'story' as 'review' | 'alert' | 'story' | 'photo',
+};
+
 const CommunityFeedScreen: React.FC = () => {
     const navigate = useNavigate();
     const { user, supabaseUser, allBusinesses } = useAppAuth();
@@ -44,16 +148,21 @@ const CommunityFeedScreen: React.FC = () => {
     const [attractions, setAttractions] = useState<{ id: string, name: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Form state for creating a new post
+    // Create form
     const [isCreatingText, setIsCreatingText] = useState(false);
-    const [newPostType, setNewPostType] = useState<'review' | 'alert' | 'story' | 'photo'>('story');
-    const [newPostContent, setNewPostContent] = useState('');
-    const [newPostLocation, setNewPostLocation] = useState('');
-    const [newPostAttractionId, setNewPostAttractionId] = useState('');
-    const [newPostBusinessId, setNewPostBusinessId] = useState('');
-    const [newPostRating, setNewPostRating] = useState<number>(5);
-    const [newPostImage, setNewPostImage] = useState<string | null>(null);
+    const [formType, setFormType] = useState(resetForm.type);
+    const [formContent, setFormContent] = useState('');
+    const [formLocation, setFormLocation] = useState('');
+    const [formAttractionId, setFormAttractionId] = useState('');
+    const [formBusinessId, setFormBusinessId] = useState('');
+    const [formRating, setFormRating] = useState(5);
+    const [formImage, setFormImage] = useState<string | null>(null);
+    const [formLinkUrl, setFormLinkUrl] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Edit state
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPosts();
@@ -68,34 +177,22 @@ const CommunityFeedScreen: React.FC = () => {
     const fetchPosts = async () => {
         setLoading(true);
         try {
-            // Fetch posts
             const { data: postsData, error: postsError } = await supabase
                 .from('community_posts')
-                .select(`
-                    *,
-                    attractions(name),
-                    companies(name)
-                `)
+                .select(`*, attractions(name), companies(name)`)
                 .eq('status', 'approved')
                 .order('created_at', { ascending: false })
                 .limit(50);
 
             if (postsError) throw postsError;
 
-            // Optional: Fetch user details for each post since auth.users isn't easily joinable without a public profile table.
-            // Since we use raw Supabase users, we will map them if we have profiles.
             const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_url');
 
-            // Find which posts the CURRENT user has liked
             let userLikes: Set<string> = new Set();
             if (supabaseUser) {
                 const { data: likesData } = await supabase
-                    .from('post_likes')
-                    .select('post_id')
-                    .eq('user_id', supabaseUser.id);
-                if (likesData) {
-                    userLikes = new Set(likesData.map(l => l.post_id));
-                }
+                    .from('post_likes').select('post_id').eq('user_id', supabaseUser.id);
+                if (likesData) userLikes = new Set(likesData.map(l => l.post_id));
             }
 
             const mappedPosts = (postsData || []).map(post => {
@@ -120,70 +217,76 @@ const CommunityFeedScreen: React.FC = () => {
         }
     };
 
+    const clearForm = () => {
+        setFormType('story'); setFormContent(''); setFormLocation('');
+        setFormAttractionId(''); setFormBusinessId(''); setFormRating(5);
+        setFormImage(null); setFormLinkUrl(''); setIsCreatingText(false);
+        setEditingPostId(null);
+    };
+
     const handleToggleLike = async (postId: string, currentlyLiked: boolean) => {
-        if (!supabaseUser) {
-            alert("Debes iniciar sesión para dar like.");
-            return;
-        }
-
-        // Optimistic UI update
-        setPosts(prev => prev.map(p => {
-            if (p.id === postId) {
-                return {
-                    ...p,
-                    user_has_liked: !currentlyLiked,
-                    likes_count: p.likes_count + (currentlyLiked ? -1 : 1)
-                };
-            }
-            return p;
-        }));
-
-        const { data, error } = await supabase.rpc('toggle_community_like', { p_post_id: postId });
-        if (error) {
-            console.error("Error toggling like:", error);
-            // Revert on error
-            fetchPosts();
-        }
+        if (!supabaseUser) { alert('Debes iniciar sesión para dar like.'); return; }
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, user_has_liked: !currentlyLiked, likes_count: p.likes_count + (currentlyLiked ? -1 : 1) } : p));
+        const { error } = await supabase.rpc('toggle_community_like', { p_post_id: postId });
+        if (error) fetchPosts();
     };
 
     const handleSubmitPost = async () => {
-        if (!newPostContent.trim()) return;
-        if (!supabaseUser) {
-            alert("Debes iniciar sesión para publicar.");
-            return;
-        }
-
+        if (!formContent.trim() || !supabaseUser) return;
         setIsSubmitting(true);
         try {
-            const { error } = await supabase.from('community_posts').insert([{
+            const payload: Record<string, any> = {
                 user_id: supabaseUser.id,
-                post_type: newPostType,
-                content: newPostContent,
-                location_name: newPostLocation || null,
-                attraction_id: newPostAttractionId || null,
-                business_id: newPostType === 'review' ? (newPostBusinessId || null) : null,
-                rating: newPostType === 'review' ? newPostRating : null,
-                media_urls: newPostImage ? [newPostImage] : [],
-                status: 'approved' // Automatically approve text-based alerts/stories/photos for now
-            }]);
+                post_type: formType,
+                content: formContent,
+                location_name: formLocation || null,
+                attraction_id: formAttractionId || null,
+                business_id: formType === 'review' ? (formBusinessId || null) : null,
+                rating: formType === 'review' ? formRating : null,
+                media_urls: formImage ? [formImage] : [],
+                link_url: formLinkUrl.trim() || null,
+                status: 'approved',
+            };
 
-            if (error) throw error;
-            
-            // Clean up and refresh
-            setNewPostContent('');
-            setNewPostLocation('');
-            setNewPostAttractionId('');
-            setNewPostBusinessId('');
-            setNewPostRating(5);
-            setNewPostImage(null);
-            setIsCreatingText(false);
+            if (editingPostId) {
+                const { error } = await supabase.from('community_posts')
+                    .update({ content: formContent, location_name: payload.location_name, link_url: payload.link_url })
+                    .eq('id', editingPostId)
+                    .eq('user_id', supabaseUser.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('community_posts').insert([payload]);
+                if (error) throw error;
+            }
+
+            clearForm();
             fetchPosts();
         } catch (error) {
-            console.error("Error creating post:", error);
-            alert("No se pudo crear la publicación");
+            console.error('Error saving post:', error);
+            alert('No se pudo guardar la publicación');
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditPost = (post: CommunityPost) => {
+        setEditingPostId(post.id);
+        setFormType(post.post_type as any);
+        setFormContent(post.content);
+        setFormLocation(post.location_name || '');
+        setFormLinkUrl((post as any).link_url || '');
+        setMenuOpenPostId(null);
+        setIsCreatingText(true);
+    };
+
+    const handleDeletePost = async (postId: string) => {
+        if (!supabaseUser) return;
+        if (!window.confirm('¿Eliminar esta publicación?')) return;
+        setMenuOpenPostId(null);
+        const { error } = await supabase.from('community_posts')
+            .delete().eq('id', postId).eq('user_id', supabaseUser.id);
+        if (!error) setPosts(prev => prev.filter(p => p.id !== postId));
+        else alert('No se pudo eliminar. Verifica que sea tu publicación.');
     };
 
     const getPostIcon = (type: string) => {
@@ -196,23 +299,22 @@ const CommunityFeedScreen: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center">
+        <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center" onClick={() => setMenuOpenPostId(null)}>
             <div className="w-full max-w-2xl h-full flex flex-col bg-slate-50 dark:bg-surface-dark pb-[70px] shadow-2xl overflow-y-auto no-scrollbar relative">
 
                 {/* Header */}
-                <div className="bg-white/90 dark:bg-surface-dark/90 py-6 px-6">
+                <div className="bg-white/90 dark:bg-surface-dark/90 py-6 px-6 sticky top-0 z-40 border-b border-slate-100 dark:border-white/5">
                     <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Mural Global</h1>
                     <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">En vivo • Comunidad Aysén</p>
                 </div>
 
-                {/* Create Post Area */}
+                {/* Create / Edit Post Area */}
                 <div className="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-white/5 p-4">
                     {!isCreatingText ? (
                         <div className="flex gap-3">
                             <img
                                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser?.id || 'guest'}`}
-                                alt="Avatar"
-                                className="w-10 h-10 rounded-full bg-slate-100"
+                                alt="Avatar" className="w-10 h-10 rounded-full bg-slate-100"
                             />
                             <button
                                 onClick={() => setIsCreatingText(true)}
@@ -220,88 +322,77 @@ const CommunityFeedScreen: React.FC = () => {
                             >
                                 ¿Qué está pasando en la Patagonia?
                             </button>
-                            <button
-                                onClick={() => {/* TODO: Opción para subir foto (redireccionar a un flujo de cámara o selección de foto glogal) */}}
-                                className="w-10 h-10 bg-slate-100 dark:bg-background-dark rounded-full flex items-center justify-center text-primary"
-                                title="Subir Foto"
-                            >
-                                <span className="material-symbols-outlined">image</span>
-                            </button>
                         </div>
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                            <div className="flex gap-2">
-                                {(['story', 'alert', 'review', 'photo'] as const).map(type => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setNewPostType(type)}
-                                        className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex flex-col items-center justify-center gap-1 transition-all ${newPostType === type ? 'bg-primary text-white shadow-lg' : 'bg-slate-100 dark:bg-background-dark text-slate-500'}`}
-                                    >
-                                        {getPostIcon(type)}
-                                        {type}
-                                    </button>
-                                ))}
-                            </div>
+                            {editingPostId && (
+                                <div className="text-[10px] font-black text-primary uppercase tracking-widest">✏️ Editando publicación</div>
+                            )}
 
-                            {newPostType === 'photo' && (
-                                <div className="space-y-3 animate-in fade-in">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">¿De qué lugar es esta foto?</p>
-                                    <select
-                                        value={newPostAttractionId}
-                                        onChange={e => setNewPostAttractionId(e.target.value)}
-                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-primary/50"
-                                    >
-                                        <option value="">Seleccionar Atractivo Turístico (Opcional)</option>
-                                        {attractions.map(a => (
-                                            <option key={a.id} value={a.id}>{a.name}</option>
-                                        ))}
-                                    </select>
-
-                                    <div className="flex items-center justify-center w-full">
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-slate-100 dark:border-gray-600 dark:hover:border-gray-500 overflow-hidden relative">
-                                            {newPostImage ? (
-                                                <img src={newPostImage} alt="Preview" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">cloud_upload</span>
-                                                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Sube una imagen</span></p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">PNG o JPG (Max 2MB)</p>
-                                                </div>
-                                            )}
-                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    const reader = new FileReader();
-                                                    reader.onload = (re) => setNewPostImage(re.target?.result as string);
-                                                    reader.readAsDataURL(file);
-                                                }
-                                            }} />
-                                        </label>
-                                    </div>
+                            {/* Type selector (only for new posts) */}
+                            {!editingPostId && (
+                                <div className="flex gap-2">
+                                    {(['story', 'alert', 'review', 'photo'] as const).map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setFormType(type)}
+                                            className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex flex-col items-center justify-center gap-1 transition-all ${formType === type ? 'bg-primary text-white shadow-lg' : 'bg-slate-100 dark:bg-background-dark text-slate-500'}`}
+                                        >
+                                            {getPostIcon(type)}
+                                            {type}
+                                        </button>
+                                    ))}
                                 </div>
                             )}
 
-                            {newPostType === 'review' && (
+                            {/* Photo upload */}
+                            {formType === 'photo' && !editingPostId && (
                                 <div className="space-y-3 animate-in fade-in">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">¿Qué negocio estás valorando?</p>
                                     <select
-                                        value={newPostBusinessId}
-                                        onChange={e => setNewPostBusinessId(e.target.value)}
-                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-amber-500/50"
+                                        value={formAttractionId}
+                                        onChange={e => setFormAttractionId(e.target.value)}
+                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white"
                                     >
-                                        <option value="">Seleccionar Empresa / Local (Opcional)</option>
-                                        {allBusinesses.map(b => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
+                                        <option value="">📍 Atractivo Turístico (Opcional)</option>
+                                        {attractions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
-                                    
+                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 overflow-hidden relative">
+                                        {formImage ? (
+                                            <img src={formImage} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="material-symbols-outlined text-3xl text-slate-400">cloud_upload</span>
+                                                <p className="text-sm text-slate-500 font-semibold">Sube una imagen</p>
+                                                <p className="text-xs text-slate-400">PNG o JPG (Max 2MB)</p>
+                                            </div>
+                                        )}
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (re) => setFormImage(re.target?.result as string);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} />
+                                    </label>
+                                </div>
+                            )}
+
+                            {/* Business rating */}
+                            {formType === 'review' && !editingPostId && (
+                                <div className="space-y-3 animate-in fade-in">
+                                    <select
+                                        value={formBusinessId}
+                                        onChange={e => setFormBusinessId(e.target.value)}
+                                        className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white"
+                                    >
+                                        <option value="">Seleccionar Empresa / Local *</option>
+                                        {allBusinesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                    </select>
                                     <div className="flex items-center justify-center gap-2 py-2">
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <button
-                                                key={star}
-                                                onClick={() => setNewPostRating(star)}
-                                                className={`text-3xl transition-all ${star <= newPostRating ? 'text-amber-400 drop-shadow-sm scale-110' : 'text-slate-200 dark:text-slate-700'}`}
-                                            >
+                                            <button key={star} onClick={() => setFormRating(star)}
+                                                className={`text-3xl transition-all ${star <= formRating ? 'text-amber-400 scale-110' : 'text-slate-200 dark:text-slate-700'}`}>
                                                 ★
                                             </button>
                                         ))}
@@ -309,33 +400,56 @@ const CommunityFeedScreen: React.FC = () => {
                                 </div>
                             )}
 
+                            {/* Location */}
                             <input
                                 type="text"
-                                placeholder="📍 Ubicación o Título (Ej: Capillas de Mármol)"
-                                value={newPostLocation}
-                                onChange={e => setNewPostLocation(e.target.value)}
+                                placeholder="📍 Ubicación o Título"
+                                value={formLocation}
+                                onChange={e => setFormLocation(e.target.value)}
                                 className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl px-4 py-3 dark:text-white focus:ring-0"
                             />
+
+                            {/* Content */}
                             <textarea
-                                placeholder={newPostType === 'alert' ? "Describe la alerta de ruta..." : newPostType === 'photo' ? "Añade una descripción a tu foto..." : "Cuenta tu experiencia..."}
-                                value={newPostContent}
-                                onChange={e => setNewPostContent(e.target.value)}
+                                placeholder={formType === 'alert' ? 'Describe la alerta de ruta...' : formType === 'photo' ? 'Añade una descripción...' : 'Cuenta tu experiencia...'}
+                                value={formContent}
+                                onChange={e => setFormContent(e.target.value)}
                                 rows={3}
                                 className="w-full text-sm font-medium bg-slate-100 dark:bg-background-dark border-none rounded-xl p-4 dark:text-white focus:ring-2 focus:ring-primary/20 resize-none"
-                            ></textarea>
+                            />
+
+                            {/* Video / Link URL */}
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">link</span>
+                                <input
+                                    type="url"
+                                    placeholder="🎬 Enlace de YouTube, TikTok, Reels u otro URL..."
+                                    value={formLinkUrl}
+                                    onChange={e => setFormLinkUrl(e.target.value)}
+                                    className="w-full text-sm font-bold bg-slate-50 dark:bg-background-dark/30 border-none rounded-xl pl-10 pr-4 py-3 dark:text-white focus:ring-0"
+                                />
+                            </div>
+                            {/* Preview of parsed video link */}
+                            {formLinkUrl.trim() && (() => {
+                                const { platform } = parseVideoUrl(formLinkUrl.trim());
+                                return (
+                                    <p className="text-[10px] font-bold text-primary px-2 -mt-2">
+                                        {getPlatformIcon(platform)} Detectado: {getPlatformLabel(platform)} — se mostrará en el Mural
+                                    </p>
+                                );
+                            })()}
+
+                            {/* Actions */}
                             <div className="flex justify-end gap-2">
-                                <button
-                                    onClick={() => { setIsCreatingText(false); setNewPostContent(''); setNewPostLocation(''); setNewPostImage(null); setNewPostAttractionId(''); setNewPostBusinessId(''); setNewPostRating(5); }}
-                                    className="px-6 py-3 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
-                                >
+                                <button onClick={clearForm} className="px-6 py-3 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5">
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleSubmitPost}
-                                    disabled={!newPostContent.trim() || isSubmitting || (newPostType === 'photo' && !newPostImage) || (newPostType === 'review' && !newPostBusinessId)}
+                                    disabled={!formContent.trim() || isSubmitting || (formType === 'photo' && !formImage && !editingPostId) || (formType === 'review' && !formBusinessId && !editingPostId)}
                                     className="px-6 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest shadow-lg disabled:opacity-50"
                                 >
-                                    {isSubmitting ? 'Publicando...' : 'Publicar'}
+                                    {isSubmitting ? 'Guardando...' : editingPostId ? 'Guardar cambios' : 'Publicar'}
                                 </button>
                             </div>
                         </div>
@@ -356,30 +470,60 @@ const CommunityFeedScreen: React.FC = () => {
                         </div>
                     ) : (
                         posts.map(post => (
-                            <div key={post.id} className="bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 rounded-3xl p-5 shadow-sm">
+                            <div key={post.id} className="bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 rounded-3xl p-5 shadow-sm" onClick={e => e.stopPropagation()}>
+
                                 {/* Post Header */}
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
                                         <img
                                             src={post.auth_users?.raw_user_meta_data?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user_id}`}
-                                            className="w-10 h-10 rounded-full bg-slate-100"
-                                            alt="Avatar"
+                                            className="w-10 h-10 rounded-full bg-slate-100" alt="Avatar"
                                         />
                                         <div>
                                             <p className="text-sm font-black dark:text-white leading-none">
                                                 {post.auth_users?.raw_user_meta_data?.full_name || 'Explorador'}
                                             </p>
-                                            <p className="text-[10px] text-slate-500 font-bold mt-1">
-                                                {timeAgo(post.created_at)}
-                                            </p>
+                                            <p className="text-[10px] text-slate-500 font-bold mt-1">{timeAgo(post.created_at)}</p>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-50 dark:bg-background-dark w-10 h-10 rounded-full flex items-center justify-center">
-                                        {getPostIcon(post.post_type)}
+
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-slate-50 dark:bg-background-dark w-10 h-10 rounded-full flex items-center justify-center">
+                                            {getPostIcon(post.post_type)}
+                                        </div>
+                                        {/* 3-dot menu — only for own posts */}
+                                        {supabaseUser && post.user_id === supabaseUser.id && (
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setMenuOpenPostId(menuOpenPostId === post.id ? null : post.id); }}
+                                                    className="w-10 h-10 rounded-full bg-slate-50 dark:bg-background-dark text-slate-400 hover:bg-slate-100 flex items-center justify-center"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">more_vert</span>
+                                                </button>
+                                                {menuOpenPostId === post.id && (
+                                                    <div className="absolute right-0 top-12 z-50 bg-white dark:bg-surface-dark rounded-2xl shadow-xl border border-slate-100 dark:border-white/10 overflow-hidden w-40 animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={() => handleEditPost(post)}
+                                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5"
+                                                        >
+                                                            <span className="material-symbols-outlined text-base">edit</span>
+                                                            Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeletePost(post.id)}
+                                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                        >
+                                                            <span className="material-symbols-outlined text-base">delete</span>
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Location Badge (If has one) */}
+                                {/* Location Badge */}
                                 {(post.location_name || post.attractions || post.companies) && (
                                     <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-lg mb-3">
                                         <span className="material-symbols-outlined text-[14px]">location_on</span>
@@ -389,41 +533,37 @@ const CommunityFeedScreen: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Rating Stars if Review */}
+                                {/* Rating Stars */}
                                 {post.post_type === 'review' && (post as any).rating && (
                                     <div className="flex gap-1 mb-3">
-                                        {[1,2,3,4,5].map(star => (
+                                        {[1, 2, 3, 4, 5].map(star => (
                                             <span key={star} className={`text-lg ${star <= (post as any).rating ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'}`}>★</span>
                                         ))}
                                     </div>
                                 )}
 
                                 {/* Content */}
-                                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                                    {post.content}
-                                </p>
+                                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-4">{post.content}</p>
 
-                                {/* Media */}
+                                {/* Image */}
                                 {post.media_urls && post.media_urls.length > 0 && (
                                     <div className="mb-4 rounded-xl overflow-hidden bg-slate-100 dark:bg-background-dark">
                                         <img src={post.media_urls[0]} alt="Post media" className="w-full max-h-96 object-cover" />
                                     </div>
                                 )}
 
+                                {/* Video / Link embed */}
+                                {(post as any).link_url && (
+                                    <VideoCard url={(post as any).link_url} />
+                                )}
+
                                 {/* Actions */}
                                 <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                                    <button
-                                        onClick={() => handleToggleLike(post.id, !!post.user_has_liked)}
-                                        className="flex items-center gap-2 group"
-                                    >
+                                    <button onClick={() => handleToggleLike(post.id, !!post.user_has_liked)} className="flex items-center gap-2 group">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${post.user_has_liked ? 'bg-red-50 text-red-500 dark:bg-red-500/10' : 'bg-slate-50 dark:bg-background-dark text-slate-400 group-hover:bg-slate-100'}`}>
-                                            <span className="material-symbols-outlined text-lg" style={post.user_has_liked ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                                favorite
-                                            </span>
+                                            <span className="material-symbols-outlined text-lg" style={post.user_has_liked ? { fontVariationSettings: "'FILL' 1" } : {}}>favorite</span>
                                         </div>
-                                        <span className={`text-sm font-black ${post.user_has_liked ? 'text-red-500' : 'text-slate-500'}`}>
-                                            {post.likes_count}
-                                        </span>
+                                        <span className={`text-sm font-black ${post.user_has_liked ? 'text-red-500' : 'text-slate-500'}`}>{post.likes_count}</span>
                                     </button>
 
                                     <button className="w-10 h-10 rounded-full bg-slate-50 dark:bg-background-dark text-slate-400 hover:bg-slate-100 flex items-center justify-center ml-auto">
