@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
 import BottomNavigationBar from '../components/BottomNavigationBar';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface CommunityPost {
     id: string;
@@ -25,6 +23,19 @@ interface CommunityPost {
     companies?: { name: string };
     user_has_liked?: boolean; // Appended by our logic
 }
+
+// Custom helper para no depender de librerías externas
+const timeAgo = (dateStr: string) => {
+    const seconds = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 1000);
+    if (seconds < 60) return 'hace un momento';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `hace ${minutes} m`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `hace ${days} d`;
+    return new Date(dateStr).toLocaleDateString();
+};
 
 const CommunityFeedScreen: React.FC = () => {
     const navigate = useNavigate();
@@ -206,7 +217,7 @@ const CommunityFeedScreen: React.FC = () => {
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                             <div className="flex gap-2">
-                                {(<['story', 'alert', 'review']>['story', 'alert', 'review']).map(type => (
+                                {(['story', 'alert', 'review'] as const).map(type => (
                                     <button
                                         key={type}
                                         onClick={() => setNewPostType(type)}
@@ -278,7 +289,7 @@ const CommunityFeedScreen: React.FC = () => {
                                                 {post.auth_users?.raw_user_meta_data?.full_name || 'Explorador'}
                                             </p>
                                             <p className="text-[10px] text-slate-500 font-bold mt-1">
-                                                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: es })}
+                                                {timeAgo(post.created_at)}
                                             </p>
                                         </div>
                                     </div>
