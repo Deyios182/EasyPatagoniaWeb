@@ -12,6 +12,7 @@ interface PhotoContribution {
     photo_description: string | null;
     status: 'pending' | 'approved' | 'rejected';
     rejection_reason: string | null;
+    likes_count: number;
     created_at: string;
     attraction_name?: string;
 }
@@ -70,6 +71,7 @@ const UserContributionsScreen: React.FC = () => {
     const pendingPhotos = contributions.filter(c => c.status === 'pending').length;
     const rejectedPhotos = contributions.filter(c => c.status === 'rejected').length;
     const totalPoints = approvedPhotos * 10;
+    const totalLikes = contributions.reduce((acc, c) => acc + (c.likes_count || 0), 0);
 
     const rankInfo = getRankProgress(approvedPhotos);
 
@@ -164,12 +166,12 @@ const UserContributionsScreen: React.FC = () => {
                         <p className="text-sm text-slate-600 dark:text-slate-400 font-semibold">Pendientes</p>
                     </div>
 
-                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-sm">
+                    <div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/10 dark:to-pink-900/10 rounded-2xl p-6 shadow-sm border border-red-100 dark:border-red-900/30">
                         <div className="flex items-center gap-3 mb-2">
-                            <Trophy className="text-amber-400" size={24} />
-                            <span className="text-3xl font-black text-slate-900 dark:text-white">{totalPoints}</span>
+                            <span className="material-symbols-outlined text-red-500 text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                            <span className="text-3xl font-black text-red-600 dark:text-red-400">{totalLikes}</span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 font-semibold">Puntos</p>
+                        <p className="text-sm text-red-600/80 dark:text-red-400/80 font-black uppercase tracking-wider">Likes Totales</p>
                     </div>
                 </div>
 
@@ -250,13 +252,21 @@ const UserContributionsScreen: React.FC = () => {
                                             })}
                                         </p>
 
-                                        {/* Points or Rejection Reason */}
+                                        {/* Points and Likes */}
                                         {photo.status === 'approved' && (
-                                            <div className="mt-3 inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 px-3 py-1 rounded-full">
-                                                <Trophy size={14} className="text-amber-600 dark:text-amber-400" />
-                                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                                    +10 puntos
-                                                </span>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/30 px-3 py-1 rounded-full">
+                                                    <Trophy size={14} className="text-amber-600 dark:text-amber-400" />
+                                                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                                        +10 pts
+                                                    </span>
+                                                </div>
+                                                <div className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 shadow-sm border border-red-100 dark:border-red-900/30 px-3 py-1 rounded-full">
+                                                    <span className="material-symbols-outlined text-red-500 text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                                                    <span className="text-xs font-black text-red-600 dark:text-red-400">
+                                                        {photo.likes_count || 0} likes
+                                                    </span>
+                                                </div>
                                             </div>
                                         )}
                                         {photo.status === 'rejected' && photo.rejection_reason && (

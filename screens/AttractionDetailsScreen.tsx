@@ -15,7 +15,10 @@ const AttractionDetailsScreen: React.FC = () => {
     const attraction = allAttractions.find(a => a.id === id);
     const [relatedBusinesses, setRelatedBusinesses] = useState<any[]>([]);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
-    const [photoAuthors, setPhotoAuthors] = useState<Record<string, { name: string; rank: any }>>({});
+    const [photoAuthors, setPhotoAuthors] = useState<Record<string, { name: string; rank: any; likes: number; id: string | null }>>({});
+    const [communityPhotos, setCommunityPhotos] = useState<any[]>([]);
+    const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
+    const [isLiking, setIsLiking] = useState<string | null>(null);
 
     useEffect(() => {
         if (!attraction) return;
@@ -35,26 +38,21 @@ const AttractionDetailsScreen: React.FC = () => {
 
         // Fetch photo authors and their ranks
         const fetchPhotoAuthors = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
 
-
-            console.log('📸 Fetching authors for attraction:', attraction.id);
-
-            const { data: contributions, error } = await supabase
+            const { data: contributions } = await supabase
                 .from('user_photo_contributions')
-                .select('photo_url, user_id, user_name, user_email')
+                .select('id, photo_url, user_id, user_name, user_email, likes_count')
                 .eq('attraction_id', attraction.id)
-                .eq('status', 'approved');
-
-            console.log('📸 Contributions found:', contributions);
-            console.log('📸 Error:', error);
+                .eq('status', 'approved')
+                .order('likes_count', { ascending: false });
 
             if (contributions) {
-                const authorsData: Record<string, { name: string; rank: any }> = {};
+                setCommunityPhotos(contributions);
+                const authorsData: Record<string, { name: string; rank: any; likes: number; id: string }> = {};
 
                 for (const contrib of contributions) {
                     if (!contrib.photo_url) continue;
-
-                    console.log('📸 Processing contribution:', contrib);
 
                     // Get user's approved photos count for rank
                     const { data: userPhotos } = await supabase
@@ -65,20 +63,32 @@ const AttractionDetailsScreen: React.FC = () => {
 
                     const approvedCount = userPhotos?.length || 1;
                     const rankInfo = getUserRank(approvedCount);
-
-                    // Use user_name from contribution record
                     const userName = contrib.user_name || contrib.user_email?.split('@')[0] || 'Viajero Anónimo';
-
-                    console.log(`📸 Author: ${userName}, Rank: ${rankInfo.rank}, Count: ${approvedCount}`);
 
                     authorsData[contrib.photo_url] = {
                         name: userName,
-                        rank: rankInfo
+                        rank: rankInfo,
+                        likes: contrib.likes_count || 0,
+                        id: contrib.id
                     };
                 }
-
-                console.log('📸 Final authors data:', authorsData);
                 setPhotoAuthors(authorsData);
+            }
+
+            // Fetch current user's likes
+            if (user && contributions) {
+                const contribIds = contributions.map(c => c.id);
+                if (contribIds.length > 0) {
+                    const { data: myLikes } = await supabase
+                        .from('photo_likes')
+                        .select('photo_id')
+                        .eq('user_id', user.id)
+                        .in('photo_id', contribIds);
+                    
+                    if (myLikes) {
+                        setUserLikes(new Set(myLikes.map(l => l.photo_id)));
+                    }
+                }
             }
         };
 
@@ -157,59 +167,116 @@ const AttractionDetailsScreen: React.FC = () => {
                             </div>
                         ) : (
                             <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
-                                {attraction.gallery_urls?.map((img: string, i: number) => {
-                                    const author = photoAuthors[img];
-                                    return (
-                                        <div key={i} className="w-full h-full shrink-0 snap-center relative">
-                                            <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
+                                {(() => {
+                                    // Combine official and community photos without duplicates
+                                    const allUrls = [
+                                        ...(attraction.main_image_url ? [attraction.main_image_url] : []),
+                                        ...(attraction.gallery_urls || []),
+                                        ...communityPhotos.map(c => c.photo_url)
+                                    ];
+                                    const uniqueUrls = [...new Set(allUrls)];
 
-                                            {/* Author Attribution */}
-                                            {author && (
-                                                <div className="absolute bottom-8 right-8 z-20">
-                                                    <div className="bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 shadow-xl">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex-1">
-                                                                <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Foto por</p>
-                                                                <p className="text-white font-black text-sm">{author.name}</p>
-                                                            </div>
-                                                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${author.rank.gradient}`}>
-                                                                <span className="text-sm">{author.rank.emoji}</span>
-                                                                <span className="text-white font-black text-[10px] uppercase">{author.rank.rank}</span>
+                                    // Sort community photos to the front by likes so podium is visible first
+                                    const sortedUrls = uniqueUrls.sort((a, b) => {
+                                        const likesA = photoAuthors[a]?.likes || 0;
+                                        const likesB = photoAuthors[b]?.likes || 0;
+                                        return likesB - likesA;
+                                    });
+
+                                    // Identify top 3 community photos for the podium
+                                    let rankIndex = 1;
+
+                                    return sortedUrls.map((img: string, i: number) => {
+                                        const author = photoAuthors[img];
+                                        let medal = null;
+                                        let medalColor = '';
+                                        
+                                        if (author && author.id) {
+                                            if (rankIndex === 1) { medal = '🥇'; medalColor = 'from-yellow-300 to-yellow-500 shadow-yellow-500/50'; }
+                                            else if (rankIndex === 2) { medal = '🥈'; medalColor = 'from-slate-300 to-slate-400 shadow-slate-400/50'; }
+                                            else if (rankIndex === 3) { medal = '🥉'; medalColor = 'from-orange-400 to-orange-600 shadow-orange-500/50'; }
+                                            rankIndex++;
+                                        }
+
+                                        const hasLiked = author && author.id ? userLikes.has(author.id) : false;
+
+                                        const handleLikeToggle = async (e: React.MouseEvent) => {
+                                            e.stopPropagation();
+                                            if (!author || !author.id) return navigate('/login');
+                                            
+                                            // Optimistic UI updates
+                                            setIsLiking(author.id);
+                                            const newLikes = new Set(userLikes);
+                                            if (hasLiked) {
+                                                newLikes.delete(author.id);
+                                                author.likes -= 1;
+                                            } else {
+                                                newLikes.add(author.id);
+                                                author.likes += 1;
+                                            }
+                                            setUserLikes(newLikes);
+                                            setPhotoAuthors({ ...photoAuthors });
+
+                                            try {
+                                                const { error } = await supabase.rpc('toggle_photo_like', { p_photo_id: author.id });
+                                                if (error) throw error;
+                                            } catch (error) {
+                                                console.error('Error in toggle like:', error);
+                                                // Revert optimistic on error
+                                                if (hasLiked) newLikes.add(author.id);
+                                                else newLikes.delete(author.id);
+                                                setUserLikes(newLikes);
+                                            }
+                                            setIsLiking(null);
+                                        };
+
+                                        return (
+                                            <div key={i} className="w-full h-full shrink-0 snap-center relative group">
+                                                <img src={img} className="w-full h-full object-cover" alt={attraction.name} />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80 pointer-events-none"></div>
+
+                                                {/* Podium Medal */}
+                                                {medal && (
+                                                    <div className="absolute top-6 left-6 z-20 animate-in zoom-in duration-500">
+                                                        <div className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-gradient-to-br ${medalColor} shadow-xl border-4 border-white/20 backdrop-blur-md rotate-[-10deg] hover:scale-110 transition-transform`}>
+                                                            <span className="text-3xl md:text-4xl filter drop-shadow-md">{medal}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Author Attribution & Interactions */}
+                                                {author && (
+                                                    <div className="absolute bottom-8 right-8 z-20 flex flex-col items-end gap-3">
+                                                        {/* Like Button Wrapper */}
+                                                        {author.id && (
+                                                            <button 
+                                                                onClick={handleLikeToggle}
+                                                                disabled={isLiking === author.id}
+                                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-black text-sm transition-all border shadow-lg ${hasLiked ? 'bg-red-500/90 border-red-400 text-white shadow-red-500/30' : 'bg-black/60 border-white/20 text-white hover:bg-black/80 backdrop-blur-md'}`}
+                                                            >
+                                                                <span className={`material-symbols-outlined text-[18px] ${hasLiked ? 'text-white' : 'text-red-400'}`} style={{ fontVariationSettings: hasLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                                                                {author.likes}
+                                                            </button>
+                                                        )}
+                                                        
+                                                        {/* Author Badge */}
+                                                        <div className="bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 shadow-xl max-w-xs transition-transform transform group-hover:scale-[1.02]">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Foto por</p>
+                                                                    <p className="text-white font-black text-sm truncate">{author.name}</p>
+                                                                </div>
+                                                                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${author.rank.gradient} shrink-0`}>
+                                                                    <span className="text-sm">{author.rank.emoji}</span>
+                                                                    <span className="text-white font-black text-[10px] uppercase">{author.rank.rank}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                }) || (() => {
-                                    // Fallback to main_image_url
-                                    const mainAuthor = photoAuthors[attraction.main_image_url!];
-                                    return (
-                                        <div className="w-full h-full shrink-0 snap-center relative">
-                                            <img src={attraction.main_image_url} className="w-full h-full object-cover" alt={attraction.name} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent opacity-80"></div>
-
-                                            {/* Author Attribution for main image */}
-                                            {mainAuthor && (
-                                                <div className="absolute bottom-8 right-8 z-20">
-                                                    <div className="bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 shadow-xl">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex-1">
-                                                                <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Foto por</p>
-                                                                <p className="text-white font-black text-sm">{mainAuthor.name}</p>
-                                                            </div>
-                                                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${mainAuthor.rank.gradient}`}>
-                                                                <span className="text-sm">{mainAuthor.rank.emoji}</span>
-                                                                <span className="text-white font-black text-[10px] uppercase">{mainAuthor.rank.rank}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
+                                                )}
+                                            </div>
+                                        );
+                                    });
                                 })()}
                             </div>
                         )}
