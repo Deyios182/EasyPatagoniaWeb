@@ -5,12 +5,14 @@ import ContabilidadTab from './ContabilidadTab';
 import CarpetasTab from './CarpetasTab';
 import CalendarioTab from './CalendarioTab';
 import PresupuestoTab from './PresupuestoTab';
+import ReunionesTab from './ReunionesTab';
 
 const TABS = [
   { id: 'contabilidad', label: 'Contabilidad', icon: 'account_balance', gradient: 'from-emerald-500 to-emerald-600' },
   { id: 'carpetas', label: 'Carpetas', icon: 'folder_shared', gradient: 'from-blue-500 to-indigo-600' },
   { id: 'calendario', label: 'Calendario', icon: 'calendar_month', gradient: 'from-purple-500 to-pink-600' },
   { id: 'presupuesto', label: 'Presupuesto', icon: 'monitoring', gradient: 'from-orange-500 to-red-500' },
+  { id: 'reuniones', label: 'Reuniones', icon: 'videocam', gradient: 'from-blue-400 to-cyan-500' },
 ];
 
 const IntranetScreen: React.FC = () => {
@@ -36,7 +38,7 @@ const IntranetScreen: React.FC = () => {
               <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase italic">
                 Easy Intranet
               </h1>
-              <p className="text-slate-400 text-lg">Gestión interna • Contabilidad • Documentos • Calendario</p>
+              <p className="text-slate-400 text-lg">Gestión interna • Contabilidad • Documentos • Calendario • Reuniones</p>
             </div>
 
             <button onClick={() => navigate('/admin')}
@@ -68,6 +70,7 @@ const IntranetScreen: React.FC = () => {
         {activeTab === 'carpetas' && <CarpetasTab />}
         {activeTab === 'calendario' && <CalendarioTab />}
         {activeTab === 'presupuesto' && <PresupuestoTab />}
+        {activeTab === 'reuniones' && <ReunionesTab />}
       </div>
     </div>
   );
