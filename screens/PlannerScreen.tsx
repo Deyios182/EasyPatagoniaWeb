@@ -104,26 +104,45 @@ const PlannerScreen: React.FC = () => {
     <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center p-4 md:p-12 overflow-y-auto no-scrollbar">
       <div className="w-full max-w-4xl space-y-12 pb-24">
 
-        <div className="flex items-center justify-between">
-          <button onClick={() => navigate('/map')} className="hidden md:flex w-14 h-14 items-center justify-center rounded-2xl bg-white dark:bg-surface-dark dark:text-white shadow-sm border border-slate-200 dark:border-white/5 hover:bg-primary hover:text-white transition-all">
-            <span className="material-symbols-outlined text-2xl">arrow_back</span>
-          </button>
-          <div className="text-center flex-1 md:flex-initial">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Easy Planner</span>
-            <h1 className="text-2xl md:text-3xl font-black dark:text-white tracking-tighter uppercase italic leading-none">{t('itinerary_title')}</h1>
-          </div>
-          {/* Botón para ver el último plan si existe */}
-          {localStorage.getItem('ep_plan') ? (
-            <button
-              onClick={() => navigate('/itinerary')}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all animate-pulse"
-            >
-              <span className="material-symbols-outlined text-sm">visibility</span>
-              <span className="text-[10px] font-black uppercase tracking-widest">Ver Último Plan</span>
+        {/* Header Chat Unificado (Igual a Chatbot) */}
+        <div className="p-6 md:p-8 bg-surface-dark mx-[-16px] md:mx-[-48px] mt-[-16px] md:mt-[-48px] mb-8 flex flex-col text-white shadow-xl relative z-50">
+          <div className="flex items-center gap-5 mb-6">
+            <button onClick={() => navigate('/map')} className="hidden md:flex w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
+              <span className="material-symbols-outlined">arrow_back</span>
             </button>
-          ) : (
-            <div className="w-14 hidden md:block"></div>
-          )}
+            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <span className="material-symbols-outlined text-3xl">smart_toy</span>
+            </div>
+            <div className="flex-1">
+              <h2 className="font-black text-lg tracking-tight uppercase italic flex items-center flex-wrap">
+                El Patagón<span className="text-primary text-[10px] font-bold ml-2 not-italic bg-primary/20 px-2 py-1 rounded-full uppercase tracking-widest">IA</span>
+              </h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Taller de Rutas</span>
+              </div>
+            </div>
+            {/* Botón para ver el último plan si existe */}
+            {localStorage.getItem('ep_plan') && (
+              <button
+                onClick={() => navigate('/itinerary')}
+                className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl bg-primary/20 text-white hover:bg-primary transition-all animate-pulse border border-primary/30 shadow-lg"
+              >
+                <span className="material-symbols-outlined text-sm md:text-lg">visibility</span>
+                <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Ver Último Plan</span>
+              </button>
+            )}
+          </div>
+
+          {/* TABS */}
+          <div className="flex bg-white/5 p-1.5 rounded-2xl max-w-2xl mx-auto w-full">
+             <button onClick={() => navigate('/chat')} className="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center gap-2">
+               <span className="material-symbols-outlined text-lg">chat</span> Asistente
+             </button>
+             <button className="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all bg-primary text-white shadow-lg flex items-center justify-center gap-2">
+               <span className="material-symbols-outlined text-lg">auto_awesome</span> Armar Itinerario
+             </button>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-surface-dark p-6 md:p-16 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border border-slate-100 dark:border-white/5 space-y-12 md:space-y-16">

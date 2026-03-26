@@ -156,44 +156,56 @@ const ChatBotScreen: React.FC = () => {
     <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark items-center">
       <div className="w-full max-w-4xl h-full flex flex-col bg-white dark:bg-surface-dark md:border-x border-white/5 shadow-2xl overflow-hidden">
 
-        {/* Header Chat */}
-        <div className="p-6 md:p-8 bg-surface-dark flex items-center gap-5 text-white shadow-xl relative z-50">
-          <button onClick={() => navigate(-1)} className="hidden md:flex w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
-            <span className="material-symbols-outlined">arrow_back</span>
-          </button>
-          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <span className="material-symbols-outlined text-3xl">smart_toy</span>
-          </div>
-          <div className="flex-1">
-            <h2 className="font-black text-lg tracking-tight uppercase italic">
-              Patagon<span className="text-[#dd6e42]">IA</span>
-            </h2>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">{t('ai_status')}</span>
+        {/* Header Chat Unificado */}
+        <div className="p-6 md:p-8 bg-surface-dark flex flex-col text-white shadow-xl relative z-50">
+          <div className="flex items-center gap-5 mb-6">
+            <button onClick={() => navigate('/map')} className="hidden md:flex w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/10 transition-all no-underline">
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <span className="material-symbols-outlined text-3xl">smart_toy</span>
             </div>
-          </div>
-          {isPlaying && (
-            <div className="flex gap-1 items-end h-5">
-              <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0s] rounded-full"></div>
-              <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0.1s] rounded-full"></div>
-              <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0.2s] rounded-full"></div>
+            <div className="flex-1">
+              <h2 className="font-black text-lg tracking-tight uppercase italic">
+                El Patagón<span className="text-primary text-[10px] font-bold ml-2 not-italic bg-primary/20 px-2 py-1 rounded-full uppercase tracking-widest">IA</span>
+              </h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">{t('ai_status')}</span>
+              </div>
             </div>
-          )}
+            {isPlaying && (
+              <div className="flex gap-1 items-end h-5">
+                <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0s] rounded-full"></div>
+                <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0.1s] rounded-full"></div>
+                <div className="w-1.5 bg-primary animate-[bounce_0.5s_infinite_0.2s] rounded-full"></div>
+              </div>
+            )}
 
-          {/* Botón Limpiar Chat */}
-          <button
-            onClick={() => {
-              if (confirm("¿Estás seguro de que quieres limpiar la conversación?")) {
-                localStorage.removeItem('ep_chat_history');
-                window.location.reload();
-              }
-            }}
-            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-red-500 transition-all ml-4"
-            title="Limpiar Conversación"
-          >
-            <span className="material-symbols-outlined text-xl">delete_sweep</span>
-          </button>
+            {/* Botón Limpiar Chat */}
+            <button
+              onClick={() => {
+                if (confirm("¿Estás seguro de que quieres limpiar la conversación?")) {
+                  localStorage.removeItem('ep_chat_history');
+                  window.location.reload();
+                }
+              }}
+              className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-red-500 transition-all ml-4"
+              title="Limpiar Conversación"
+            >
+              <span className="material-symbols-outlined text-xl">delete_sweep</span>
+            </button>
+          </div>
+
+          {/* TABS */}
+          <div className="flex bg-white/5 p-1.5 rounded-2xl">
+             <button className="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all bg-primary text-white shadow-lg flex items-center justify-center gap-2">
+               <span className="material-symbols-outlined text-lg">chat</span> Asistente
+             </button>
+             <button onClick={() => navigate('/planner')} className="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center gap-2">
+               <span className="material-symbols-outlined text-lg">auto_awesome</span> Armar Itinerario
+             </button>
+          </div>
         </div>
 
         {/* Mensajes */}

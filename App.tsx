@@ -12,6 +12,7 @@ import SplashScreen from './screens/SplashScreen';
 import TouristMapScreen from './screens/TouristMapScreen';
 import BusinessDetailsScreen from './screens/BusinessDetailsScreen';
 import PlannerScreen from './screens/PlannerScreen';
+import CommunityFeedScreen from './screens/CommunityFeedScreen';
 import ItineraryScreen from './screens/ItineraryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ChatBotScreen from './screens/ChatBotScreen';
@@ -569,11 +570,10 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
         {(user || supabaseUser) && (
           <>
             <NavItem to="/highlights" icon="grade" label="Imperdibles" />
-            <NavItem to="/directory" icon="list_alt" label={t('list')} />
+            <NavItem to="/community" icon="diversity_3" label="Mural Global" />
             <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
             {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
-            <NavItem to="/planner" icon="auto_awesome" label={t('ai')} />
-            <NavItem to="/chat" icon="smart_toy" label={t('ai_guide_title')} />
+            <NavItem to="/chat" icon="smart_toy" label="El Patagón" />
           </>
         )}
 
@@ -678,6 +678,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/attraction/:id" element={isAuthenticated ? <AttractionDetailsScreen /> : <Navigate to="/auth/login" />} />
 
           {/* Rutas Privadas (Requieren Login) */}
+          <Route path="/community" element={isAuthenticated ? <CommunityFeedScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/planner" element={isAuthenticated ? <PlannerScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/itinerary" element={isAuthenticated ? <ItineraryScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/profile" element={isAuthenticated ? <ProfileScreen role={role} /> : <Navigate to="/auth/login" />} />

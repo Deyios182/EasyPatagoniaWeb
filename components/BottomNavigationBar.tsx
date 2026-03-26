@@ -47,24 +47,24 @@ const BottomNavigationBar: React.FC = () => {
                 </Link>
             </div>
 
-            {/* 4. PLANNER (Mid-Right) */}
+            {/* 4. MURAL GLOBAL (Mid-Right) */}
             <Link
-                to="/planner"
-                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/planner') ? 'text-primary' : 'text-slate-400 hover:text-primary'
+                to="/community"
+                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/community') ? 'text-primary' : 'text-slate-400 hover:text-primary'
                     }`}
             >
-                <span className="material-symbols-outlined text-2xl leading-none">auto_awesome</span>
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Plan</span>
+                <span className="material-symbols-outlined text-2xl leading-none">diversity_3</span>
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Mural</span>
             </Link>
 
-            {/* 5. IA (Far Right) */}
+            {/* 5. EL PATAGÓN (Far Right) */}
             <Link
                 to="/chat"
-                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/chat') ? 'text-primary' : 'text-slate-400 hover:text-primary'
+                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/chat') || isActive('/planner') ? 'text-primary' : 'text-slate-400 hover:text-primary'
                     }`}
             >
                 <span className="material-symbols-outlined text-2xl leading-none">smart_toy</span>
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">IA</span>
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90 whitespace-nowrap">El Patagón</span>
             </Link>
         </div>
     );
