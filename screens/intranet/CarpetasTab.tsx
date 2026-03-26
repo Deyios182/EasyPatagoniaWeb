@@ -34,6 +34,7 @@ const CarpetasTab: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
   const fetchFolders = async (parentId: string | null = null) => {
     setLoading(true);
@@ -137,11 +138,13 @@ const CarpetasTab: React.FC = () => {
     }
 
     const { data: urlData } = supabase.storage.from('intranet').getPublicUrl(filePath);
+    // Force download url by appending download=true query parameter
+    const downloadUrl = `${urlData.publicUrl}?download=${encodeURIComponent(file.name)}`;
 
     const { error: fileError } = await supabase.from('intranet_files').insert([{
       folder_id: currentFolder.id,
       name: file.name,
-      file_url: urlData.publicUrl,
+      file_url: downloadUrl,
       file_size: file.size,
       file_type: file.type
     }]);
@@ -183,6 +186,10 @@ const CarpetasTab: React.FC = () => {
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
   };
+
+  const isPreviewable = (type: string) => type?.includes('image') || type?.includes('pdf');
+  // Helper to remove ?download parameter for previewing in iframe
+  const getPreviewUrl = (url: string) => url.split('?')[0];
 
   return (
     <div className="space-y-6">
@@ -267,8 +274,13 @@ const CarpetasTab: React.FC = () => {
                     <p className="text-white font-bold text-sm truncate">{f.name}</p>
                     <p className="text-slate-500 text-[10px]">{formatSize(f.file_size)} • {new Date(f.created_at).toLocaleDateString('es-CL')}</p>
                   </div>
-                  <a href={f.file_url} target="_blank" rel="noreferrer" className="p-2 hover:bg-white/10 rounded-lg transition-all" title="Descargar">
-                    <span className="material-symbols-outlined text-sm text-slate-400">download</span>
+                  {isPreviewable(f.file_type) && (
+                    <button onClick={() => setPreviewFile(f)} className="p-2 hover:bg-white/10 rounded-lg transition-all" title="Ver archivo">
+                      <span className="material-symbols-outlined text-sm text-blue-400">visibility</span>
+                    </button>
+                  )}
+                  <a href={f.file_url} download={f.name} target="_blank" rel="noreferrer" className="p-2 hover:bg-white/10 rounded-lg transition-all" title="Descargar">
+                    <span className="material-symbols-outlined text-sm text-emerald-400">download</span>
                   </a>
                   <button onClick={() => handleDeleteFile(f)} className="p-2 hover:bg-red-500/20 rounded-lg transition-all opacity-0 group-hover:opacity-100" title="Eliminar">
                     <span className="material-symbols-outlined text-sm text-red-400">delete</span>
@@ -285,6 +297,43 @@ const CarpetasTab: React.FC = () => {
               <p className="text-slate-600 text-sm mt-1">{!currentFolder && 'Usa "Crear Carpetas" para generar la estructura del año'}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-slate-950/80 backdrop-blur-md" onClick={() => setPreviewFile(null)}>
+          <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="material-symbols-outlined text-blue-400">{previewFile.file_type.includes('image') ? 'image' : 'picture_as_pdf'}</span>
+                <h3 className="text-white font-bold truncate">{previewFile.name}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={previewFile.file_url} download={previewFile.name} className="px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm rounded-xl hover:bg-emerald-500/30 transition-all flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">download</span>
+                  <span className="hidden md:inline">Descargar</span>
+                </a>
+                <button onClick={() => setPreviewFile(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
+                  <span className="material-symbols-outlined text-white">close</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 bg-black/50 p-4 md:p-8 flex items-center justify-center overflow-auto">
+              {previewFile.file_type.includes('image') ? (
+                <img src={getPreviewUrl(previewFile.file_url)} alt={previewFile.name} className="max-w-full max-h-full object-contain touch-pinch-zoom rounded-lg shadow-2xl" />
+              ) : previewFile.file_type.includes('pdf') ? (
+                <iframe src={getPreviewUrl(previewFile.file_url)} className="w-full h-full rounded-xl bg-white" title={previewFile.name} />
+              ) : (
+                <div className="text-center">
+                  <span className="material-symbols-outlined text-6xl text-slate-600 mb-4 block">description</span>
+                  <p className="text-white font-bold">Vista previa no disponible</p>
+                  <p className="text-slate-500 text-sm mt-2">Por favor descarga el archivo para verlo</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

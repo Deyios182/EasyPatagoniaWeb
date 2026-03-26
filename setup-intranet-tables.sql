@@ -87,10 +87,7 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM profiles
         WHERE id = auth.uid()
-        AND (
-            roles @> '["super_admin"]'::jsonb
-            OR roles @> '["admin"]'::jsonb
-        )
+        AND role IN ('super_admin', 'admin')
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
