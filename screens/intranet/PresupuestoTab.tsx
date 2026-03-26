@@ -48,7 +48,7 @@ const PresupuestoTab: React.FC = () => {
     if (existing) {
       await supabase.from('intranet_budget').update({ budgeted_amount: amount }).eq('id', existing.id);
     } else {
-      await supabase.from('intranet_budget').insert([{ category, month: month + 1, year, budgeted_amount: amount, created_by: user?.uid }]);
+      await supabase.from('intranet_budget').insert([{ category, month: month + 1, year, budgeted_amount: amount, created_by: user?.uid ?? null }]);
     }
     setSaving(false);
     fetchData();

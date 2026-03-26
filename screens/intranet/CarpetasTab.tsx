@@ -69,7 +69,7 @@ const CarpetasTab: React.FC = () => {
 
     // Create year folder
     const { data: yearFolder } = await supabase.from('intranet_folders')
-      .insert([{ name: String(year), folder_year: year, icon: 'calendar_today', color: '#6366f1', created_by: user?.uid }])
+      .insert([{ name: String(year), folder_year: year, icon: 'calendar_today', color: '#6366f1', created_by: user?.uid ?? null }])
       .select().single();
 
     if (!yearFolder) return;
@@ -82,7 +82,7 @@ const CarpetasTab: React.FC = () => {
       folder_month: i + 1,
       icon: 'folder',
       color: '#3b82f6',
-      created_by: user?.uid
+      created_by: user?.uid ?? null
     }));
     await supabase.from('intranet_folders').insert(monthFolders);
     fetchFolders(currentFolder?.id || null);
@@ -143,7 +143,7 @@ const CarpetasTab: React.FC = () => {
       file_url: urlData.publicUrl,
       file_size: file.size,
       file_type: file.type,
-      uploaded_by: user?.uid
+      uploaded_by: user?.uid ?? null
     }]);
 
     setUploading(false);
@@ -164,7 +164,7 @@ const CarpetasTab: React.FC = () => {
       parent_id: currentFolder?.id || null,
       icon: 'folder',
       color: '#3b82f6',
-      created_by: user?.uid
+      created_by: user?.uid ?? null
     }]);
     setNewFolderName('');
     setShowNewFolder(false);

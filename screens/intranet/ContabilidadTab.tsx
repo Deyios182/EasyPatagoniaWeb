@@ -68,7 +68,7 @@ const ContabilidadTab: React.FC = () => {
       description: form.description,
       date: form.date,
       notes: form.notes,
-      created_by: user?.uid
+      created_by: user?.uid ?? null
     };
 
     if (editId) {

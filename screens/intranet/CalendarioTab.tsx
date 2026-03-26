@@ -69,7 +69,7 @@ const CalendarioTab: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, created_by: user?.uid, start_date: new Date(form.start_date).toISOString(), end_date: form.end_date ? new Date(form.end_date).toISOString() : null };
+    const payload = { ...form, created_by: user?.uid ?? null, start_date: new Date(form.start_date).toISOString(), end_date: form.end_date ? new Date(form.end_date).toISOString() : null };
     if (editId) {
       await supabase.from('intranet_events').update(payload).eq('id', editId);
     } else {
