@@ -30,6 +30,7 @@ import AttractionDetailsScreen from './screens/AttractionDetailsScreen';
 import AuthCallbackScreen from './screens/AuthCallbackScreen';
 import UserPublicProfileScreen from './screens/UserPublicProfileScreen';
 import DirectMessageScreen from './screens/DirectMessageScreen';
+import FriendsScreen from './screens/FriendsScreen';
 import UserContributionsScreen from './screens/UserContributionsScreen';
 import AdminPhotoReviewScreen from './screens/AdminPhotoReviewScreen';
 import IntranetScreen from './screens/intranet/IntranetScreen';
@@ -689,6 +690,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/chat" element={isAuthenticated ? <ChatBotScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/users/:id" element={isAuthenticated ? <UserPublicProfileScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/messages/:userId" element={isAuthenticated ? <DirectMessageScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/friends" element={isAuthenticated ? <FriendsScreen /> : <Navigate to="/auth/login" />} />
 
           {/* Rutas Administrativas */}
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />

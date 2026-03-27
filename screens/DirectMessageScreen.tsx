@@ -98,7 +98,16 @@ const DirectMessageScreen: React.FC = () => {
         const msg = { sender_id: supabaseUser.id, receiver_id: otherUserId, content: input.trim() };
         setInput('');
         const { data, error } = await supabase.from('direct_messages').insert([msg]).select().single();
-        if (!error && data) setMessages(prev => [...prev, data]);
+        if (!error && data) {
+            setMessages(prev => [...prev, data]);
+            // Notify the receiver
+            await supabase.from('notifications').insert({
+                user_id: otherUserId,
+                actor_id: supabaseUser.id,
+                type: 'message',
+                message: 'te envió un mensaje 💬',
+            });
+        }
     };
 
     const accentColor = otherProfile?.accent_color || '#FF6B35';

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
 import BottomNavigationBar from '../components/BottomNavigationBar';
+import NotificationBell from '../components/NotificationBell';
 
 interface CommunityPost {
     id: string;
@@ -108,20 +109,47 @@ const VideoCard: React.FC<{ url: string }> = ({ url }) => {
         );
     }
 
-    // TikTok / Instagram – show platform card with redirect
+    // TikTok – embed inline via official TikTok embed player
+    if (platform === 'tiktok' && id) {
+        return (
+            <div className="mb-4 rounded-2xl overflow-hidden bg-black relative" style={{ paddingBottom: '177.78%' }}>
+                {expanded ? (
+                    <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src={`https://www.tiktok.com/embed/v2/${id}`}
+                        allowFullScreen
+                        allow="autoplay"
+                        scrolling="no"
+                        sandbox="allow-popups allow-same-origin allow-scripts allow-top-navigation"
+                    />
+                ) : (
+                    <button onClick={() => setExpanded(true)}
+                        className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-black group">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform mb-3">
+                            <span className="text-2xl">🎵</span>
+                        </div>
+                        <p className="text-white font-black text-sm">TikTok</p>
+                        <p className="text-slate-400 text-xs mt-1">Toca para reproducir</p>
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    // Instagram – redirect card (no embeddable API without token)
     return (
         <a
             href={original}
             target="_blank"
             rel="noopener noreferrer"
-            className="mb-4 flex items-center gap-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl px-5 py-4 shadow-lg hover:brightness-110 transition-all group"
+            className="mb-4 flex items-center gap-4 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 text-white rounded-2xl px-5 py-4 shadow-lg hover:brightness-110 transition-all group"
         >
-            <span className="text-4xl">{getPlatformIcon(platform)}</span>
+            <span className="text-3xl">📸</span>
             <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{getPlatformLabel(platform)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/70">{getPlatformLabel(platform)}</p>
                 <p className="text-sm font-bold truncate">{original}</p>
             </div>
-            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">open_in_new</span>
+            <span className="material-symbols-outlined text-white/70 group-hover:text-white">open_in_new</span>
         </a>
     );
 };
@@ -228,7 +256,21 @@ const CommunityFeedScreen: React.FC = () => {
         if (!supabaseUser) { alert('Debes iniciar sesión para dar like.'); return; }
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, user_has_liked: !currentlyLiked, likes_count: p.likes_count + (currentlyLiked ? -1 : 1) } : p));
         const { error } = await supabase.rpc('toggle_community_like', { p_post_id: postId });
-        if (error) fetchPosts();
+        if (error) { fetchPosts(); return; }
+
+        // Insert notification when liking (not when unliking)
+        if (!currentlyLiked) {
+            const post = posts.find(p => p.id === postId);
+            if (post && post.user_id !== supabaseUser.id) {
+                await supabase.from('notifications').insert({
+                    user_id: post.user_id,
+                    actor_id: supabaseUser.id,
+                    type: 'like',
+                    post_id: postId,
+                    message: 'le dio ❤️ a tu publicación',
+                });
+            }
+        }
     };
 
     const handleSubmitPost = async () => {
@@ -303,9 +345,24 @@ const CommunityFeedScreen: React.FC = () => {
             <div className="w-full max-w-2xl h-full flex flex-col bg-slate-50 dark:bg-surface-dark pb-[70px] shadow-2xl overflow-y-auto no-scrollbar relative">
 
                 {/* Header */}
-                <div className="bg-white/90 dark:bg-surface-dark/90 py-6 px-6 sticky top-0 z-40 border-b border-slate-100 dark:border-white/5">
-                    <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Mural Global</h1>
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">En vivo • Comunidad Aysén</p>
+                <div className="bg-white/90 dark:bg-surface-dark/90 py-4 px-6 sticky top-0 z-40 border-b border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Mural Global</h1>
+                            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">En vivo • Comunidad Aysén</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {/* Friends button */}
+                            <button
+                                onClick={() => navigate('/friends')}
+                                className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/10 shadow-sm"
+                                title="Amigos"
+                            >
+                                <span className="material-symbols-outlined text-xl dark:text-white">group</span>
+                            </button>
+                            <NotificationBell />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Create / Edit Post Area */}
