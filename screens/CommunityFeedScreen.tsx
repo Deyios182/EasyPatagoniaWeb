@@ -480,9 +480,12 @@ const CommunityFeedScreen: React.FC = () => {
                                             className="w-10 h-10 rounded-full bg-slate-100" alt="Avatar"
                                         />
                                         <div>
-                                            <p className="text-sm font-black dark:text-white leading-none">
+                                            <button
+                                                onClick={() => navigate(`/users/${post.user_id}`)}
+                                                className="text-sm font-black dark:text-white leading-none hover:text-primary transition-colors text-left"
+                                            >
                                                 {post.auth_users?.raw_user_meta_data?.full_name || 'Explorador'}
-                                            </p>
+                                            </button>
                                             <p className="text-[10px] text-slate-500 font-bold mt-1">{timeAgo(post.created_at)}</p>
                                         </div>
                                     </div>
