@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
+import { checkPushStatus, subscribeToPushNotifications } from '../utils/pushNotifications';
 
 interface Notification {
     id: string;
@@ -38,12 +39,15 @@ const NotificationBell: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [open, setOpen] = useState(false);
     const [profiles, setProfiles] = useState<Record<string, { full_name: string | null; avatar_url: string | null }>>({});
+    const [pushEnabled, setPushEnabled] = useState(true); // default true to avoid flicker
+    const [enablingPush, setEnablingPush] = useState(false);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
     useEffect(() => {
         if (!supabaseUser) return;
         fetchNotifications();
+        checkPush();
 
         // Real-time subscription
         const channel = supabase.channel(`notifications-${supabaseUser.id}`)
@@ -77,6 +81,25 @@ const NotificationBell: React.FC = () => {
                 (profs || []).forEach(p => { map[p.id] = p; });
                 setProfiles(map);
             }
+        }
+    };
+
+    const checkPush = async () => {
+        const isEnabled = await checkPushStatus();
+        setPushEnabled(isEnabled);
+    };
+
+    const handleEnablePush = async () => {
+        if (!supabaseUser) return;
+        setEnablingPush(true);
+        try {
+            await subscribeToPushNotifications(supabaseUser.id);
+            setPushEnabled(true);
+            alert('¡Notificaciones activadas exitosamente!');
+        } catch (error: any) {
+            alert(error.message || 'Error al activar notificaciones');
+        } finally {
+            setEnablingPush(false);
         }
     };
 
@@ -158,6 +181,18 @@ const NotificationBell: React.FC = () => {
                             })
                         )}
                     </div>
+                    {!pushEnabled && (
+                        <div className="p-3 bg-slate-50 dark:bg-background-dark border-t border-slate-100 dark:border-white/5">
+                            <button
+                                onClick={handleEnablePush}
+                                disabled={enablingPush}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-sm">notifications_active</span>
+                                {enablingPush ? 'Activando...' : 'Activar en este dispositivo'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
