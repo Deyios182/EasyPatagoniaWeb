@@ -10,6 +10,8 @@ interface Folder {
   folder_month?: number;
   icon: string;
   color: string;
+  folder_date?: string;
+  description?: string;
 }
 
 interface FileItem {
@@ -34,6 +36,8 @@ const CarpetasTab: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderDate, setNewFolderDate] = useState('');
+  const [newFolderDesc, setNewFolderDesc] = useState('');
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
   const fetchFolders = async (parentId: string | null = null) => {
@@ -167,10 +171,14 @@ const CarpetasTab: React.FC = () => {
       name: newFolderName.trim(),
       parent_id: currentFolder?.id || null,
       icon: 'folder',
-      color: '#3b82f6'
+      color: '#3b82f6',
+      folder_date: newFolderDate || null,
+      description: newFolderDesc || null
     }]);
     if (folderError) { console.error('Error creating folder:', folderError); alert('Error: ' + folderError.message); return; }
     setNewFolderName('');
+    setNewFolderDate('');
+    setNewFolderDesc('');
     setShowNewFolder(false);
     fetchFolders(currentFolder?.id || null);
   };
@@ -219,11 +227,16 @@ const CarpetasTab: React.FC = () => {
 
       {/* New Folder Input */}
       {showNewFolder && (
-        <div className="flex gap-2">
-          <input type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nombre de la carpeta..."
-            className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold outline-none focus:border-primary/50"
+        <div className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-white/5 p-4 rounded-xl border border-white/10">
+          <input type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nombre carpeta..."
+            className="flex-1 w-full px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white text-sm font-bold outline-none focus:border-primary/50"
             onKeyDown={e => e.key === 'Enter' && handleCreateFolder()} />
-          <button onClick={handleCreateFolder} className="px-4 py-2.5 bg-primary rounded-xl font-bold text-white text-sm">Crear</button>
+          <input type="date" value={newFolderDate} onChange={e => setNewFolderDate(e.target.value)}
+            className="w-full md:w-auto px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-primary/50" title="Fecha (opcional)" />
+          <input type="text" value={newFolderDesc} onChange={e => setNewFolderDesc(e.target.value)} placeholder="Observaciones..."
+            className="flex-1 w-full px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-primary/50"
+            onKeyDown={e => e.key === 'Enter' && handleCreateFolder()} />
+          <button onClick={handleCreateFolder} className="w-full md:w-auto px-6 py-2.5 bg-primary rounded-xl font-bold text-white text-sm shrink-0">Crear</button>
         </div>
       )}
 
@@ -247,15 +260,25 @@ const CarpetasTab: React.FC = () => {
         <div className="space-y-4">
           {/* Folders */}
           {folders.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {folders.map(f => (
                 <div key={f.id} className="group relative p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 cursor-pointer transition-all hover:scale-[1.02]" onClick={() => openFolder(f)}>
                   <button onClick={e => { e.stopPropagation(); handleDeleteFolder(f); }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded-lg transition-all">
                     <span className="material-symbols-outlined text-xs text-red-400">close</span>
                   </button>
-                  <span className="material-symbols-outlined text-4xl mb-2 block" style={{ color: f.color }}>{f.icon}</span>
-                  <p className="text-white font-bold text-sm truncate">{f.name}</p>
-                  {f.folder_month && <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Mes {f.folder_month}</p>}
+                  <div className="flex items-start gap-4 mb-2">
+                    <span className="material-symbols-outlined text-4xl shrink-0" style={{ color: f.color }}>{f.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-sm truncate">{f.name}</p>
+                      {f.folder_month && <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Mes {f.folder_month}</p>}
+                      {f.folder_date && <p className="text-emerald-400 text-[10px] font-bold mt-0.5">{new Date(f.folder_date + 'T12:00:00').toLocaleDateString('es-CL')}</p>}
+                    </div>
+                  </div>
+                  {f.description && (
+                    <div className="mt-2 text-xs text-slate-400 line-clamp-2 bg-slate-900/50 p-2 rounded-lg border border-white/5">
+                      {f.description}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
