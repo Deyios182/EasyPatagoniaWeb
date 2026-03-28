@@ -26,12 +26,19 @@ CREATE TABLE IF NOT EXISTS intranet_recurring_transactions (
 -- RLS y Políticas
 ALTER TABLE intranet_recurring_transactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Intranet admins can read recurring" ON intranet_recurring_transactions;
 CREATE POLICY "Intranet admins can read recurring" ON intranet_recurring_transactions
     FOR SELECT USING (is_intranet_admin());
+
+DROP POLICY IF EXISTS "Intranet admins can insert recurring" ON intranet_recurring_transactions;
 CREATE POLICY "Intranet admins can insert recurring" ON intranet_recurring_transactions
     FOR INSERT WITH CHECK (is_intranet_admin());
+
+DROP POLICY IF EXISTS "Intranet admins can update recurring" ON intranet_recurring_transactions;
 CREATE POLICY "Intranet admins can update recurring" ON intranet_recurring_transactions
     FOR UPDATE USING (is_intranet_admin());
+
+DROP POLICY IF EXISTS "Intranet admins can delete recurring" ON intranet_recurring_transactions;
 CREATE POLICY "Intranet admins can delete recurring" ON intranet_recurring_transactions
     FOR DELETE USING (is_intranet_admin());
 
