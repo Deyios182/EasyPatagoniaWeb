@@ -34,3 +34,7 @@ CREATE POLICY "Intranet admins can update recurring" ON intranet_recurring_trans
     FOR UPDATE USING (is_intranet_admin());
 CREATE POLICY "Intranet admins can delete recurring" ON intranet_recurring_transactions
     FOR DELETE USING (is_intranet_admin());
+
+-- 3. Añadir metadatos a los archivos
+ALTER TABLE intranet_files
+ADD COLUMN IF NOT EXISTS document_type TEXT DEFAULT 'Varios';

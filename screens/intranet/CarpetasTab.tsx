@@ -22,6 +22,7 @@ interface FileItem {
   file_type: string;
   created_at: string;
   notes?: string;
+  document_type?: string;
 }
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -38,6 +39,12 @@ const CarpetasTab: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderDate, setNewFolderDate] = useState('');
   const [newFolderDesc, setNewFolderDesc] = useState('');
+  
+  const [pendingUpload, setPendingUpload] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState('Varios');
+  const [uploadNotes, setUploadNotes] = useState('');
+  const [uploadCustomName, setUploadCustomName] = useState('');
+  
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
   const fetchFolders = async (parentId: string | null = null) => {
@@ -128,16 +135,25 @@ const CarpetasTab: React.FC = () => {
     fetchFolders(null);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !currentFolder) return;
-    setUploading(true);
     const file = e.target.files[0];
+    setPendingUpload(file);
+    setUploadCustomName(file.name);
+    e.target.value = '';
+  };
+
+  const confirmUpload = async () => {
+    if (!pendingUpload || !currentFolder) return;
+    setUploading(true);
+    const file = pendingUpload;
     const filePath = `intranet/${currentFolder.id}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage.from('intranet').upload(filePath, file);
     if (uploadError) {
       alert('Error subiendo archivo: ' + uploadError.message);
       setUploading(false);
+      setPendingUpload(null);
       return;
     }
 
@@ -147,15 +163,20 @@ const CarpetasTab: React.FC = () => {
 
     const { error: fileError } = await supabase.from('intranet_files').insert([{
       folder_id: currentFolder.id,
-      name: file.name,
+      name: uploadCustomName || file.name,
       file_url: downloadUrl,
       file_size: file.size,
-      file_type: file.type
+      file_type: file.type,
+      document_type: uploadDocType,
+      notes: uploadNotes
     }]);
     if (fileError) console.error('Error saving file record:', fileError);
 
     setUploading(false);
-    e.target.value = '';
+    setPendingUpload(null);
+    setUploadCustomName('');
+    setUploadNotes('');
+    setUploadDocType('Varios');
     fetchFolders(currentFolder.id);
   };
 
@@ -294,8 +315,14 @@ const CarpetasTab: React.FC = () => {
                     {f.file_type?.includes('image') ? 'image' : f.file_type?.includes('pdf') ? 'picture_as_pdf' : 'description'}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm truncate">{f.name}</p>
+                    <div className="flex items-center gap-2">
+                       <p className="text-white font-bold text-sm truncate">{f.name}</p>
+                       {f.document_type && f.document_type !== 'Varios' && (
+                          <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase rounded shrink-0">{f.document_type}</span>
+                       )}
+                    </div>
                     <p className="text-slate-500 text-[10px]">{formatSize(f.file_size)} • {new Date(f.created_at).toLocaleDateString('es-CL')}</p>
+                    {f.notes && <p className="text-slate-400 text-xs mt-1 truncate">{f.notes}</p>}
                   </div>
                   {isPreviewable(f.file_type) && (
                     <button onClick={() => setPreviewFile(f)} className="p-2 hover:bg-white/10 rounded-lg transition-all" title="Ver archivo">
@@ -320,6 +347,46 @@ const CarpetasTab: React.FC = () => {
               <p className="text-slate-600 text-sm mt-1">{!currentFolder && 'Usa "Crear Carpetas" para generar la estructura del año'}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* File Upload Modal */}
+      {pendingUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" onClick={() => !uploading && setPendingUpload(null)}>
+          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-black text-lg mb-4">Detalles del Archivo</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nombre Mostrado</label>
+                <input type="text" value={uploadCustomName} onChange={e => setUploadCustomName(e.target.value)} disabled={uploading}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold outline-none focus:border-primary/50" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tipo de Documento</label>
+                <select value={uploadDocType} onChange={e => setUploadDocType(e.target.value)} disabled={uploading}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold outline-none focus:border-primary/50">
+                  <option value="Varios" className="bg-slate-900">Varios</option>
+                  <option value="Factura" className="bg-slate-900">Factura</option>
+                  <option value="Boleta" className="bg-slate-900">Boleta</option>
+                  <option value="Contrato" className="bg-slate-900">Contrato</option>
+                  <option value="Cotización" className="bg-slate-900">Cotización</option>
+                  <option value="Comprobante" className="bg-slate-900">Comprobante de Pago</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Observaciones</label>
+                <textarea value={uploadNotes} onChange={e => setUploadNotes(e.target.value)} disabled={uploading}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-primary/50 resize-none h-20" placeholder="Ej: Pago total del proyecto X..." />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setPendingUpload(null)} disabled={uploading} className="flex-1 px-4 py-2.5 bg-white/5 rounded-xl font-bold text-white text-sm hover:bg-white/10 disabled:opacity-50">Cancelar</button>
+              <button onClick={confirmUpload} disabled={uploading} className="flex-1 px-4 py-2.5 bg-primary rounded-xl font-bold text-white text-sm hover:bg-primary/80 disabled:opacity-50 flex justify-center items-center gap-2">
+                {uploading ? <span className="material-symbols-outlined animate-spin text-sm">hourglass_empty</span> : <span className="material-symbols-outlined text-sm">cloud_upload</span>}
+                {uploading ? 'Subiendo...' : 'Subir Archivo'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
