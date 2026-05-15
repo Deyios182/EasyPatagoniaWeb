@@ -349,39 +349,34 @@ const TouristMapScreen: React.FC = () => {
           popupAnchor: [0, -34]
         });
       } else {
-        // NEGOCIOS: Mantienen el diseño circular
+        // NEGOCIOS: Diseño circular con indicador de estado (verde=abierto, rojo=cerrado)
         const isClosed = (item as any).isOpen === false;
-        let innerHtml = '';
         const categoryIcon =
           ['Restaurante', 'Cafetería'].some(c => (item.data as any).categoria.includes(c)) ? 'restaurant' :
             ['Hospedaje', 'Hotel'].some(c => (item.data as any).categoria.includes(c)) ? 'hotel' :
               ['Transporte'].some(c => (item.data as any).categoria.includes(c)) ? 'directions_bus' :
                 'location_on';
 
-        innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;${isClosed ? ' filter: grayscale(60%) opacity(0.7);' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        const innerHtml = `<img src="${item.icon}" style="width: 100%; height: 100%; object-fit: cover; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                         <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: ${item.color}; border-radius: 50%;"><span class="material-symbols-outlined" style="color: white; font-size: 20px;">${categoryIcon}</span></div>`;
 
-        // Badge "CERRADO" que se muestra encima del pin
-        const closedBadge = isClosed ? `
+        // Indicador de estado: círculo verde (abierto) o rojo (cerrado) en la esquina inferior derecha
+        const dotSize = isActive ? '14px' : '10px';
+        const dotColor = isClosed ? '#EF4444' : '#22C55E';
+        const statusDot = `
           <div style="
             position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #DC2626, #B91C1C);
-            color: white;
-            font-size: 7px;
-            font-weight: 900;
-            padding: 2px 6px;
-            border-radius: 6px;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.5);
-            border: 1.5px solid rgba(255,255,255,0.6);
-            letter-spacing: 0.5px;
+            bottom: ${isActive ? '1px' : '0px'};
+            right: ${isActive ? '1px' : '0px'};
+            width: ${dotSize};
+            height: ${dotSize};
+            border-radius: 50%;
+            background-color: ${dotColor};
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
             z-index: 10;
-            pointer-events: none;
-          ">CERRADO</div>
-        ` : '';
+          "></div>
+        `;
 
         customIcon = L.divIcon({
           className: "",
@@ -392,16 +387,15 @@ const TouristMapScreen: React.FC = () => {
               flex-direction: column;
               align-items: center;
             ">
-              ${closedBadge}
               <div style="
                 position: relative;
                 width: ${isActive ? '56px' : '40px'}; 
                 height: ${isActive ? '56px' : '40px'}; 
                 border-radius: 50%; 
-                border: ${isActive ? '3px' : '2px'} solid ${isClosed ? '#9CA3AF' : 'white'}; 
-                background-color: ${isClosed ? '#6B7280' : item.color}; 
+                border: ${isActive ? '3px' : '2px'} solid white; 
+                background-color: ${item.color}; 
                 overflow: hidden;
-                box-shadow: 0 4px 15px rgba(0,0,0,${isClosed ? '0.3' : '0.5'});
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
                 transition: all 0.3s ease;
                 z-index: ${isActive ? 1000 : 1};
                 display: flex;
@@ -410,6 +404,7 @@ const TouristMapScreen: React.FC = () => {
               ">
                 ${innerHtml}
               </div>
+              ${statusDot}
             </div>
           `,
           iconSize: isActive ? [56, 70] : [40, 54],

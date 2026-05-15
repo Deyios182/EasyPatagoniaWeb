@@ -549,9 +549,12 @@ const EasyAdminFieldScreen: React.FC = () => {
         <div className="min-h-screen bg-background-light dark:bg-background-dark font-body text-white">
 
             {/* HEADER */}
-            <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-primary/10 to-transparent"></div>
-                <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/30 rounded-full blur-[100px]"></div>
+            <div className="relative">
+                {/* Decorative background - overflow hidden only for these elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-primary/10 to-transparent"></div>
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/30 rounded-full blur-[100px]"></div>
+                </div>
 
                 <div className="relative z-10 p-8 md:p-12 pb-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -811,8 +814,8 @@ const EasyAdminFieldScreen: React.FC = () => {
 
                         {/* MODAL EMPRESA / NEGOCIO */}
                         {editingCompany && (
-                            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xl overflow-y-auto">
-                                <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-10 animate-in zoom-in-95 border border-white/10">
+                            <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-4 pt-4 pb-8 backdrop-blur-xl overflow-y-auto">
+                                <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative my-4 animate-in zoom-in-95 border border-white/10">
                                     <h3 className="text-2xl font-black text-white mb-6 border-b border-white/10 pb-4">
                                         {activeTab === 'negocios' ? (editingCompany.id ? 'Editar Negocio' : 'Nuevo Negocio') : (editingCompany.id ? 'Editar Empresa' : 'Nueva Empresa')}
                                     </h3>
