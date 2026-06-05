@@ -18,7 +18,7 @@ const MAP_TILES: Record<MapTheme, string> = {
 const TouristMapScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions } = useAppAuth();
+  const { allBusinesses, t, mapTheme, setMapTheme, user, allLocalities, allAttractions, supabaseUser } = useAppAuth();
 
   // USE STATE FOR MAP INSTANCE TO HANDLE STRICT MODE CORRECTLY
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
@@ -42,6 +42,22 @@ const TouristMapScreen: React.FC = () => {
   const routeMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+
+  const [medals, setMedals] = useState<any[]>([]);
+  const [progressList, setProgressList] = useState<any[]>([]);
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [successAnimation, setSuccessAnimation] = useState<{
+    title: string;
+    xp: number;
+    medal?: any | null;
+  } | null>(null);
+  const [farModal, setFarModal] = useState<{
+    checkpoint: any;
+    userLat: number;
+    userLng: number;
+    distanceKm: number;
+    route: any;
+  } | null>(null);
 
   const locateUser = () => {
     if (isLocating) {
@@ -113,6 +129,189 @@ const TouristMapScreen: React.FC = () => {
       },
       { enableHighAccuracy: true }
     );
+  };
+
+  // Haversine distance formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Earth radius in meters
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+      Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // in meters
+  };
+
+  const getProgress = (routeId: string) => {
+    return progressList.find(p => p.route_id === routeId) || {
+      route_id: routeId,
+      checkpoints_completed: [],
+      completed_at: null,
+    };
+  };
+
+  const loadUserProgress = async () => {
+    if (!supabaseUser) return;
+    try {
+      const { data } = await supabase
+        .from('user_route_progress')
+        .select('*')
+        .eq('user_id', supabaseUser.id);
+      setProgressList(data || []);
+    } catch (err) {
+      console.error('Error loading user progress:', err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchMedals = async () => {
+      try {
+        const { data } = await supabase
+          .from('gamification_medals')
+          .select('slug, name, icon')
+          .eq('is_active', true);
+        setMedals(data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchMedals();
+  }, []);
+
+  useEffect(() => {
+    loadUserProgress();
+  }, [supabaseUser]);
+
+  const handleCheckpointCheckin = async (route: any, checkpoint: any) => {
+    if (!supabaseUser) {
+      alert("Inicia sesión para poder registrar tus paradas.");
+      return;
+    }
+    const progress = getProgress(route.id);
+    if (progress.checkpoints_completed.includes(checkpoint.id)) {
+      alert("Ya has registrado esta parada.");
+      return;
+    }
+
+    setCheckingIn(checkpoint.id);
+
+    if (!navigator.geolocation) {
+      alert("La geolocalización no está soportada por tu navegador.");
+      setCheckingIn(null);
+      return;
+    }
+
+    mapInstance?.closePopup();
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const distance = calculateDistance(latitude, longitude, checkpoint.lat, checkpoint.lng);
+        const maxRadius = 1000; // 1 km radius to complete
+
+        if (distance <= maxRadius) {
+          await executeCheckin(route, checkpoint);
+        } else {
+          setFarModal({
+            checkpoint,
+            userLat: latitude,
+            userLng: longitude,
+            distanceKm: parseFloat((distance / 1000).toFixed(2)),
+            route,
+          });
+          setCheckingIn(null);
+        }
+      },
+      (error) => {
+        console.error('GPS Error:', error);
+        alert('No se pudo obtener tu ubicación. Verifica los permisos de GPS.');
+        setCheckingIn(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const executeCheckin = async (route: any, checkpoint: any, forceSimulate: boolean = false) => {
+    if (!supabaseUser) return;
+    try {
+      setCheckingIn(checkpoint.id);
+      const progress = getProgress(route.id);
+      const updatedCheckpoints = [...progress.checkpoints_completed, checkpoint.id];
+      const isRouteCompletedNow = updatedCheckpoints.length === (route.checkpoints || []).length;
+      const completedAt = isRouteCompletedNow ? new Date().toISOString() : null;
+
+      // 1. Update user route progress table
+      const { error: progressError } = await supabase.from('user_route_progress').upsert({
+        user_id: supabaseUser.id,
+        route_id: route.id,
+        checkpoints_completed: updatedCheckpoints,
+        completed_at: completedAt,
+        last_updated: new Date().toISOString(),
+      }, { onConflict: 'user_id,route_id' });
+
+      if (progressError) throw progressError;
+
+      // 2. Grant checkpoint XP reward
+      const notesCheckpoint = `Check-in en checkpoint: ${checkpoint.name} (${route.name})`;
+      const { error: xpError } = await supabase.rpc('grant_xp_to_user', {
+        p_user_id: supabaseUser.id,
+        p_amount: checkpoint.xp_reward,
+        p_reason: 'route_checkpoint',
+        p_notes: notesCheckpoint,
+      });
+
+      if (xpError) throw xpError;
+
+      let awardedMedal: any | null = null;
+
+      // 3. Grant Route completion XP and medal if completed
+      if (isRouteCompletedNow) {
+        const notesRoute = `Completó la ruta: ${route.name}`;
+        await supabase.rpc('grant_xp_to_user', {
+          p_user_id: supabaseUser.id,
+          p_amount: route.xp_reward,
+          p_reason: 'route_completed',
+          p_notes: notesRoute,
+        });
+
+        if (route.medal_slug) {
+          const { data: alreadyHasMedal } = await supabase
+            .from('user_medals')
+            .select('*')
+            .eq('user_id', supabaseUser.id)
+            .eq('medal_slug', route.medal_slug)
+            .maybeSingle();
+
+          if (!alreadyHasMedal) {
+            await supabase.from('user_medals').insert({
+              user_id: supabaseUser.id,
+              medal_slug: route.medal_slug,
+              awarded_by: supabaseUser.id,
+            });
+            awardedMedal = medals.find(m => m.slug === route.medal_slug) || null;
+          }
+        }
+      }
+
+      await loadUserProgress();
+      setFarModal(null);
+
+      setSuccessAnimation({
+        title: isRouteCompletedNow ? `¡Ruta completada: ${route.name}! 🎉` : `¡Check-in en ${checkpoint.name}!`,
+        xp: checkpoint.xp_reward + (isRouteCompletedNow ? route.xp_reward : 0),
+        medal: awardedMedal
+      });
+    } catch (err) {
+      console.error('Error during check-in:', err);
+      alert('Ocurrió un error al procesar el check-in.');
+    } finally {
+      setCheckingIn(null);
+    }
   };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -698,6 +897,31 @@ const TouristMapScreen: React.FC = () => {
         const marker = L.marker([cp.lat, cp.lng], { icon: cpIcon })
           .addTo(mapInstance);
 
+        const progress = getProgress(route.id);
+        const isCompleted = progress.checkpoints_completed.includes(cp.id);
+
+        const checkinButtonHtml = isCompleted
+          ? `<div style="display: flex; align-items: center; gap: 4px; color: #10B981; font-weight: bold; font-size: 10px; margin-top: 8px;">
+               <span style="font-size: 14px;">✓</span> Completado
+             </div>`
+          : `<button class="map-checkin-btn" data-route-id="${route.id}" data-checkpoint-id="${cp.id}" style="
+               margin-top: 8px;
+               width: 100%;
+               padding: 6px 12px;
+               background-color: #3b82f6;
+               color: white;
+               font-family: system-ui, -apple-system, sans-serif;
+               font-size: 10px;
+               font-weight: bold;
+               text-transform: uppercase;
+               border: none;
+               border-radius: 6px;
+               cursor: pointer;
+               box-shadow: 0 2px 4px rgba(59,130,246,0.3);
+             ">
+               Realizar Check-in
+             </button>`;
+
         const cpPopup = L.popup().setContent(`
           <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 180px;">
             <p style="margin: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.1em;">
@@ -710,6 +934,7 @@ const TouristMapScreen: React.FC = () => {
             <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #10B981; background: #e6fcf5; padding: 2px 6px; border-radius: 4px; width: fit-content;">
               <span>🏆 +${cp.xp_reward} XP</span>
             </div>
+            ${checkinButtonHtml}
           </div>
         `);
 
@@ -729,7 +954,7 @@ const TouristMapScreen: React.FC = () => {
       routeMarkersRef.current.forEach(marker => marker.remove());
       routeMarkersRef.current = [];
     };
-  }, [activeFilter, mapRoutes, mapInstance]);
+  }, [activeFilter, mapRoutes, mapInstance, progressList]);
 
   // Close selection when clicking on Map Background
   useEffect(() => {
@@ -742,9 +967,30 @@ const TouristMapScreen: React.FC = () => {
       setSelectedAttraction(null);
     };
 
+    const handlePopupClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('map-checkin-btn')) {
+        const routeId = target.getAttribute('data-route-id');
+        const cpId = target.getAttribute('data-checkpoint-id');
+        if (routeId && cpId) {
+          const route = mapRoutes.find(r => r.id === routeId);
+          const checkpoint = route?.checkpoints?.find((c: any) => c.id === cpId);
+          if (route && checkpoint) {
+            handleCheckpointCheckin(route, checkpoint);
+          }
+        }
+      }
+    };
+
     mapInstance.on('click', onMapClick);
-    return () => mapInstance.off('click', onMapClick);
-  }, [mapInstance]);
+    const container = mapInstance.getContainer();
+    container.addEventListener('click', handlePopupClick);
+
+    return () => {
+      mapInstance.off('click', onMapClick);
+      container.removeEventListener('click', handlePopupClick);
+    };
+  }, [mapInstance, mapRoutes, progressList, supabaseUser]);
 
   const handleLocalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const locId = e.target.value;
@@ -1074,6 +1320,87 @@ const TouristMapScreen: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* ── SUCCESS ANIMATION TOAST / MODAL ──────────────────────────────── */}
+        {successAnimation && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-500/30 p-8 rounded-[2rem] max-w-md w-full text-center shadow-2xl flex flex-col items-center">
+              <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center text-amber-400 mb-4 border border-amber-500/20">
+                <span className="material-symbols-outlined text-4xl animate-bounce" style={{ color: '#F59E0B' }}>award_star</span>
+              </div>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-2 text-white">{successAnimation.title}</h2>
+              <p className="text-sm text-slate-400 mb-6">Has demostrado tu espíritu de explorador austral.</p>
+              
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl py-3 px-6 mb-6 inline-flex items-center gap-2 text-amber-400">
+                <span className="font-black text-xl">+{successAnimation.xp} XP</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Obtenidos</span>
+              </div>
+
+              {successAnimation.medal && (
+                <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 mb-6 w-full flex items-center gap-4 text-left">
+                  <span className="text-4xl">{successAnimation.medal.icon}</span>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">¡Nueva medalla ganada!</p>
+                    <p className="font-bold text-white text-base leading-tight">{successAnimation.medal.name}</p>
+                  </div>
+                </div>
+              )}
+
+              <button 
+                onClick={() => setSuccessAnimation(null)}
+                className="w-full py-4 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary/20"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── FAR AWAY / GPS SIMULATOR MODAL ───────────────────────────────── */}
+        {farModal && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-slate-900 border border-white/10 p-6 rounded-[2rem] max-w-md w-full shadow-2xl">
+              <div className="flex items-center gap-3 text-amber-400 mb-4">
+                <span className="material-symbols-outlined text-3xl">error</span>
+                <h3 className="font-black text-lg uppercase italic tracking-tighter text-white">Estás demasiado lejos</h3>
+              </div>
+              
+              <p className="text-sm text-slate-400 mb-4 leading-relaxed">
+                Tu ubicación GPS actual está a <strong className="text-white">{farModal.distanceKm} km</strong> del checkpoint <strong className="text-white">{farModal.checkpoint.name}</strong>.
+              </p>
+              
+              <div className="bg-slate-950 p-4 rounded-2xl mb-6 text-xs border border-white/5 space-y-2 text-slate-300">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Coordenadas del Checkpoint:</span>
+                  <span className="font-mono text-slate-300">{farModal.checkpoint.lat}, {farModal.checkpoint.lng}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Tu ubicación:</span>
+                  <span className="font-mono text-slate-300">{farModal.userLat.toFixed(4)}, {farModal.userLng.toFixed(4)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Radio de Check-in:</span>
+                  <span className="text-slate-300">1.0 km</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => executeCheckin(farModal.route, farModal.checkpoint, true)}
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                >
+                  🚀 Simular Check-in (Pruebas)
+                </button>
+                <button
+                  onClick={() => setFarModal(null)}
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MENÚ MÓVIL */}
         <BottomNavigationBar />

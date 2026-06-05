@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
 import { MapPin, Compass, Navigation, Award, CheckCircle2, ChevronRight, Lock, Map, RefreshCw, AlertCircle, Info } from 'lucide-react';
 import BottomNavigationBar from '../components/BottomNavigationBar';
+import L from 'leaflet';
 
 // ─── TYPES & INTERFACES ──────────────────────────────────────────────────────
 
@@ -90,6 +91,117 @@ const EasyRoutesScreen: React.FC = () => {
     xp: number;
     medal?: MedalInfo | null;
   } | null>(null);
+
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const routeMapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!selectedRoute) {
+      if (routeMapRef.current) {
+        routeMapRef.current.remove();
+        routeMapRef.current = null;
+      }
+      return;
+    }
+
+    let mapInstance: L.Map | null = null;
+    const timer = setTimeout(() => {
+      if (!mapContainerRef.current) return;
+
+      mapInstance = L.map(mapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+        center: [-46.6225, -72.6745],
+        zoom: 12
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        attribution: '© CartoDB'
+      }).addTo(mapInstance);
+
+      routeMapRef.current = mapInstance;
+
+      const checkpoints = selectedRoute.checkpoints || [];
+      if (checkpoints.length > 0) {
+        const bounds = L.latLngBounds([]);
+        const latlngs = checkpoints.map((cp) => {
+          const pt = L.latLng(cp.lat, cp.lng);
+          bounds.extend(pt);
+          return pt;
+        });
+
+        const getDiffColor = (difficulty: string) => {
+          const diff = (difficulty || '').toLowerCase();
+          if (diff.includes('fácil') || diff.includes('facil') || diff.includes('easy')) return '#10B981';
+          if (diff.includes('moderado') || diff.includes('moderate') || diff.includes('medio')) return '#3B82F6';
+          if (diff.includes('difícil') || diff.includes('dificil') || diff.includes('hard')) return '#F59E0B';
+          if (diff.includes('extremo') || diff.includes('extreme')) return '#EF4444';
+          return '#3b82f6';
+        };
+        const color = getDiffColor(selectedRoute.difficulty);
+
+        L.polyline(latlngs, {
+          color: color,
+          weight: 4,
+          opacity: 0.8,
+          dashArray: '8, 8'
+        }).addTo(mapInstance);
+
+        checkpoints.forEach((cp, idx) => {
+          const progress = getProgress(selectedRoute.id);
+          const completed = progress.checkpoints_completed.includes(cp.id);
+          const markerIcon = L.divIcon({
+            className: '',
+            html: `
+              <div style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: ${completed ? '#10B981' : color};
+                color: white;
+                font-size: 11px;
+                font-weight: 900;
+                border: 2px solid white;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+              ">
+                ${completed ? '✓' : idx + 1}
+              </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          L.marker([cp.lat, cp.lng], { icon: markerIcon })
+            .addTo(mapInstance!)
+            .bindPopup(`
+              <div style="color: #1e293b; font-family: system-ui; padding: 2px; min-width: 140px;">
+                <h4 style="margin: 0; font-size: 11px; font-weight: 800; text-transform: uppercase;">${cp.name}</h4>
+                <p style="margin: 4px 0 0; font-size: 9px; color: #64748b; line-height: 1.2;">${cp.description || ''}</p>
+                <div style="margin-top: 4px; font-size: 9px; font-weight: 700; color: #10B981;">🏆 +${cp.xp_reward} XP</div>
+              </div>
+            `);
+        });
+
+        if (bounds.isValid()) {
+          mapInstance.fitBounds(bounds, { padding: [40, 40] });
+        }
+      }
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+      if (routeMapRef.current) {
+        routeMapRef.current = null;
+      }
+    };
+  }, [selectedRoute, progressList]);
 
   useEffect(() => {
     if (!supabaseUser) {
@@ -388,18 +500,18 @@ const EasyRoutesScreen: React.FC = () => {
               <Navigation className="w-4 h-4 rotate-270" /> Volver a las Rutas
             </button>
 
-            {selectedRoute.image_url && (
-              <div className="relative h-64 w-full rounded-[2.5rem] overflow-hidden mb-6 border border-white/10 shadow-2xl">
-                <img src={selectedRoute.image_url} alt={selectedRoute.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                {getProgress(selectedRoute.id).completed_at && (
-                  <div className="absolute top-4 right-4 bg-emerald-500/95 text-white px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg border border-emerald-400/20">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Completada</span>
-                  </div>
-                )}
-              </div>
-            )}
+            <div 
+              ref={mapContainerRef} 
+              style={{ height: '320px' }} 
+              className="relative w-full rounded-[2.5rem] overflow-hidden mb-6 border border-white/10 shadow-2xl z-10"
+            >
+              {getProgress(selectedRoute.id).completed_at && (
+                <div className="absolute top-4 right-4 bg-emerald-500/95 text-white px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg border border-emerald-400/20 z-[1000]">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="text-[9px] font-black uppercase tracking-widest">Completada</span>
+                </div>
+              )}
+            </div>
 
             <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl space-y-6">
               <div>
