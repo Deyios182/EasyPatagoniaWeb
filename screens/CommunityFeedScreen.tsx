@@ -192,6 +192,7 @@ const CommunityFeedScreen: React.FC = () => {
     // Edit state
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
+    const [grantingPostId, setGrantingPostId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPosts();
@@ -334,6 +335,24 @@ const CommunityFeedScreen: React.FC = () => {
             .delete().eq('id', postId).eq('user_id', supabaseUser.id);
         if (!error) setPosts(prev => prev.filter(p => p.id !== postId));
         else alert('No se pudo eliminar. Verifica que sea tu publicación.');
+    };
+
+    const handleGrantXP = async (targetUserId: string, amount: number, postId: string) => {
+        try {
+            const reason = "Recompensa por contenido en Mural Global";
+            const { error } = await supabase.rpc('grant_xp_to_user', {
+                p_user_id: targetUserId,
+                p_amount: amount,
+                p_reason: reason,
+                p_post_id: postId
+            });
+            if (error) throw error;
+            alert(`¡Se han otorgado +${amount} Easy Coins (XP) a este usuario!`);
+            setGrantingPostId(null);
+        } catch (err) {
+            console.error(err);
+            alert("Error al otorgar XP");
+        }
     };
 
     const getPostIcon = (type: string) => {
@@ -569,6 +588,50 @@ const CommunityFeedScreen: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center gap-2">
+                                        {/* Admin Easy Coins Button */}
+                                        {user?.rol === 'SuperAdmin' && (
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setGrantingPostId(grantingPostId === post.id ? null : post.id); }}
+                                                    className="w-10 h-10 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-sm"
+                                                    title="Otorgar Easy Coins / XP"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">monetization_on</span>
+                                                </button>
+                                                
+                                                {grantingPostId === post.id && (
+                                                    <div className="absolute right-0 top-12 z-50 bg-white dark:bg-surface-dark rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 p-4 w-48 animate-in fade-in zoom-in-95 duration-100">
+                                                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">Dar Easy Coins (XP)</p>
+                                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                                            {[10, 50, 100].map(amount => (
+                                                                <button
+                                                                    key={amount}
+                                                                    onClick={() => handleGrantXP(post.user_id, amount, post.id)}
+                                                                    className="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs py-2 rounded-xl transition-all"
+                                                                >
+                                                                    +{amount}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <button
+                                                            onClick={async () => {
+                                                                const custom = window.prompt("Cantidad personalizada:");
+                                                                if (custom) {
+                                                                    const val = parseInt(custom, 10);
+                                                                    if (!isNaN(val) && val > 0) {
+                                                                        await handleGrantXP(post.user_id, val, post.id);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="w-full bg-slate-100 dark:bg-background-dark text-slate-700 dark:text-slate-200 text-[10px] font-black py-2 rounded-xl uppercase tracking-widest border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10"
+                                                        >
+                                                            Personalizado
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="bg-slate-50 dark:bg-background-dark w-10 h-10 rounded-full flex items-center justify-center">
                                             {getPostIcon(post.post_type)}
                                         </div>

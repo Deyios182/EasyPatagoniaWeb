@@ -47,7 +47,7 @@ const PlannerScreen: React.FC = () => {
     { id: 'Hospedaje', icon: 'hotel', label: t('hotel') },
     { id: 'Actividad', icon: 'hiking', label: t('activity') },
     { id: 'Restaurante', icon: 'restaurant', label: t('restaurant') },
-    { id: 'Restaurante', icon: 'restaurant', label: t('restaurant') },
+    { id: 'Natural', icon: 'forest', label: t('natural') },
     { id: 'Transporte', icon: 'directions_bus', label: t('transport') },
     { id: 'Mercado', icon: 'storefront', label: 'Mercado' }
   ];

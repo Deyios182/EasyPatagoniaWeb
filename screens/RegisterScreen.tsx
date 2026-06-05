@@ -68,7 +68,7 @@ const RegisterScreen: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm font-body overflow-y-auto py-8">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm font-body overflow-y-auto py-8">
             <div className="relative w-full max-w-md mx-4">
                 {/* Close button */}
                 <button

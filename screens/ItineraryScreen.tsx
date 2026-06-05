@@ -128,12 +128,12 @@ const ItineraryScreen: React.FC = () => {
         </div>
 
         {/* Selector de Días */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
           {plan.map((d) => (
             <button
               key={d.day}
               onClick={() => setCurrentDay(d.day)}
-              className={`px-10 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all border ${currentDay === d.day ? 'bg-primary border-primary text-white shadow-xl scale-105' : 'bg-white dark:bg-surface-dark dark:text-slate-400 border-slate-200 dark:border-white/5'}`}
+              className={`px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border ${currentDay === d.day ? 'bg-primary border-primary text-white shadow-lg scale-102' : 'bg-white dark:bg-surface-dark dark:text-slate-400 border-slate-200 dark:border-white/5'}`}
             >
               Día {d.day}
             </button>
@@ -141,74 +141,72 @@ const ItineraryScreen: React.FC = () => {
         </div>
 
         {/* Itinerario del Día */}
-        <div className="space-y-12 relative animate-in fade-in duration-700">
-          <div className="absolute left-[27px] top-10 bottom-10 w-[4px] bg-primary/20 rounded-full"></div>
+        <div className="space-y-4 relative animate-in fade-in duration-700">
+          <div className="absolute left-[21px] top-6 bottom-6 w-[2px] bg-primary/20 rounded-full"></div>
 
           {activeDayPlan?.activities.map((act, idx) => {
             const business = allBusinesses.find(b => b.name.toLowerCase().includes(act.businessName?.toLowerCase() || '_____'));
-            const bizId = business?.id;
             return (
-              <div key={idx} className="flex gap-8 relative group">
+              <div key={idx} className="flex gap-4 relative group">
                 <div className="flex flex-col items-center">
-                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-col items-center justify-center z-10 shadow-xl border-4 border-white dark:border-background-dark ${idx === 0 ? 'bg-primary text-white' : 'bg-white dark:bg-surface-dark dark:text-slate-400'}`}>
-                    <span className="text-[10px] font-black leading-none">{act.time.split(' ')[0]}</span>
-                    <span className="text-[8px] font-bold opacity-70 mt-0.5">{act.time.split(' ')[1] || 'AM'}</span>
+                  <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center z-10 shadow-md border-2 border-white dark:border-background-dark ${idx === 0 ? 'bg-primary text-white' : 'bg-white dark:bg-surface-dark dark:text-slate-400'}`}>
+                    <span className="text-[9px] font-black leading-none">{act.time.split(' ')[0]}</span>
+                    <span className="text-[7px] font-bold opacity-70 mt-0.5">{act.time.split(' ')[1] || 'AM'}</span>
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-6">
-                  <div className="bg-white dark:bg-surface-dark rounded-[3.5rem] overflow-hidden shadow-sm border border-slate-100 dark:border-white/5 hover:shadow-2xl transition-all group/card">
-                    <div className="relative h-64 overflow-hidden">
+                <div className="flex-1 space-y-4">
+                  <div className="bg-white dark:bg-surface-dark rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-white/5 hover:shadow-lg transition-all group/card">
+                    <div className="relative h-40 overflow-hidden">
                       {activityImages[act.title] ? (
-                        <img src={activityImages[act.title]} className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-[5s]" />
+                        <img src={activityImages[act.title]} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-[4s]" />
                       ) : (
                         <div className="w-full h-full bg-slate-100 dark:bg-background-dark flex items-center justify-center">
-                          <span className="material-symbols-outlined text-primary/20 text-6xl animate-pulse">landscape</span>
+                          <span className="material-symbols-outlined text-primary/20 text-4xl animate-pulse">landscape</span>
                         </div>
                       )}
-                      <div className="absolute top-6 right-6 flex gap-2">
-                        <span className="bg-black/40 backdrop-blur-md text-white text-[8px] font-black px-4 py-2 rounded-full uppercase tracking-widest border border-white/20">
+                      <div className="absolute top-4 right-4 flex gap-1">
+                        <span className="bg-black/40 backdrop-blur-md text-white text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border border-white/10">
                           {act.category || 'Actividad'}
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-6 md:p-10">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl md:text-2xl font-black dark:text-white leading-tight flex-1 pr-4 md:pr-6 uppercase italic tracking-tighter">{act.title}</h3>
+                    <div className="p-4 md:p-6">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg md:text-xl font-black dark:text-white leading-tight flex-1 pr-4 uppercase italic tracking-tighter">{act.title}</h3>
                         {act.businessName && (
-                          <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 shrink-0">
-                            <p className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">Verificado</p>
-                            <p className="text-[10px] font-bold dark:text-white mt-1 leading-none truncate max-w-[120px]">{act.businessName}</p>
+                          <div className="bg-primary/10 px-3 py-1 rounded-xl border border-primary/20 shrink-0">
+                            <p className="text-[8px] font-black text-primary uppercase tracking-widest leading-none">Verificado</p>
+                            <p className="text-[9px] font-bold dark:text-white mt-0.5 leading-none truncate max-w-[100px]">{act.businessName}</p>
                           </div>
                         )}
                       </div>
-                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium italic border-l-2 border-primary/30 pl-6 mb-8">{act.description}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium italic border-l-2 border-primary/30 pl-4 mb-4">{act.description}</p>
 
                       {business && (
-                        <div className="flex gap-3 pt-2">
+                        <div className="flex gap-2 pt-1">
                           {/* Botón WhatsApp / Contacto */}
                           {(business.whatsapp || (business as any).contacto) && (
                             <button
                               onClick={() => {
                                 const phone = business.whatsapp || (business as any).contacto;
-                                // Simple sanitization
                                 const cleanPhone = phone?.toString().replace(/\D/g, '') || '';
                                 const msg = `Hola, vi su servicio de "${act.title}" en mi itinerario de EasyPatagonia y quisiera consultar disponibilidad.`;
                                 window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
                               }}
-                              className="flex-1 py-4 bg-green-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-lg hover:-translate-y-1"
+                              className="flex-1 py-3 bg-green-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-green-600 transition-all shadow-md hover:-translate-y-0.5"
                             >
-                              <span className="material-symbols-outlined text-lg">chat</span>
+                              <span className="material-symbols-outlined text-base">chat</span>
                               Consultar
                             </button>
                           )}
 
                           <button
                             onClick={() => navigate(`/details/${business.id}`)}
-                            className="flex-1 py-4 bg-slate-100 dark:bg-background-dark text-slate-500 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all"
+                            className="flex-1 py-3 bg-slate-100 dark:bg-background-dark text-slate-500 dark:text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary hover:text-white transition-all"
                           >
-                            <span className="material-symbols-outlined text-lg">visibility</span>
+                            <span className="material-symbols-outlined text-base">visibility</span>
                             Ver Detalles
                           </button>
                         </div>
