@@ -220,56 +220,17 @@ const LandingPage: React.FC = () => {
       />
       <div className="min-h-screen bg-[#eaeaea] font-body text-[#1a2a30] overflow-x-hidden">
 
-        {/* HERO SECTION WITH CAROUSEL */}
+        {/* HERO SECTION WITH STATIC BACKGROUND */}
         <div className="relative h-screen w-full overflow-hidden bg-black">
-          {/* Carousel Background */}
+          {/* Static Background Image */}
           <div className="absolute inset-0">
-            {loading ? (
-              <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-                </div>
-              </div>
-            ) : carouselImages.length > 0 ? (
-              carouselImages.map((img, index) => (
-                <div
-                  key={img.id}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${index === currentCarouselIndex ? 'opacity-60' : 'opacity-0'
-                    }`}
-                >
-                  <img
-                    src={img.image_url}
-                    className="w-full h-full object-cover"
-                    alt={img.alt_text || `Patagonia ${index + 1}`}
-                  />
-                </div>
-              ))
-            ) : (
-              <img
-                src={content['hero']?.image_url || "https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"}
-                className="w-full h-full object-cover opacity-60"
-                alt="Patagonia Background"
-              />
-            )}
+            <img
+              src="https://images.unsplash.com/photo-1522083165195-342750297f05?q=80&w=2070"
+              className="w-full h-full object-cover opacity-60"
+              alt="Majestic Patagonia Landscape"
+            />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a2a30] via-transparent to-black/30"></div>
-
-          {/* Carousel Indicators */}
-          {carouselImages.length > 1 && (
-            <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-2 z-40">
-              {carouselImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentCarouselIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-all ${index === currentCarouselIndex
-                    ? 'bg-[#dd6e42] w-8'
-                    : 'bg-white/50 hover:bg-white/80'
-                    }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
 
 
 
