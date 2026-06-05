@@ -169,12 +169,16 @@ const resetForm = {
     type: 'story' as 'review' | 'alert' | 'story' | 'photo',
 };
 
+// Global module-level cache for instant loads
+let cachedPosts: CommunityPost[] = [];
+let cachedProfiles: any[] = [];
+
 const CommunityFeedScreen: React.FC = () => {
     const navigate = useNavigate();
-    const { user, supabaseUser, allBusinesses } = useAppAuth();
-    const [posts, setPosts] = useState<CommunityPost[]>([]);
+    const { user, supabaseUser, allBusinesses, allAttractions } = useAppAuth();
+    const [posts, setPosts] = useState<CommunityPost[]>(cachedPosts);
     const [attractions, setAttractions] = useState<{ id: string, name: string }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(cachedPosts.length === 0);
 
     // Create form
     const [isCreatingText, setIsCreatingText] = useState(false);
@@ -194,16 +198,8 @@ const CommunityFeedScreen: React.FC = () => {
     const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
     const [grantingPostId, setGrantingPostId] = useState<string | null>(null);
 
-    // Pagination state
-    const [postsLimit, setPostsLimit] = useState(5);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-
     useEffect(() => {
-        fetchPosts(postsLimit > 5);
-    }, [postsLimit]);
-
-    useEffect(() => {
+        fetchPosts();
         fetchAttractions();
     }, []);
 
@@ -212,22 +208,21 @@ const CommunityFeedScreen: React.FC = () => {
         if (data) setAttractions(data);
     };
 
-    const fetchPosts = async (isLoadMore = false) => {
-        if (isLoadMore) setLoadingMore(true);
-        else setLoading(true);
+    const fetchPosts = async () => {
+        // Only show loader if we have no cached posts
+        if (cachedPosts.length === 0) {
+            setLoading(true);
+        }
         try {
+            // Flat select with zero joins to avoid database recursive RLS slow downs
             const { data: postsData, error: postsError } = await supabase
                 .from('community_posts')
-                .select(`*, attractions(name), companies(name)`)
+                .select('*')
                 .eq('status', 'approved')
                 .order('created_at', { ascending: false })
-                .limit(postsLimit);
+                .limit(50);
 
             if (postsError) throw postsError;
-
-            if (postsData) {
-                setHasMore(postsData.length === postsLimit);
-            }
 
             // Optimize: Only fetch profiles of users who have posted in the current page (max 50 users)
             const userIds = Array.from(new Set((postsData || []).map(p => p.user_id).filter(Boolean)));
@@ -237,7 +232,10 @@ const CommunityFeedScreen: React.FC = () => {
                     .from('profiles')
                     .select('id, full_name, avatar_url')
                     .in('id', userIds);
-                if (profData) profiles = profData;
+                if (profData) {
+                    profiles = profData;
+                    cachedProfiles = profData;
+                }
             }
 
             let userLikes: Set<string> = new Set();
@@ -247,8 +245,12 @@ const CommunityFeedScreen: React.FC = () => {
                 if (likesData) userLikes = new Set(likesData.map(l => l.post_id));
             }
 
+            // Map profiles, attractions, and companies in-memory using cached global context data
             const mappedPosts = (postsData || []).map(post => {
-                const prof = profiles?.find(p => p.id === post.user_id);
+                const prof = profiles.find(p => p.id === post.user_id) || cachedProfiles.find(p => p.id === post.user_id);
+                const attr = allAttractions.find(a => a.id === post.attraction_id);
+                const comp = allBusinesses.find(b => b.id === post.business_id);
+                
                 return {
                     ...post,
                     auth_users: {
@@ -257,16 +259,18 @@ const CommunityFeedScreen: React.FC = () => {
                             avatar_url: prof?.avatar_url
                         }
                     },
+                    attractions: attr ? { name: attr.name } : undefined,
+                    companies: comp ? { name: comp.name } : undefined,
                     user_has_liked: userLikes.has(post.id)
                 };
             });
 
             setPosts(mappedPosts as CommunityPost[]);
+            cachedPosts = mappedPosts as CommunityPost[];
         } catch (error) {
             console.error('Error fetching posts:', error);
         } finally {
             setLoading(false);
-            setLoadingMore(false);
         }
     };
 
@@ -739,28 +743,6 @@ const CommunityFeedScreen: React.FC = () => {
                                 </div>
                             </div>
                         ))
-                    )}
-                    
-                    {hasMore && posts.length > 0 && (
-                        <div className="flex justify-center pt-4 pb-8">
-                            <button
-                                onClick={() => setPostsLimit(prev => prev + 5)}
-                                disabled={loadingMore}
-                                className="px-8 py-4 bg-slate-200 dark:bg-background-dark hover:bg-slate-300 dark:hover:bg-background-dark/80 text-slate-700 dark:text-slate-200 text-xs font-black uppercase tracking-widest rounded-2xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-                            >
-                                {loadingMore ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-slate-700 dark:border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Cargando...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined text-sm">expand_more</span>
-                                        Cargar más publicaciones
-                                    </>
-                                )}
-                            </button>
-                        </div>
                     )}
                 </div>
             </div>
