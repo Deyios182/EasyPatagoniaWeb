@@ -7,6 +7,7 @@ import { Category, Business, MapTheme } from '../types';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from '../components/MapMarkers';
 import SEO from '../components/SEO';
+import { supabase } from '../supabaseClient';
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -26,7 +27,7 @@ const TouristMapScreen: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: L.Marker | L.CircleMarker }>({});
 
-  const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
+  const [activeFilter, setActiveFilter] = useState<Category | 'All' | 'Rutas'>('All');
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'attractions' | 'gas_stations' | 'campings'>('all');
   const [serviceSearch, setServiceSearch] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -36,12 +37,96 @@ const TouristMapScreen: React.FC = () => {
   const [selectedAttraction, setSelectedAttraction] = useState<any | null>(null); // New state for Attraction
   const [showRouteAssistant, setShowRouteAssistant] = useState(false);
 
+  const [mapRoutes, setMapRoutes] = useState<any[]>([]);
+  const routePolylinesRef = useRef<L.Polyline[]>([]);
+  const routeMarkersRef = useRef<L.Marker[]>([]);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+
+  const locateUser = () => {
+    if (!navigator.geolocation) {
+      alert("La geolocalización no está soportada por tu navegador.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const latlng = L.latLng(latitude, longitude);
+        
+        if (mapInstance) {
+          mapInstance.flyTo(latlng, 15, { animate: true, duration: 1.5 });
+          
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setLatLng(latlng);
+          } else {
+            const userIcon = L.divIcon({
+              className: '',
+              html: `
+                <div style="
+                  position: relative;
+                  width: 20px;
+                  height: 20px;
+                  background-color: #3b82f6;
+                  border: 3px solid white;
+                  border-radius: 50%;
+                  box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+                ">
+                  <div style="
+                    position: absolute;
+                    inset: -6px;
+                    border-radius: 50%;
+                    background-color: rgba(59, 130, 246, 0.3);
+                    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+                  "></div>
+                </div>
+                <style>
+                  @keyframes ping {
+                    75%, 100% {
+                      transform: scale(2);
+                      opacity: 0;
+                    }
+                  }
+                </style>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+            const marker = L.marker(latlng, { icon: userIcon, zIndexOffset: 1000 }).addTo(mapInstance);
+            userMarkerRef.current = marker;
+          }
+        }
+      },
+      (error) => {
+        console.error("Error obteniendo ubicación:", error);
+        alert("No se pudo obtener tu ubicación actual. Revisa los permisos de ubicación.");
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('easy_routes')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order');
+        if (error) throw error;
+        setMapRoutes(data || []);
+      } catch (err) {
+        console.error('Error fetching routes for map:', err);
+      }
+    };
+    fetchRoutes();
   }, []);
 
   // Handle incoming navigation state (e.g. from Highlights or Details)
@@ -68,6 +153,9 @@ const TouristMapScreen: React.FC = () => {
   }, [zoom]);
 
   const filtered = useMemo(() => {
+    if (activeFilter === 'Rutas') {
+      return [];
+    }
     return allBusinesses.filter(b => {
       // Robust checks
       if (!b.gps) return false;
@@ -153,6 +241,10 @@ const TouristMapScreen: React.FC = () => {
     return () => {
       map.remove();
       setMapInstance(null);
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
     };
   }, []);
 
@@ -225,7 +317,7 @@ const TouristMapScreen: React.FC = () => {
       : [];
 
     // Localities (Visible only at LOW zoom, hide when businesses appear)
-    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD)
+    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD && activeFilter !== 'Rutas')
       ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
         id: l.id,
         lat: l.latitude!,
@@ -241,7 +333,7 @@ const TouristMapScreen: React.FC = () => {
     // Attractions (Visible only at Medium Zoom >= 12)
     const SHOW_ATTRACTION_ZOOM_THRESHOLD = 12;
 
-    const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD)
+    const attractionMarkers = (zoom >= SHOW_ATTRACTION_ZOOM_THRESHOLD && activeFilter !== 'Rutas')
       ? allAttractions
         .filter(a => a.latitude && a.longitude)
         .filter(a => {
@@ -485,6 +577,151 @@ const TouristMapScreen: React.FC = () => {
     }
   }, [selectedBusiness?.id, selectedAttraction?.id, mapInstance]);
 
+  const getRouteColor = (difficulty: string) => {
+    const diff = (difficulty || '').toLowerCase();
+    if (diff.includes('fácil') || diff.includes('facil') || diff.includes('easy')) return '#10B981';
+    if (diff.includes('moderado') || diff.includes('moderate') || diff.includes('medio')) return '#3B82F6';
+    if (diff.includes('difícil') || diff.includes('dificil') || diff.includes('hard') || diff.includes('difficult')) return '#F59E0B';
+    if (diff.includes('extremo') || diff.includes('extreme')) return '#EF4444';
+    return '#3B82F6'; // Default blue
+  };
+
+  // Draw / Update Route Polylines and Checkpoint Markers
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    // First, clear any existing route polylines and markers
+    routePolylinesRef.current.forEach(polyline => polyline.remove());
+    routePolylinesRef.current = [];
+
+    routeMarkersRef.current.forEach(marker => marker.remove());
+    routeMarkersRef.current = [];
+
+    if (activeFilter !== 'Rutas') return;
+
+    console.log('🗺️ [MAP] Drawing routes on map:', mapRoutes);
+
+    const bounds: L.LatLngBounds = L.latLngBounds([]);
+
+    mapRoutes.forEach(route => {
+      const checkpoints = route.checkpoints || [];
+      if (checkpoints.length === 0) return;
+
+      const color = getRouteColor(route.difficulty);
+      const latlngs = checkpoints.map((cp: any) => {
+        const latlng = L.latLng(cp.lat, cp.lng);
+        bounds.extend(latlng);
+        return latlng;
+      });
+
+      // 1. Draw Polyline
+      const polyline = L.polyline(latlngs, {
+        color: color,
+        weight: 5,
+        opacity: 0.8,
+        dashArray: '10, 10', // dashed line style to make it look premium & exploratory
+        lineJoin: 'round'
+      }).addTo(mapInstance);
+
+      // Add polyline hover effects
+      polyline.on('mouseover', () => {
+        polyline.setStyle({ weight: 8, opacity: 1.0 });
+      });
+      polyline.on('mouseout', () => {
+        polyline.setStyle({ weight: 5, opacity: 0.8 });
+      });
+
+      const routePopup = L.popup().setContent(`
+        <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px; min-width: 200px;">
+          <p style="margin: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.1em;">
+            Ruta EasyPatagonia
+          </p>
+          <h3 style="margin: 4px 0 2px; font-size: 16px; font-weight: 900; color: #1e293b; text-transform: uppercase; font-style: italic; line-height: 1.2;">
+            ${route.name}
+          </h3>
+          <p style="margin: 0 0 8px; font-size: 11px; color: #64748b; line-height: 1.3;">${route.description}</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 10px; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+              📏 ${route.total_km} km
+            </span>
+            <span style="font-size: 10px; font-weight: 700; color: ${color}; background: ${color}15; padding: 2px 6px; border-radius: 4px; border: 1px solid ${color}30;">
+              📊 ${route.difficulty}
+            </span>
+            <span style="font-size: 10px; font-weight: 700; color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">
+              💎 +${route.xp_reward} XP
+            </span>
+          </div>
+        </div>
+      `);
+      polyline.bindPopup(routePopup);
+      routePolylinesRef.current.push(polyline);
+
+      // 2. Draw Checkpoint Markers
+      checkpoints.forEach((cp: any, i: number) => {
+        const cpIcon = L.divIcon({
+          className: '',
+          html: `
+            <div style="
+              position: relative;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              background-color: ${color};
+              color: white;
+              font-family: system-ui, -apple-system, sans-serif;
+              font-size: 12px;
+              font-weight: 900;
+              border: 3px solid white;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+              transition: all 0.2s ease;
+            ">
+              ${i + 1}
+            </div>
+          `,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14]
+        });
+
+        const marker = L.marker([cp.lat, cp.lng], { icon: cpIcon })
+          .addTo(mapInstance);
+
+        const cpPopup = L.popup().setContent(`
+          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 180px;">
+            <p style="margin: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.1em;">
+              Hito ${i + 1} de ${checkpoints.length} • ${route.name}
+            </p>
+            <h4 style="margin: 4px 0 2px; font-size: 14px; font-weight: 800; color: #1e293b; text-transform: uppercase; font-style: italic;">
+              ${cp.name}
+            </h4>
+            ${cp.description ? `<p style="margin: 0 0 6px; font-size: 11px; color: #64748b; line-height: 1.3;">${cp.description}</p>` : ''}
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #10B981; background: #e6fcf5; padding: 2px 6px; border-radius: 4px; width: fit-content;">
+              <span>🏆 +${cp.xp_reward} XP</span>
+            </div>
+          </div>
+        `);
+
+        marker.bindPopup(cpPopup);
+        routeMarkersRef.current.push(marker);
+      });
+    });
+
+    // Fit map bounds to show routes if we have points
+    if (bounds.isValid()) {
+      mapInstance.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    return () => {
+      routePolylinesRef.current.forEach(polyline => polyline.remove());
+      routePolylinesRef.current = [];
+      routeMarkersRef.current.forEach(marker => marker.remove());
+      routeMarkersRef.current = [];
+    };
+  }, [activeFilter, mapRoutes, mapInstance]);
+
   // Close selection when clicking on Map Background
   useEffect(() => {
     if (!mapInstance) return;
@@ -696,8 +933,8 @@ const TouristMapScreen: React.FC = () => {
 
 
 
-          {/* Toggle Satelital - Moved lower to avoid overlap */}
-          <div className="absolute top-40 left-4 md:left-8 z-[90] pointer-events-auto">
+          {/* Toggle Satelital & Geolocalización */}
+          <div className="absolute top-40 left-4 md:left-8 z-[90] pointer-events-auto flex flex-col gap-2">
             <button
               onClick={() => setIsSatellite(!isSatellite)}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isSatellite ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
@@ -705,17 +942,24 @@ const TouristMapScreen: React.FC = () => {
             >
               <span className="material-symbols-outlined text-2xl">{isSatellite ? 'map' : 'satellite_alt'}</span>
             </button>
+            <button
+              onClick={locateUser}
+              className="w-12 h-12 rounded-2xl bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 active:scale-95"
+              title="Mi ubicación"
+            >
+              <span className="material-symbols-outlined text-2xl">my_location</span>
+            </button>
           </div>
 
           {/* Filtros de Negocios */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-1 scroll-smooth mask-linear-fade">
-            {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
+            {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte', 'Rutas'].map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat as any)}
                 className={`whitespace-nowrap px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
               >
-                {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
+                {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : cat === 'Rutas' ? 'Rutas' : 'Mercado'}
               </button>
             ))}
           </div>
