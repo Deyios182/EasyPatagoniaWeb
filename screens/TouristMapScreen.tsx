@@ -234,8 +234,7 @@ const TouristMapScreen: React.FC = () => {
       keepBuffer: 6,
       updateWhenZooming: false,
       updateInterval: 200,
-      className: 'map-tiles',
-      bounds: [[-49.3, -76.0], [-43.5, -71.0]]
+      className: 'map-tiles'
     }).addTo(map);
 
     tileLayerRef.current.on('tileerror', (error) => {
@@ -279,8 +278,7 @@ const TouristMapScreen: React.FC = () => {
         keepBuffer: 10,
         updateWhenZooming: true,
         updateInterval: 100,
-        className: 'map-tiles',
-        bounds: [[-49.3, -76.0], [-43.5, -71.0]]
+        className: 'map-tiles'
       }).addTo(mapInstance);
 
       tileLayerRef.current.on('tileerror', (error) => {
