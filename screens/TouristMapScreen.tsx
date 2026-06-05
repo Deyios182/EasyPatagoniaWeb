@@ -43,6 +43,11 @@ const TouristMapScreen: React.FC = () => {
   const userMarkerRef = useRef<L.Marker | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
+  const [trackedRouteId, setTrackedRouteId] = useState<string | null>(localStorage.getItem('tracked_route_id'));
+  const [trackedRoute, setTrackedRoute] = useState<any | null>(null);
+  const trackedPolylineRef = useRef<L.Polyline | null>(null);
+  const trackedMarkersRef = useRef<L.Marker[]>([]);
+
   const [medals, setMedals] = useState<any[]>([]);
   const [progressList, setProgressList] = useState<any[]>([]);
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
@@ -338,6 +343,162 @@ const TouristMapScreen: React.FC = () => {
     };
     fetchRoutes();
   }, []);
+
+  // Resolve trackedRoute when mapRoutes or trackedRouteId changes
+  useEffect(() => {
+    if (trackedRouteId && mapRoutes.length > 0) {
+      const found = mapRoutes.find(r => r.id === trackedRouteId);
+      setTrackedRoute(found || null);
+    } else {
+      setTrackedRoute(null);
+    }
+  }, [trackedRouteId, mapRoutes]);
+
+  // Draw / Update Tracked Route on the map (always visible if activeFilter is NOT 'Rutas')
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    // Clear existing tracked route drawings
+    if (trackedPolylineRef.current) {
+      trackedPolylineRef.current.remove();
+      trackedPolylineRef.current = null;
+    }
+    trackedMarkersRef.current.forEach(marker => marker.remove());
+    trackedMarkersRef.current = [];
+
+    // If 'Rutas' filter is active, we already draw all routes. So don't duplicate.
+    if (activeFilter === 'Rutas' || !trackedRoute) return;
+
+    console.log('🗺️ [MAP] Drawing active tracked route:', trackedRoute);
+
+    const checkpoints = trackedRoute.checkpoints || [];
+    if (checkpoints.length === 0) return;
+
+    const color = getRouteColor(trackedRoute.difficulty);
+    const latlngs = checkpoints.map((cp: any) => L.latLng(cp.lat, cp.lng));
+
+    // 1. Draw Polyline
+    const polyline = L.polyline(latlngs, {
+      color: color,
+      weight: 6,
+      opacity: 0.9,
+      dashArray: '12, 12',
+      lineJoin: 'round'
+    }).addTo(mapInstance);
+
+    const routePopup = L.popup().setContent(`
+      <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px; min-width: 200px;">
+        <p style="margin: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.1em;">
+          Misión Activa
+        </p>
+        <h3 style="margin: 4px 0 2px; font-size: 16px; font-weight: 900; color: #1e293b; text-transform: uppercase; font-style: italic; line-height: 1.2;">
+          ${trackedRoute.name}
+        </h3>
+        <p style="margin: 0 0 8px; font-size: 11px; color: #64748b; line-height: 1.3;">${trackedRoute.description}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span style="font-size: 10px; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+            📏 ${trackedRoute.total_km} km
+          </span>
+          <span style="font-size: 10px; font-weight: 700; color: ${color}; background: ${color}15; padding: 2px 6px; border-radius: 4px; border: 1px solid ${color}30;">
+            📊 ${trackedRoute.difficulty}
+          </span>
+        </div>
+      </div>
+    `);
+    polyline.bindPopup(routePopup);
+    trackedPolylineRef.current = polyline;
+
+    // 2. Draw Checkpoint Markers
+    checkpoints.forEach((cp: any, i: number) => {
+      const progress = getProgress(trackedRoute.id);
+      const isCompleted = progress.checkpoints_completed.includes(cp.id);
+
+      const cpIcon = L.divIcon({
+        className: '',
+        html: `
+          <div style="
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background-color: ${isCompleted ? '#10B981' : color};
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            border: 2px solid white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+          ">
+            ${isCompleted ? '✓' : i + 1}
+          </div>
+        `,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+        popupAnchor: [0, -13]
+      });
+
+      const marker = L.marker([cp.lat, cp.lng], { icon: cpIcon })
+        .addTo(mapInstance);
+
+      const checkinButtonHtml = isCompleted
+        ? `<div style="display: flex; align-items: center; gap: 4px; color: #10B981; font-weight: bold; font-size: 10px; margin-top: 8px;">
+             <span style="font-size: 14px;">✓</span> Completado
+           </div>`
+        : `<button class="map-checkin-btn" data-route-id="${trackedRoute.id}" data-checkpoint-id="${cp.id}" style="
+             margin-top: 8px;
+             width: 100%;
+             padding: 6px 12px;
+             background-color: #3b82f6;
+             color: white;
+             font-family: system-ui, -apple-system, sans-serif;
+             font-size: 10px;
+             font-weight: bold;
+             text-transform: uppercase;
+             border: none;
+             border-radius: 6px;
+             cursor: pointer;
+             box-shadow: 0 2px 4px rgba(59,130,246,0.3);
+           ">
+             Realizar Check-in
+           </button>`;
+
+      const cpPopup = L.popup().setContent(`
+        <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 180px;">
+          <p style="margin: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.1em;">
+            Misión Activa • Hito ${i + 1} de ${checkpoints.length}
+          </p>
+          <h4 style="margin: 4px 0 2px; font-size: 14px; font-weight: 800; color: #1e293b; text-transform: uppercase; font-style: italic;">
+            ${cp.name}
+          </h4>
+          ${cp.description ? `<p style="margin: 0 0 6px; font-size: 11px; color: #64748b; line-height: 1.3;">${cp.description}</p>` : ''}
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #10B981; background: #e6fcf5; padding: 2px 6px; border-radius: 4px; width: fit-content;">
+            <span>🏆 +${cp.xp_reward} XP</span>
+          </div>
+          ${checkinButtonHtml}
+        </div>
+      `);
+
+      marker.bindPopup(cpPopup);
+      trackedMarkersRef.current.push(marker);
+    });
+
+    const bounds = L.latLngBounds(latlngs);
+    if (bounds.isValid()) {
+      mapInstance.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    return () => {
+      if (trackedPolylineRef.current) {
+        trackedPolylineRef.current.remove();
+        trackedPolylineRef.current = null;
+      }
+      trackedMarkersRef.current.forEach(marker => marker.remove());
+      trackedMarkersRef.current = [];
+    };
+  }, [mapInstance, trackedRoute, activeFilter, progressList]);
 
   // Handle incoming navigation state (e.g. from Highlights or Details)
   useEffect(() => {
@@ -1204,6 +1365,29 @@ const TouristMapScreen: React.FC = () => {
             >
               <span className="material-symbols-outlined text-2xl">my_location</span>
             </button>
+            {trackedRoute && (
+              <div className="mt-2 bg-slate-900/95 border border-amber-500/30 p-4 rounded-2xl shadow-xl flex flex-col gap-2 max-w-[200px] text-left pointer-events-auto">
+                <div>
+                  <span className="text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider bg-amber-500/10 text-amber-400 border-amber-500/20">
+                    Misión Activa
+                  </span>
+                  <h4 className="text-white font-black text-xs uppercase italic tracking-tight truncate mt-1.5">{trackedRoute.name}</h4>
+                  <p className="text-[9px] text-slate-400 mt-0.5">
+                    Hitos: {getProgress(trackedRoute.id).checkpoints_completed.length} / {trackedRoute.checkpoints?.length || 0}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('tracked_route_id');
+                    setTrackedRouteId(null);
+                    setTrackedRoute(null);
+                  }}
+                  className="w-full py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
+                >
+                  Dejar de seguir
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Filtros de Negocios */}

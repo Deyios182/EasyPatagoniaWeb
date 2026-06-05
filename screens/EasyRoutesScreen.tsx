@@ -528,6 +528,16 @@ const EasyRoutesScreen: React.FC = () => {
                 <p className="text-sm text-slate-400 mt-2 leading-relaxed">{selectedRoute.description}</p>
               </div>
 
+              <button
+                onClick={() => {
+                  localStorage.setItem('tracked_route_id', selectedRoute.id);
+                  navigate('/map');
+                }}
+                className="w-full py-3 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:bg-primary/90 flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-primary/20"
+              >
+                <MapPin className="w-4 h-4" /> Trazar misión en el Mapa Principal
+              </button>
+
               {/* Progress bar */}
               <div className="bg-slate-950/40 border border-white/5 p-4 rounded-2xl">
                 <div className="flex justify-between items-center mb-2">
