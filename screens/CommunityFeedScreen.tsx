@@ -209,17 +209,23 @@ const CommunityFeedScreen: React.FC = () => {
         try {
             const { data: postsData, error: postsError } = await supabase
                 .from('community_posts')
-                .select(`
-                    *,
-                    attractions(name),
-                    companies(name),
-                    profiles:user_id(full_name, avatar_url)
-                `)
+                .select(`*, attractions(name), companies(name)`)
                 .eq('status', 'approved')
                 .order('created_at', { ascending: false })
                 .limit(50);
 
             if (postsError) throw postsError;
+
+            // Optimize: Only fetch profiles of users who have posted in the current page (max 50 users)
+            const userIds = Array.from(new Set((postsData || []).map(p => p.user_id).filter(Boolean)));
+            let profiles: any[] = [];
+            if (userIds.length > 0) {
+                const { data: profData } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds);
+                if (profData) profiles = profData;
+            }
 
             let userLikes: Set<string> = new Set();
             if (supabaseUser) {
@@ -229,7 +235,7 @@ const CommunityFeedScreen: React.FC = () => {
             }
 
             const mappedPosts = (postsData || []).map(post => {
-                const prof = (post as any).profiles;
+                const prof = profiles?.find(p => p.id === post.user_id);
                 return {
                     ...post,
                     auth_users: {
