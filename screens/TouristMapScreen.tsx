@@ -1273,7 +1273,7 @@ const TouristMapScreen: React.FC = () => {
                 onChange={handleLocalityChange}
                 className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white text-[10px] font-black py-1 pr-5 leading-none cursor-pointer appearance-none uppercase tracking-wider outline-none max-w-[120px] sm:max-w-[150px] truncate"
                 defaultValue=""
-                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
               >
                 <option value="" disabled>Patagonia</option>
                 {allLocalities.map(loc => (
