@@ -36,6 +36,7 @@ import AdminPhotoReviewScreen from './screens/AdminPhotoReviewScreen';
 import IntranetScreen from './screens/intranet/IntranetScreen';
 import GamificationAdminScreen from './screens/GamificationAdminScreen';
 import PassportScreen from './screens/PassportScreen';
+import EasyRoutesScreen from './screens/EasyRoutesScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
@@ -576,7 +577,9 @@ const NavigationSidebar: React.FC<SidebarProps> = ({ isCollapsed, toggle }) => {
           <>
             <NavItem to="/highlights" icon="grade" label="Imperdibles" />
             <NavItem to="/directory" icon="list_alt" label={t('list')} />
+            <NavItem to="/routes" icon="route" label="Rutas" />
             <NavItem to="/community" icon="diversity_3" label="Mural Global" />
+            <NavItem to="/passport" icon="badge" label="Pasaporte" />
             <div className="my-4 border-t border-slate-300 dark:border-white/5"></div>
             {!isCollapsed && <p className="text-[10px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-6 mb-2 leading-none animate-in fade-in">Inteligencia</p>}
             <NavItem to="/chat" icon="smart_toy" label="PatagonIA" />
@@ -695,7 +698,8 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/friends" element={isAuthenticated ? <FriendsScreen /> : <Navigate to="/auth/login" />} />
 
           {/* Rutas privadas de usuario */}
-          <Route path="/passport" element={user ? <PassportScreen /> : <Navigate to="/" />} />
+          <Route path="/routes" element={isAuthenticated ? <EasyRoutesScreen /> : <Navigate to="/auth/login" />} />
+          <Route path="/passport" element={isAuthenticated ? <PassportScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin/photos" element={user && role === 'SuperAdmin' ? <AdminPhotoReviewScreen /> : <Navigate to="/profile" />} />

@@ -7,9 +7,24 @@ const HighlightsScreen: React.FC = () => {
     const navigate = useNavigate();
     const { allAttractions, allLocalities } = useAppAuth();
     const [selectedLocality, setSelectedLocality] = useState<string>('all');
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [selectedTag, setSelectedTag] = useState<string>('all');
     const [isScrolled, setIsScrolled] = useState(false);
 
-    // Filter only imperdibles
+    // Extract all unique tags dynamically
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        allAttractions.forEach(a => {
+            if (a.keywords && Array.isArray(a.keywords)) {
+                a.keywords.forEach(k => {
+                    if (k) tags.add(k.trim());
+                });
+            }
+        });
+        return ['all', ...Array.from(tags)];
+    }, [allAttractions]);
+
+    // Filter attractions based on locality, search query, and selected tag
     const highlights = useMemo(() => {
         let filtered = allAttractions;
 
@@ -17,8 +32,22 @@ const HighlightsScreen: React.FC = () => {
             filtered = filtered.filter(a => a.locality_id === selectedLocality);
         }
 
+        if (selectedTag !== 'all') {
+            filtered = filtered.filter(a => a.keywords && a.keywords.includes(selectedTag));
+        }
+
+        if (searchQuery.trim() !== '') {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(a => 
+                a.name.toLowerCase().includes(query) || 
+                (a.short_description && a.short_description.toLowerCase().includes(query)) ||
+                (a.description && a.description.toLowerCase().includes(query)) ||
+                (a.keywords && a.keywords.some(k => k.toLowerCase().includes(query)))
+            );
+        }
+
         return filtered;
-    }, [allAttractions, selectedLocality]);
+    }, [allAttractions, selectedLocality, selectedTag, searchQuery]);
 
     const openInGoogleMaps = (lat?: number, lng?: number, name?: string) => {
         if (!lat || !lng) return;
@@ -34,9 +63,9 @@ const HighlightsScreen: React.FC = () => {
     return (
         <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-hidden transition-colors duration-300">
             {/* Cabecera Fija Estandarizada */}
-            <div className="sticky top-0 p-4 md:p-10 flex flex-col gap-4 md:gap-6 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-xl z-50 border-b border-white/10 transition-all duration-300">
+            <div className="sticky top-0 p-4 md:p-10 flex flex-col gap-4 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl shadow-xl z-50 border-b border-slate-200 dark:border-white/10 transition-all duration-300">
                 {!isScrolled && (
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-6">
                             <button
                                 onClick={() => navigate('/map')}
@@ -52,13 +81,27 @@ const HighlightsScreen: React.FC = () => {
                     </div>
                 )}
 
-                <div className="w-full md:w-auto md:min-w-[300px]">
-                    <div className="flex items-center gap-4 bg-slate-100 dark:bg-background-dark px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
+                {/* Search & Filters Controls */}
+                <div className="flex flex-col md:flex-row gap-3 w-full">
+                    {/* Search Bar */}
+                    <div className="flex-1 flex items-center gap-3 bg-slate-100 dark:bg-background-dark px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
+                        <span className="material-symbols-outlined text-slate-400 text-2xl">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Buscar imperdible..."
+                            className="bg-transparent border-none focus:ring-0 text-xs font-black text-slate-800 dark:text-white w-full uppercase tracking-widest outline-none"
+                        />
+                    </div>
+
+                    {/* Locality Selector */}
+                    <div className="w-full md:w-72 flex items-center gap-3 bg-slate-100 dark:bg-background-dark px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
                         <span className="material-symbols-outlined text-primary text-2xl">place</span>
                         <select
                             value={selectedLocality}
                             onChange={e => setSelectedLocality(e.target.value)}
-                            className="bg-transparent border-none focus:ring-0 text-xs font-black text-slate-800 dark:text-white w-full cursor-pointer uppercase tracking-widest"
+                            className="bg-transparent border-none focus:ring-0 text-xs font-black text-slate-800 dark:text-white w-full cursor-pointer uppercase tracking-widest outline-none"
                         >
                             <option value="all" className="bg-white dark:bg-slate-800">Todas las localidades</option>
                             {allLocalities.filter(l => l.is_active).map(loc => (
@@ -67,6 +110,25 @@ const HighlightsScreen: React.FC = () => {
                         </select>
                     </div>
                 </div>
+
+                {/* Dynamic Tag Filters */}
+                {allTags.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                        {allTags.map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => setSelectedTag(tag)}
+                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
+                              selectedTag === tag
+                                ? 'bg-primary text-white border-transparent shadow-md shadow-primary/20'
+                                : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
+                            }`}
+                          >
+                            {tag === 'all' ? 'Todo' : tag}
+                          </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Grid Scrollable */}
@@ -143,7 +205,7 @@ const HighlightsScreen: React.FC = () => {
                                 <span className="material-symbols-outlined text-4xl text-slate-400">landscape</span>
                             </div>
                             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase italic mb-2">Sin Destinos</h3>
-                            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No hay atractivos en esta localidad.</p>
+                            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No se encontraron atractivos coincidentes.</p>
                         </div>
                     )}
                 </div>

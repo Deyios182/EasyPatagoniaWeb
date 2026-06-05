@@ -12,7 +12,7 @@ const BottomNavigationBar: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-[110] h-[70px] shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 pb-6 pt-3 px-2 flex justify-between items-center z-[110] h-[70px] shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
 
             {/* 1. IMPERDIBLES (Left) */}
             <Link
@@ -57,7 +57,17 @@ const BottomNavigationBar: React.FC = () => {
                 <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Mural</span>
             </Link>
 
-            {/* 5. PATAGONIA (Far Right) */}
+            {/* 5. PASAPORTE (Mid-Right 2) */}
+            <Link
+                to="/passport"
+                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/passport') ? 'text-primary' : 'text-slate-400 hover:text-primary'
+                    }`}
+            >
+                <span className="material-symbols-outlined text-2xl leading-none">badge</span>
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Pasaporte</span>
+            </Link>
+
+            {/* 6. PATAGONIA (Far Right) */}
             <Link
                 to="/chat"
                 className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/chat') || isActive('/planner') ? 'text-primary' : 'text-slate-400 hover:text-primary'

@@ -243,6 +243,14 @@ const TouristMapScreen: React.FC = () => {
           if (attractionFilter === 'campings') return a.category === 'camping';
           return true;
         })
+        .filter(a => {
+          if (serviceSearch === '') return true;
+          const searchLower = serviceSearch.toLowerCase();
+          return (a.name || '').toLowerCase().includes(searchLower) ||
+                 (a.short_description || '').toLowerCase().includes(searchLower) ||
+                 (a.description || '').toLowerCase().includes(searchLower) ||
+                 a.keywords?.some((k: string) => k.toLowerCase().includes(searchLower));
+        })
         .map(a => {
           // Determine color based on category
           let color = '#FF6B35'; // Default orange for attractions
@@ -441,7 +449,7 @@ const TouristMapScreen: React.FC = () => {
       }
     });
 
-  }, [filtered, selectedBusiness?.id, selectedAttraction?.id, mapInstance, allLocalities, allAttractions]);
+  }, [filtered, selectedBusiness?.id, selectedAttraction?.id, mapInstance, allLocalities, allAttractions, zoom, attractionFilter, serviceSearch]);
 
   // Separate Effect for Camera Movement (FlyTo) to avoid snapping on ogni trigger de marcadores
   useEffect(() => {
@@ -577,24 +585,42 @@ const TouristMapScreen: React.FC = () => {
         )}
 
         {/* BARRA SUPERIOR (Búsqueda + Filtros + PERFIL MÓVIL) */}
-        <div className="absolute top-0 left-0 right-0 z-[100] p-2 md:p-8 flex flex-col md:flex-row gap-2 md:gap-4 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-[100] p-2 md:p-8 flex flex-col gap-2 md:gap-4 pointer-events-none">
 
           {/* Contenedor Superior: Buscador + Botón Perfil */}
-          <div className="w-full md:max-w-md pointer-events-auto flex gap-3">
-            <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl md:rounded-3xl px-4 py-3 md:px-8 md:py-5 flex items-center gap-3 shadow-2xl group focus-within:border-primary/50 transition-all">
-              <span className="material-symbols-outlined text-primary leading-none text-xl md:text-2xl">location_on</span>
+          <div className="w-full md:max-w-4xl pointer-events-auto flex flex-col md:flex-row gap-3">
+            {/* Locality Dropdown */}
+            <div className="w-full md:w-80 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl focus-within:border-primary/50 transition-all">
+              <span className="material-symbols-outlined text-primary leading-none text-xl">location_on</span>
               <select
                 onChange={handleLocalityChange}
-                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-sm md:text-base font-bold py-1 leading-none cursor-pointer appearance-none uppercase tracking-wider"
+                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-xs font-bold py-1 leading-none cursor-pointer appearance-none uppercase tracking-wider outline-none"
                 defaultValue=""
               >
-                <option value="" disabled>📍 Descubre la Patagonia</option>
+                <option value="" disabled>📍 Localidades</option>
                 {allLocalities.map(loc => (
                   <option key={loc.id} value={loc.id} className="text-slate-800">
                     {loc.name}
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Search Input Bar */}
+            <div className="flex-1 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl focus-within:border-primary/50 transition-all">
+              <span className="material-symbols-outlined text-slate-400 leading-none text-xl">search</span>
+              <input
+                type="text"
+                value={serviceSearch}
+                onChange={e => setServiceSearch(e.target.value)}
+                placeholder="Buscar por nombre o servicio..."
+                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-xs font-bold py-1 leading-none outline-none placeholder-slate-400 dark:placeholder-slate-500"
+              />
+              {serviceSearch && (
+                <button onClick={() => setServiceSearch('')} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
             </div>
 
             {/* BOTÓN PERFIL MÓVIL (Solo visible en MÓVIL) */}
@@ -623,7 +649,7 @@ const TouristMapScreen: React.FC = () => {
 
 
           {/* Toggle Satelital - Moved lower to avoid overlap */}
-          <div className="absolute top-32 left-4 md:left-8 z-[90] pointer-events-auto">
+          <div className="absolute top-40 left-4 md:left-8 z-[90] pointer-events-auto">
             <button
               onClick={() => setIsSatellite(!isSatellite)}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isSatellite ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
@@ -634,12 +660,12 @@ const TouristMapScreen: React.FC = () => {
           </div>
 
           {/* Filtros de Negocios */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-1 scroll-smooth mask-linear-fade">
             {['All', 'Restaurante', 'Hospedaje', 'Actividad', 'Transporte'].map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat as any)}
-                className={`whitespace-nowrap px-4 py-2 md:px-8 md:py-4 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
+                className={`whitespace-nowrap px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm ${activeFilter === cat ? 'bg-primary border-primary text-white shadow-lg scale-105' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-500 dark:text-slate-400 border-white/50 dark:border-white/5 backdrop-blur-md'}`}
               >
                 {cat === 'All' ? t('all') : cat === 'Restaurante' ? t('restaurant') : cat === 'Hospedaje' ? t('hotel') : cat === 'Actividad' ? t('activity') : cat === 'Transporte' ? t('transport') : 'Mercado'}
               </button>
@@ -647,7 +673,27 @@ const TouristMapScreen: React.FC = () => {
           </div>
 
           {/* Filtros de Atractivos */}
-
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto pb-2 scroll-smooth mask-linear-fade">
+            {([
+              { id: 'all', label: 'Todo Atractivos', icon: 'explore' },
+              { id: 'attractions', label: 'Lugares', icon: 'landscape' },
+              { id: 'campings', label: 'Camping', icon: 'campground' },
+              { id: 'gas_stations', label: 'Bencina', icon: 'local_gas_station' },
+            ] as const).map(layer => (
+              <button
+                key={layer.id}
+                onClick={() => setAttractionFilter(layer.id)}
+                className={`whitespace-nowrap px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border leading-none shadow-sm flex items-center gap-1.5 ${
+                  attractionFilter === layer.id 
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-lg scale-105' 
+                    : 'bg-white/90 dark:bg-surface-dark/90 text-amber-600 dark:text-amber-400 border-white/50 dark:border-white/5 backdrop-blur-md'
+                }`}
+              >
+                <span className="material-symbols-outlined text-xs leading-none">{layer.icon}</span>
+                {layer.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ÁREA INFERIOR: TARJETA + BOTÓN DE ACCIÓN */}
