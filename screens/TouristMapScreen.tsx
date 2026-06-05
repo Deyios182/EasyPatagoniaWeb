@@ -206,10 +206,17 @@ const TouristMapScreen: React.FC = () => {
           title: b.nombre,
           type: isMarket ? 'market' : 'business',
           isOpen: b.isOpen,
-          color: b.categoria === 'Transporte' ? '#4f6d7a' :
-            ['Restaurante', 'Cafetería'].some(c => b.categoria.includes(c)) ? '#dd6e42' :
-              ['Hospedaje', 'Hotel', 'Cabaña'].some(c => b.categoria.includes(c)) ? '#3498db' :
-                isMarket ? '#2196F3' : '#2ecc71',
+          color: b.categoria === 'Transporte' ? '#06B6D4' : // Ferry / Celeste
+            ['Restaurante', 'Cafetería', 'Gastronomía'].some(c => b.categoria.includes(c)) ? '#EAB308' : // Gastronomía / Amarillo
+            ['Hospedaje', 'Hotel', 'Cabaña', 'Alojamientos'].some(c => b.categoria.includes(c)) ? '#EF4444' : // Alojamientos / Rojo
+            ['Camping'].some(c => b.categoria.includes(c)) ? '#22C55E' : // Camping / Verde
+            ['Actividad', 'Tour', 'Excursión', 'Tours'].some(c => b.categoria.includes(c)) ? '#F97316' : // Tours / Naranjo
+            ['Artesanía', 'Mercado', 'Comercio', 'Tienda'].some(c => b.categoria.includes(c)) ? '#2563EB' : // Artesanía / Azul
+            ['Mirador', 'Vista'].some(c => b.categoria.includes(c)) ? '#8B5CF6' : // Miradores / Morado
+            ['Emergencias', 'Urgencias', 'Emergencia', 'Hospital'].some(c => b.categoria.includes(c)) ? '#991B1B' : // Emergencias / Rojo intenso
+            ['Combustible', 'Bencina'].some(c => b.categoria.includes(c)) ? '#1A1A1A' : // Combustible / Negro
+            ['Trekking', 'Senderismo'].some(c => b.categoria.includes(c)) ? '#065F46' : // Trekking / Verde Bosque
+            '#F97316',
           icon: b.media.logo_url,
           data: b
         };
@@ -252,10 +259,15 @@ const TouristMapScreen: React.FC = () => {
                  a.keywords?.some((k: string) => k.toLowerCase().includes(searchLower));
         })
         .map(a => {
-          // Determine color based on category
-          let color = '#FF6B35'; // Default orange for attractions
-          if (a.category === 'gas_station') color = '#DC2626'; // Red for gas stations
-          if (a.category === 'camping') color = '#16A34A'; // Green for campings
+          // Determine color based on category according to spec
+          const catStr = (a.category || 'attraction') as string;
+          let color = '#F97316'; // Tours / Naranjo (Default)
+          if (catStr === 'gas_station' || catStr === 'combustible') color = '#1A1A1A'; // Combustible / Negro
+          if (catStr === 'camping') color = '#22C55E'; // Camping / Verde
+          if (catStr === 'mirador') color = '#8B5CF6'; // Miradores / Morado
+          if (catStr === 'emergency') color = '#991B1B'; // Emergencias / Rojo intenso
+          if (catStr === 'ferry') color = '#06B6D4'; // Ferry / Celeste
+          if (catStr === 'trekking') color = '#065F46'; // Trekking / Verde Bosque
 
           return {
             id: a.id,
@@ -403,7 +415,7 @@ const TouristMapScreen: React.FC = () => {
                 border: ${isActive ? '3px' : '2px'} solid white; 
                 background-color: ${item.color}; 
                 overflow: hidden;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
                 transition: all 0.3s ease;
                 z-index: ${isActive ? 1000 : 1};
                 display: flex;
@@ -412,11 +424,22 @@ const TouristMapScreen: React.FC = () => {
               ">
                 ${innerHtml}
               </div>
+              {/* Colita inferior por categoría */}
+              <div style="
+                width: 0;
+                height: 0;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 8px solid ${item.color};
+                margin-top: -3px;
+                z-index: ${isActive ? 999 : 0};
+                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+              "></div>
               ${statusDot}
             </div>
           `,
-          iconSize: isActive ? [56, 70] : [40, 54],
-          iconAnchor: isActive ? [28, 42] : [20, 34]
+          iconSize: isActive ? [56, 64] : [40, 48],
+          iconAnchor: isActive ? [28, 64] : [20, 48]
         });
       }
 

@@ -6,7 +6,7 @@ export const AttractionMarker: React.FC = () => (
         {/* Pin exterior */}
         <path
             d="M13 0C5.82 0 0 5.82 0 13c0 7.18 13 21 13 21s13-13.82 13-21C26 5.82 20.18 0 13 0z"
-            fill="#FF6B35"
+            fill="#F97316"
             stroke="#fff"
             strokeWidth="2"
         />
@@ -27,7 +27,7 @@ export const MarketMarker: React.FC = () => (
         {/* Pin exterior */}
         <path
             d="M13 0C5.82 0 0 5.82 0 13c0 7.18 13 21 13 21s13-13.82 13-21C26 5.82 20.18 0 13 0z"
-            fill="#2196F3"
+            fill="#2563EB"
             stroke="#fff"
             strokeWidth="2"
         />
@@ -41,13 +41,13 @@ export const MarketMarker: React.FC = () => (
     </svg>
 );
 
-// Marcador para bencineras/gasolineras (rojo)
+// Marcador para bencineras/gasolineras (negro)
 export const GasStationMarker: React.FC = () => (
     <svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg">
         {/* Pin exterior */}
         <path
             d="M13 0C5.82 0 0 5.82 0 13c0 7.18 13 21 13 21s13-13.82 13-21C26 5.82 20.18 0 13 0z"
-            fill="#DC2626"
+            fill="#1A1A1A"
             stroke="#fff"
             strokeWidth="2"
         />
@@ -68,14 +68,14 @@ export const CampingMarker: React.FC = () => (
         {/* Pin exterior */}
         <path
             d="M13 0C5.82 0 0 5.82 0 13c0 7.18 13 21 13 21s13-13.82 13-21C26 5.82 20.18 0 13 0z"
-            fill="#16A34A"
+            fill="#22C55E"
             stroke="#fff"
             strokeWidth="2"
         />
         {/* Icono de carpa */}
         <g transform="translate(4.5, 5)" fill="white">
             <path d="M8.5 3.5L3 11.5h11L8.5 3.5z" />
-            <path d="M8.5 5.5l3.5 6H5l3.5-6z" fill="#16A34A" />
+            <path d="M8.5 5.5l3.5 6H5l3.5-6z" fill="#22C55E" />
             <rect x="2.5" y="11.5" width="12" height="1.2" />
         </g>
     </svg>
