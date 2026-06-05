@@ -216,7 +216,16 @@ const CommunityFeedScreen: React.FC = () => {
 
             if (postsError) throw postsError;
 
-            const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_url');
+            // Optimize: Only fetch profiles of users who have posted in the current page (max 50 users)
+            const userIds = Array.from(new Set((postsData || []).map(p => p.user_id).filter(Boolean)));
+            let profiles: any[] = [];
+            if (userIds.length > 0) {
+                const { data: profData } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds);
+                if (profData) profiles = profData;
+            }
 
             let userLikes: Set<string> = new Set();
             if (supabaseUser) {
