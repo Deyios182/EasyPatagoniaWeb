@@ -424,7 +424,6 @@ const TouristMapScreen: React.FC = () => {
               ">
                 ${innerHtml}
               </div>
-              {/* Colita inferior por categoría */}
               <div style="
                 width: 0;
                 height: 0;
