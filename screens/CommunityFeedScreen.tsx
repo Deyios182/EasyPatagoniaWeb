@@ -194,8 +194,16 @@ const CommunityFeedScreen: React.FC = () => {
     const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
     const [grantingPostId, setGrantingPostId] = useState<string | null>(null);
 
+    // Pagination state
+    const [postsLimit, setPostsLimit] = useState(5);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+
     useEffect(() => {
-        fetchPosts();
+        fetchPosts(postsLimit > 5);
+    }, [postsLimit]);
+
+    useEffect(() => {
         fetchAttractions();
     }, []);
 
@@ -204,17 +212,22 @@ const CommunityFeedScreen: React.FC = () => {
         if (data) setAttractions(data);
     };
 
-    const fetchPosts = async () => {
-        setLoading(true);
+    const fetchPosts = async (isLoadMore = false) => {
+        if (isLoadMore) setLoadingMore(true);
+        else setLoading(true);
         try {
             const { data: postsData, error: postsError } = await supabase
                 .from('community_posts')
                 .select(`*, attractions(name), companies(name)`)
                 .eq('status', 'approved')
                 .order('created_at', { ascending: false })
-                .limit(50);
+                .limit(postsLimit);
 
             if (postsError) throw postsError;
+
+            if (postsData) {
+                setHasMore(postsData.length === postsLimit);
+            }
 
             // Optimize: Only fetch profiles of users who have posted in the current page (max 50 users)
             const userIds = Array.from(new Set((postsData || []).map(p => p.user_id).filter(Boolean)));
@@ -253,6 +266,7 @@ const CommunityFeedScreen: React.FC = () => {
             console.error('Error fetching posts:', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
@@ -725,6 +739,28 @@ const CommunityFeedScreen: React.FC = () => {
                                 </div>
                             </div>
                         ))
+                    )}
+                    
+                    {hasMore && posts.length > 0 && (
+                        <div className="flex justify-center pt-4 pb-8">
+                            <button
+                                onClick={() => setPostsLimit(prev => prev + 5)}
+                                disabled={loadingMore}
+                                className="px-8 py-4 bg-slate-200 dark:bg-background-dark hover:bg-slate-300 dark:hover:bg-background-dark/80 text-slate-700 dark:text-slate-200 text-xs font-black uppercase tracking-widest rounded-2xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-slate-700 dark:border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Cargando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm">expand_more</span>
+                                        Cargar más publicaciones
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
