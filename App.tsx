@@ -35,6 +35,7 @@ import UserContributionsScreen from './screens/UserContributionsScreen';
 import AdminPhotoReviewScreen from './screens/AdminPhotoReviewScreen';
 import IntranetScreen from './screens/intranet/IntranetScreen';
 import GamificationAdminScreen from './screens/GamificationAdminScreen';
+import PassportScreen from './screens/PassportScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
@@ -693,7 +694,8 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/messages/:userId" element={isAuthenticated ? <DirectMessageScreen /> : <Navigate to="/auth/login" />} />
           <Route path="/friends" element={isAuthenticated ? <FriendsScreen /> : <Navigate to="/auth/login" />} />
 
-          {/* Rutas Administrativas */}
+          {/* Rutas privadas de usuario */}
+          <Route path="/passport" element={user ? <PassportScreen /> : <Navigate to="/" />} />
           <Route path="/portal" element={user && (role === 'DueñoEmpresa' || role === 'SuperAdmin') ? <BusinessPortalScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin" element={user && role === 'SuperAdmin' ? <AdminDashboardScreen /> : <Navigate to="/profile" />} />
           <Route path="/admin/photos" element={user && role === 'SuperAdmin' ? <AdminPhotoReviewScreen /> : <Navigate to="/profile" />} />

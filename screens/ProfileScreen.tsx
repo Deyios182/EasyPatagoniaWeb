@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Role, MapTheme, Currency, SavedItinerary } from '../types';
 import { useAppAuth } from '../App';
-import { getUserRank } from '../utils/rankingSystem';
-import { computeAchievements, UserStats, ACCENT_COLORS, BANNER_GRADIENTS } from '../utils/achievementSystem';
+import { getUserRankFromXP, getRankProgress, loadRanksFromDB, RankInfo } from '../utils/rankingSystem';
+import { loadMedalsFromDB, buildMedalStatuses, MedalWithStatus, UserStats, ACCENT_COLORS, BANNER_GRADIENTS, autoCheckAndGrantMedals } from '../utils/medalsSystem';
 import { supabase } from '../supabaseClient';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 
@@ -32,8 +32,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
   const [postCount, setPostCount] = useState(0);
   const [muralPosts, setMuralPosts] = useState<any[]>([]);
 
-  // Achievements
-  const [achievements, setAchievements] = useState<ReturnType<typeof computeAchievements>>([]);
+  // XP + Rangos + Medallas
+  const [totalXp, setTotalXp] = useState(0);
+  const [ranks, setRanks] = useState<RankInfo[]>([]);
+  const [medals, setMedals] = useState<MedalWithStatus[]>([]);
+  const [newMedalUnlocked, setNewMedalUnlocked] = useState<MedalWithStatus | null>(null);
 
   // Contributions
   const [contributionsCount, setContributionsCount] = useState({ total: 0, approved: 0, pending: 0 });
@@ -48,8 +51,67 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
     if (supabaseUser) {
       loadProfileData();
       fetchContributions();
+      loadXpAndRanks();
     }
   }, [supabaseUser?.id]);
+
+  // ── Cargar XP + Rangos + Medallas ──────────────────────────────────────────
+  const loadXpAndRanks = async () => {
+    if (!supabaseUser) return;
+
+    // XP total del usuario
+    const { data: xpData } = await supabase
+      .from('user_xp')
+      .select('total_xp')
+      .eq('user_id', supabaseUser.id)
+      .single();
+
+    const xp = xpData?.total_xp || 0;
+    setTotalXp(xp);
+
+    // Rangos dinámicos
+    const loadedRanks = await loadRanksFromDB();
+    setRanks(loadedRanks);
+
+    // Medallas: todas las del sistema + las del usuario
+    const allMedals = await loadMedalsFromDB();
+    const { data: userMedalsData } = await supabase
+      .from('user_medals')
+      .select('medal_slug, earned_at')
+      .eq('user_id', supabaseUser.id);
+
+    // Construir stats para verificar triggers automáticos
+    const stats: UserStats = {
+      totalPosts: postCount,
+      photoPosts: muralPosts.filter((p: any) => p.post_type === 'photo').length,
+      reviewPosts: muralPosts.filter((p: any) => p.post_type === 'review').length,
+      alertPosts: muralPosts.filter((p: any) => p.post_type === 'alert').length,
+      approvedPhotos: muralPosts.filter((p: any) => p.post_type === 'photo').length,
+      totalXp: xp,
+      followersCount,
+      sharedItineraries: 0,
+    };
+
+    // Verificar y otorgar medallas automáticas
+    const newlyGranted = await autoCheckAndGrantMedals(supabaseUser.id, stats);
+
+    // Recargar medallas del usuario si se otorgaron nuevas
+    let finalUserMedals = userMedalsData || [];
+    if (newlyGranted.length > 0) {
+      const { data: refreshed } = await supabase
+        .from('user_medals')
+        .select('medal_slug, earned_at')
+        .eq('user_id', supabaseUser.id);
+      finalUserMedals = refreshed || [];
+
+      // Mostrar notificación de primera medalla nueva
+      const firstNew = allMedals.find(m => m.slug === newlyGranted[0]);
+      if (firstNew) setNewMedalUnlocked({ ...firstNew, earned: true });
+    }
+
+    const withStatus = buildMedalStatuses(allMedals, finalUserMedals, stats);
+    setMedals(withStatus);
+  };
 
   const loadProfileData = async () => {
     if (!supabaseUser) return;
@@ -72,7 +134,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
     setFollowersCount(followers || 0);
     setFollowingCount(following || 0);
 
-    // Posts
+    // Posts (aprobados)
     const { data: posts } = await supabase.from('community_posts')
       .select('id, content, post_type, media_urls, created_at')
       .eq('user_id', supabaseUser.id).eq('status', 'approved')
@@ -81,18 +143,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
     const allPosts = posts || [];
     setPostCount(allPosts.length);
     setMuralPosts(allPosts);
-
-    // Achievements
-    const stats: UserStats = {
-      totalPosts: allPosts.length,
-      photoPosts: allPosts.filter((p: any) => p.post_type === 'photo').length,
-      reviewPosts: allPosts.filter((p: any) => p.post_type === 'review').length,
-      alertPosts: allPosts.filter((p: any) => p.post_type === 'alert').length,
-      approvedPhotos: allPosts.filter((p: any) => p.post_type === 'photo').length,
-      sharedItineraries: allPosts.filter((p: any) => p.post_type === 'story' && p.content?.includes('hoja de ruta')).length,
-      followersCount: followers || 0,
-    };
-    setAchievements(computeAchievements(stats));
   };
 
   const fetchContributions = async () => {
@@ -136,8 +186,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
 
   if (!user) return null;
 
-  const earnedBadges = achievements.filter(a => a.earned);
-  const rankInfo = getUserRank(contributionsCount.approved);
+  const rankInfo = getUserRankFromXP(totalXp, ranks.length > 0 ? ranks : undefined);
+  const rankProgress = getRankProgress(totalXp, ranks.length > 0 ? ranks : undefined);
+  const earnedMedals = medals.filter(m => m.earned);
+  const MEDAL_TYPE_LABELS: Record<string, string> = { objective: 'Objetivos', legendary: 'Legendarias', secret: 'Secretas' };
 
   const TABS: { id: Tab, icon: string, label: string }[] = [
     { id: 'profile', icon: 'person', label: 'Perfil' },
@@ -165,7 +217,25 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
     <div className="flex min-h-screen w-full flex-col bg-slate-50 dark:bg-background-dark items-center pb-24">
       <div className="w-full max-w-2xl">
 
-        {/* BANNER + AVATAR HEADER */}
+        {/* ── TOAST: Medalla Desbloqueada ── */}
+        {newMedalUnlocked && (
+          <div
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm cursor-pointer"
+            onClick={() => setNewMedalUnlocked(null)}
+          >
+            <span className="text-3xl">{newMedalUnlocked.icon}</span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/70">🏅 ¡Medalla Desbloqueada!</p>
+              <p className="font-black text-base">{newMedalUnlocked.name}</p>
+              <p className="text-[11px] text-white/80">+{newMedalUnlocked.xp_reward} XP ganados</p>
+            </div>
+            <button className="ml-auto text-white/60 hover:text-white">
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+          </div>
+        )}
+
+
         <div className="relative">
           {/* Banner */}
           <div className={`h-40 w-full bg-gradient-to-r ${bannerGradient}`} />
@@ -183,12 +253,35 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
               alt="Avatar"
             />
             {/* Rank badge */}
-            {contributionsCount.approved > 0 && (
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${rankInfo.gradient} shadow-lg mb-2`}>
-                <span className="text-xl">{rankInfo.emoji}</span>
-                <span className="text-white text-[10px] font-black uppercase">{rankInfo.rank}</span>
-              </div>
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg mb-2 text-white`}
+              style={{ background: `linear-gradient(135deg, ${rankInfo.hex_color}, ${rankInfo.hex_color}99)` }}
+            >
+              <span className="text-xl">{rankInfo.emoji}</span>
+              <span className="text-white text-[10px] font-black uppercase tracking-widest">{rankInfo.name}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* XP Bar */}
+        <div className="px-6 mt-4">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-500 font-black text-lg">⚡</span>
+              <span className="text-2xl font-black dark:text-white">{totalXp.toLocaleString()}</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">XP Total</span>
+            </div>
+            {rankProgress.nextRank && (
+              <span className="text-[10px] font-bold text-slate-400">
+                {rankProgress.xpToNext} XP para {rankProgress.nextRank.emoji} {rankProgress.nextRank.name}
+              </span>
             )}
+          </div>
+          <div className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${rankProgress.progress}%`, backgroundColor: rankInfo.hex_color }}
+            />
           </div>
         </div>
 
@@ -306,21 +399,50 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ role }) => {
               ) : (
                 /* Badges & recent posts */
                 <>
-                  {/* Achievements */}
-                  {achievements.length > 0 && (
+                  {/* Achievements / Medallas */}
+                  {medals.length > 0 && (
                     <div className="bg-white dark:bg-surface-dark rounded-3xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">🏅 Mis Logros</p>
-                      <div className="flex flex-wrap gap-2">
-                        {achievements.map(b => (
-                          <div key={b.id} title={b.description}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${b.earned ? `bg-gradient-to-r ${b.color} shadow-md` : 'bg-slate-100 dark:bg-background-dark opacity-40'}`}>
-                            <span className="text-lg">{b.icon}</span>
-                            <span className={`text-[9px] font-black uppercase tracking-wide ${b.earned ? 'text-white' : 'text-slate-400'}`}>{b.name}</span>
-                          </div>
-                        ))}
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">🏅 Medallas Australes</p>
+                        <span className="text-[10px] font-black text-slate-400">{earnedMedals.length}/{medals.filter(m => !m.is_secret || m.earned).length}</span>
                       </div>
-                      {earnedBadges.length === 0 && (
-                        <p className="text-xs text-slate-400 text-center mt-2">¡Participa en la comunidad para ganar logros!</p>
+
+                      {/* Tabs por tipo */}
+                      {(['objective', 'legendary', 'secret'] as const).map(type => {
+                        const typeMedals = medals.filter(m => m.medal_type === type);
+                        if (typeMedals.length === 0) return null;
+                        return (
+                          <div key={type} className="mb-4">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{MEDAL_TYPE_LABELS[type]}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {typeMedals.map(medal => (
+                                <div
+                                  key={medal.slug}
+                                  title={medal.description}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
+                                    medal.earned
+                                      ? type === 'legendary' ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-md'
+                                        : type === 'secret' ? 'bg-gradient-to-r from-purple-500 to-pink-600 shadow-md'
+                                        : 'bg-gradient-to-r from-blue-400 to-blue-600 shadow-md'
+                                      : 'bg-slate-100 dark:bg-background-dark opacity-40'
+                                  }`}
+                                >
+                                  <span className="text-lg">{medal.icon}</span>
+                                  <span className={`text-[9px] font-black uppercase tracking-wide ${medal.earned ? 'text-white' : 'text-slate-400'}`}>
+                                    {medal.name}
+                                  </span>
+                                  {medal.earned && (
+                                    <span className="text-[8px] text-white/70 font-bold">+{medal.xp_reward}XP</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {earnedMedals.length === 0 && (
+                        <p className="text-xs text-slate-400 text-center mt-2">¡Explora y participa para ganar medallas!</p>
                       )}
                     </div>
                   )}

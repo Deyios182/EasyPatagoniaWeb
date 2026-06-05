@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS gamification_ranks (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Asegurar columnas si la tabla ya existía
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS emoji TEXT DEFAULT '🎒';
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS color_gradient TEXT DEFAULT 'from-slate-400 to-slate-600';
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS hex_color TEXT DEFAULT '#64748B';
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS benefits TEXT;
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+ALTER TABLE gamification_ranks ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
 CREATE INDEX IF NOT EXISTS idx_ranks_sort ON gamification_ranks(sort_order, min_xp);
 
 -- ================================================================
@@ -62,6 +70,19 @@ CREATE TABLE IF NOT EXISTS gamification_medals (
   sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Asegurar columnas si la tabla ya existía
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS icon TEXT DEFAULT '🏅';
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS medal_type TEXT DEFAULT 'objective';
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS trigger_type TEXT DEFAULT 'manual';
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS trigger_value JSONB;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS xp_reward INTEGER DEFAULT 0;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS is_secret BOOLEAN DEFAULT false;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE gamification_medals ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
 
 -- Medallas ganadas por usuario
 CREATE TABLE IF NOT EXISTS user_medals (
@@ -95,6 +116,18 @@ CREATE TABLE IF NOT EXISTS easy_routes (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Asegurar columnas si la tabla ya existía
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS total_km INTEGER;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS difficulty TEXT DEFAULT 'Moderado';
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS medal_slug TEXT;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS xp_reward INTEGER DEFAULT 100;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS checkpoints JSONB DEFAULT '[]';
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+ALTER TABLE easy_routes ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
 -- Progreso de usuario en rutas
 CREATE TABLE IF NOT EXISTS user_route_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -122,35 +155,35 @@ CREATE POLICY "user_xp_update_own" ON user_xp FOR UPDATE USING (auth.uid() = use
 ALTER TABLE xp_transactions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "xp_trans_select_own" ON xp_transactions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "xp_trans_admin_all" ON xp_transactions FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND ('super_admin' = ANY(roles) OR 'admin' = ANY(roles)))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
 
 -- gamification_ranks: lectura pública, escritura solo admin
 ALTER TABLE gamification_ranks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "ranks_select_all" ON gamification_ranks FOR SELECT USING (true);
 CREATE POLICY "ranks_admin_all" ON gamification_ranks FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND ('super_admin' = ANY(roles) OR 'admin' = ANY(roles)))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
 
 -- gamification_medals: lectura pública (excepto secretas sin ganar), escritura solo admin
 ALTER TABLE gamification_medals ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "medals_select_public" ON gamification_medals FOR SELECT USING (is_secret = false OR is_active = true);
 CREATE POLICY "medals_admin_all" ON gamification_medals FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND ('super_admin' = ANY(roles) OR 'admin' = ANY(roles)))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
 
 -- user_medals: el usuario ve las suyas, admin ve todas
 ALTER TABLE user_medals ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "user_medals_select_own" ON user_medals FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "user_medals_admin_all" ON user_medals FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND ('super_admin' = ANY(roles) OR 'admin' = ANY(roles)))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
 
 -- easy_routes: lectura pública
 ALTER TABLE easy_routes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "routes_select_all" ON easy_routes FOR SELECT USING (true);
 CREATE POLICY "routes_admin_all" ON easy_routes FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND ('super_admin' = ANY(roles) OR 'admin' = ANY(roles)))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
 
 -- user_route_progress: el usuario ve el suyo

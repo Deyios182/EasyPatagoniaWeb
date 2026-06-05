@@ -187,6 +187,7 @@ const CommunityFeedScreen: React.FC = () => {
     const [formImage, setFormImage] = useState<string | null>(null);
     const [formLinkUrl, setFormLinkUrl] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [postSubmittedPending, setPostSubmittedPending] = useState(false);  // Banner ⋄ pendiente
 
     // Edit state
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -287,7 +288,8 @@ const CommunityFeedScreen: React.FC = () => {
                 rating: formType === 'review' ? formRating : null,
                 media_urls: formImage ? [formImage] : [],
                 link_url: formLinkUrl.trim() || null,
-                status: 'approved',
+                // ⋄ Los nuevos posts van a 'pending' para moderación y asignación de XP
+                status: editingPostId ? undefined : 'pending',
             };
 
             if (editingPostId) {
@@ -299,6 +301,9 @@ const CommunityFeedScreen: React.FC = () => {
             } else {
                 const { error } = await supabase.from('community_posts').insert([payload]);
                 if (error) throw error;
+                // Mostrar banner de confirmación pendiente
+                setPostSubmittedPending(true);
+                setTimeout(() => setPostSubmittedPending(false), 6000);
             }
 
             clearForm();
@@ -364,6 +369,22 @@ const CommunityFeedScreen: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Banner: Post pendiente enviado */}
+                {postSubmittedPending && (
+                  <div className="mx-4 mt-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 flex items-start gap-3">
+                    <span className="text-2xl">⏳</span>
+                    <div>
+                      <p className="font-black text-amber-700 dark:text-amber-300 text-sm">¡Publicación enviada!</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                        Tu post está pendiente de revisión. El admin asignará tu XP al aprobarlo.
+                      </p>
+                    </div>
+                    <button onClick={() => setPostSubmittedPending(false)} className="ml-auto text-amber-400">
+                      <span className="material-symbols-outlined text-base">close</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Create / Edit Post Area */}
                 <div className="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-white/5 p-4">

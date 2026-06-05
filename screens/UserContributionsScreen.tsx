@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Trophy, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { getUserRank, getRankProgress } from '../utils/rankingSystem';
+import { getUserRankFromXP, getRankProgress, DEFAULT_RANKS } from '../utils/rankingSystem';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 
 interface PhotoContribution {
@@ -73,7 +73,10 @@ const UserContributionsScreen: React.FC = () => {
     const totalPoints = approvedPhotos * 10;
     const totalLikes = contributions.reduce((acc, c) => acc + (c.likes_count || 0), 0);
 
-    const rankInfo = getRankProgress(approvedPhotos);
+    // Use XP approximation (1 approved photo ≈ 10 XP for compat)
+    const approxXp = approvedPhotos * 10;
+    const rankInfo = getRankProgress(approxXp, DEFAULT_RANKS);
+    const currentRankStyle = { background: `linear-gradient(135deg, ${rankInfo.currentRank.hex_color}, ${rankInfo.currentRank.hex_color}bb)` };
 
     if (loading) {
         return (
@@ -107,19 +110,19 @@ const UserContributionsScreen: React.FC = () => {
 
             <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
                 {/* Rank Card */}
-                <div className={`bg-gradient-to-br ${rankInfo.currentRank.gradient} rounded-3xl p-8 text-white shadow-2xl`}>
+                <div className="rounded-3xl p-8 text-white shadow-2xl" style={currentRankStyle}>
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-5xl">{rankInfo.currentRank.emoji}</span>
                                 <div>
                                     <p className="text-sm opacity-90 font-semibold uppercase tracking-wider">Rango Actual</p>
-                                    <h2 className="text-3xl font-black">{rankInfo.currentRank.rank}</h2>
+                                    <h2 className="text-3xl font-black">{rankInfo.currentRank.name}</h2>
                                 </div>
                             </div>
                             {rankInfo.nextRank && (
                                 <p className="text-sm opacity-80">
-                                    {rankInfo.photosToNext} fotos más para {rankInfo.nextRank.emoji} {rankInfo.nextRank.rank}
+                                    {rankInfo.xpToNext} XP más para {rankInfo.nextRank.emoji} {rankInfo.nextRank.name}
                                 </p>
                             )}
                         </div>
