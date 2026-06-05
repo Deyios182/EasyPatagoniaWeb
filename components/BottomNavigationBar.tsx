@@ -34,6 +34,16 @@ const BottomNavigationBar: React.FC = () => {
                 <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Guía</span>
             </Link>
 
+            {/* 2.5. RUTAS (Left of Map) */}
+            <Link
+                to="/routes"
+                className={`flex flex-col items-center gap-1 no-underline w-12 transition-colors ${isActive('/routes') ? 'text-primary' : 'text-slate-400 hover:text-primary'
+                    }`}
+            >
+                <span className="material-symbols-outlined text-2xl leading-none">explore</span>
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none scale-90">Rutas</span>
+            </Link>
+
             {/* 3. MAPA (CENTER - BIG) */}
             <div className="-mt-8">
                 <Link

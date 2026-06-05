@@ -41,8 +41,18 @@ const TouristMapScreen: React.FC = () => {
   const routePolylinesRef = useRef<L.Polyline[]>([]);
   const routeMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const locateUser = () => {
+    if (isLocating) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      setIsLocating(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       alert("La geolocalización no está soportada por tu navegador.");
       return;
@@ -94,6 +104,7 @@ const TouristMapScreen: React.FC = () => {
             const marker = L.marker(latlng, { icon: userIcon, zIndexOffset: 1000 }).addTo(mapInstance);
             userMarkerRef.current = marker;
           }
+          setIsLocating(true);
         }
       },
       (error) => {
@@ -944,7 +955,7 @@ const TouristMapScreen: React.FC = () => {
             </button>
             <button
               onClick={locateUser}
-              className="w-12 h-12 rounded-2xl bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 active:scale-95"
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isLocating ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
               title="Mi ubicación"
             >
               <span className="material-symbols-outlined text-2xl">my_location</span>
