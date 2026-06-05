@@ -1273,6 +1273,7 @@ const TouristMapScreen: React.FC = () => {
                 onChange={handleLocalityChange}
                 className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white text-[10px] font-black py-1 pr-5 leading-none cursor-pointer appearance-none uppercase tracking-wider outline-none max-w-[120px] sm:max-w-[150px] truncate"
                 defaultValue=""
+                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
               >
                 <option value="" disabled>Patagonia</option>
                 {allLocalities.map(loc => (
@@ -1350,7 +1351,7 @@ const TouristMapScreen: React.FC = () => {
 
 
           {/* Toggle Satelital & Geolocalización */}
-          <div className="absolute top-40 left-4 md:left-8 z-[90] pointer-events-auto flex flex-col gap-2">
+          <div className="absolute top-[180px] md:top-[240px] left-4 md:left-8 z-[90] pointer-events-auto flex flex-col gap-2">
             <button
               onClick={() => setIsSatellite(!isSatellite)}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-slate-200 dark:border-white/10 ${isSatellite ? 'bg-primary text-white' : 'bg-white/90 dark:bg-surface-dark/90 text-slate-600 dark:text-gray-200'} active:scale-95`}
@@ -1408,7 +1409,7 @@ const TouristMapScreen: React.FC = () => {
             {([
               { id: 'all', label: 'Todo Atractivos', icon: 'explore' },
               { id: 'attractions', label: 'Lugares', icon: 'landscape' },
-              { id: 'campings', label: 'Camping', icon: 'campground' },
+              { id: 'campings', label: 'Camping', icon: 'camping' },
               { id: 'gas_stations', label: 'Bencina', icon: 'local_gas_station' },
             ] as const).map(layer => (
               <button

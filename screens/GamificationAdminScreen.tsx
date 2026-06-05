@@ -3,6 +3,33 @@ import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 
+// --- MAPA ---
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+// @ts-ignore
+import icon from 'leaflet/dist/images/marker-icon.png';
+// @ts-ignore
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const MapRecenter = () => {
+  const map = useMap();
+  useEffect(() => { setTimeout(() => { map.invalidateSize(); }, 200); }, [map]);
+  return null;
+};
+const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) => void, pos: { lat: number, lng: number } | null }) => {
+  useMapEvents({ click(e) { setPos(e.latlng.lat, e.latlng.lng); }, });
+  return pos ? <Marker position={[pos.lat, pos.lng]} /> : null;
+};
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface GamificationRank {
@@ -131,6 +158,11 @@ const GamificationAdminScreen: React.FC = () => {
   const [editingMedal, setEditingMedal] = useState<Partial<GamificationMedal> | null>(null);
   const [editingRoute, setEditingRoute] = useState<Partial<EasyRoute> | null>(null);
   const [postXpValues, setPostXpValues] = useState<Record<string, number>>({});
+
+  // Map modal states for checkpoints coordinate picking
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [tempCoords, setTempCoords] = useState<{ lat: number, lng: number } | null>(null);
+  const [mapTargetCheckpointIndex, setMapTargetCheckpointIndex] = useState<number | null>(null);
 
   // XP manual grant
   const [manualXpUser, setManualXpUser] = useState('');
@@ -327,6 +359,23 @@ const GamificationAdminScreen: React.FC = () => {
       ...prev!,
       checkpoints: (prev!.checkpoints || []).filter((_: any, i: number) => i !== idx)
     }));
+  };
+
+  const openMapForCheckpoint = (idx: number, currentLat?: any, currentLng?: any) => {
+    const lat = parseFloat(currentLat) || -46.6;
+    const lng = parseFloat(currentLng) || -72.6;
+    setTempCoords({ lat, lng });
+    setMapTargetCheckpointIndex(idx);
+    setShowMapModal(true);
+  };
+
+  const confirmLocation = () => {
+    if (tempCoords && mapTargetCheckpointIndex !== null) {
+      updateCheckpoint(mapTargetCheckpointIndex, 'lat', tempCoords.lat.toFixed(6));
+      updateCheckpoint(mapTargetCheckpointIndex, 'lng', tempCoords.lng.toFixed(6));
+    }
+    setShowMapModal(false);
+    setMapTargetCheckpointIndex(null);
   };
 
   // ─── MANUAL XP ────────────────────────────────────────────────────────────
@@ -971,13 +1020,23 @@ const GamificationAdminScreen: React.FC = () => {
                             </div>
                             <input value={cp.name || ''} onChange={e => updateCheckpoint(idx, 'name', e.target.value)}
                               placeholder="Nombre del punto" className="w-full bg-white dark:bg-surface-dark rounded-lg p-2 text-sm font-bold border-none dark:text-white" />
-                            <div className="grid grid-cols-3 gap-2">
-                              <input value={cp.lat || ''} onChange={e => updateCheckpoint(idx, 'lat', e.target.value)}
-                                placeholder="Lat" className="bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-mono border-none dark:text-white" />
-                              <input value={cp.lng || ''} onChange={e => updateCheckpoint(idx, 'lng', e.target.value)}
-                                placeholder="Lng" className="bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-mono border-none dark:text-white" />
+                            <div className="flex gap-2">
+                              <div className="flex-1 grid grid-cols-2 gap-2">
+                                <input value={cp.lat || ''} onChange={e => updateCheckpoint(idx, 'lat', e.target.value)}
+                                  placeholder="Lat" className="bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-mono border-none dark:text-white" />
+                                <input value={cp.lng || ''} onChange={e => updateCheckpoint(idx, 'lng', e.target.value)}
+                                  placeholder="Lng" className="bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-mono border-none dark:text-white" />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => openMapForCheckpoint(idx, cp.lat, cp.lng)}
+                                className="bg-primary/20 text-primary hover:bg-primary/30 rounded-lg px-3 flex items-center justify-center border border-primary/20 transition-all"
+                                title="Seleccionar en el mapa"
+                              >
+                                <span className="material-symbols-outlined text-sm">map</span>
+                              </button>
                               <input type="number" value={cp.xp_reward || 20} onChange={e => updateCheckpoint(idx, 'xp_reward', parseInt(e.target.value) || 0)}
-                                placeholder="XP" className="bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-bold border-none dark:text-white" />
+                                placeholder="XP" className="w-20 bg-white dark:bg-surface-dark rounded-lg p-2 text-xs font-bold border-none dark:text-white" />
                             </div>
                             <input value={cp.description || ''} onChange={e => updateCheckpoint(idx, 'description', e.target.value)}
                               placeholder="Descripción del punto..." className="w-full bg-white dark:bg-surface-dark rounded-lg p-2 text-xs border-none dark:text-white" />
@@ -1083,6 +1142,38 @@ const GamificationAdminScreen: React.FC = () => {
         )}
 
       </div>
+
+      {/* MODAL MAPA (COORDINATE PICKER) */}
+      {showMapModal && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
+          <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh] border border-white/10 shadow-2xl">
+            <div className="p-4 border-b border-white/10">
+              <h3 className="text-lg font-black text-white">Seleccionar Ubicación del Checkpoint</h3>
+              <p className="text-xs text-slate-400">Haz clic en el mapa para marcar la ubicación exacta de la parada/misión.</p>
+            </div>
+            <div className="flex-1 relative bg-slate-800">
+              {/* @ts-ignore */}
+              <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                <MapRecenter />
+                {/* @ts-ignore */}
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
+                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
+              </MapContainer>
+            </div>
+            <div className="p-4 bg-slate-900/90 border-t border-white/10 flex justify-between items-center gap-4">
+              {tempCoords && (
+                <p className="text-xs text-emerald-400 font-bold">
+                  📍 {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
+                </p>
+              )}
+              <div className="flex gap-3 ml-auto">
+                <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
+                <button onClick={confirmLocation} className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30">Confirmar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
