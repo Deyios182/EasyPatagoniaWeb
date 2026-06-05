@@ -29,6 +29,7 @@ const TouristMapScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<Category | 'All'>('All');
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'attractions' | 'gas_stations' | 'campings'>('all');
   const [serviceSearch, setServiceSearch] = useState('');
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [zoom, setZoom] = useState(14);
   const [isSatellite, setIsSatellite] = useState(false); // Local state for satellite view
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
@@ -611,32 +612,13 @@ const TouristMapScreen: React.FC = () => {
 
           {/* Contenedor Superior: Buscador + Botón Perfil */}
           <div className="w-full md:max-w-4xl pointer-events-auto flex items-center gap-2 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl px-3 py-2 shadow-xl">
-            {/* Lupa / Search Icon */}
-            <span className="material-symbols-outlined text-slate-400 dark:text-slate-300 text-xl leading-none">search</span>
             
-            {/* Input de Búsqueda */}
-            <input
-              type="text"
-              value={serviceSearch}
-              onChange={e => setServiceSearch(e.target.value)}
-              placeholder="Buscar por nombre o palabras destacadas..."
-              className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white flex-1 text-[11px] sm:text-xs font-bold py-1 leading-none outline-none placeholder-slate-400 dark:placeholder-slate-500"
-            />
-            {serviceSearch && (
-              <button onClick={() => setServiceSearch('')} className="text-slate-400 hover:text-slate-600 dark:hover:text-white mr-1 flex items-center">
-                <span className="material-symbols-outlined text-sm leading-none">close</span>
-              </button>
-            )}
-
-            {/* Separador */}
-            <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-1"></div>
-
-            {/* Selector de Localidades */}
+            {/* 1. Selector de Localidades (Primero) */}
             <div className="relative flex items-center gap-1 shrink-0">
               <span className="material-symbols-outlined text-primary text-lg leading-none">location_on</span>
               <select
                 onChange={handleLocalityChange}
-                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white text-[10px] font-black py-1 pr-5 leading-none cursor-pointer appearance-none uppercase tracking-wider outline-none max-w-[90px] sm:max-w-[120px] truncate"
+                className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white text-[10px] font-black py-1 pr-5 leading-none cursor-pointer appearance-none uppercase tracking-wider outline-none max-w-[120px] sm:max-w-[150px] truncate"
                 defaultValue=""
               >
                 <option value="" disabled>Patagonia</option>
@@ -649,7 +631,47 @@ const TouristMapScreen: React.FC = () => {
               <span className="material-symbols-outlined text-slate-400 text-xs absolute right-0 pointer-events-none">expand_more</span>
             </div>
 
-            {/* Avatar Perfil */}
+            {/* Separador */}
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+            {/* 2. Buscador Toggleable (Segundo) */}
+            <div className="flex-1 flex items-center justify-end">
+              {isSearchExpanded ? (
+                <div className="flex items-center gap-2 w-full bg-slate-100 dark:bg-background-dark/50 rounded-xl px-2 py-1 animate-in slide-in-from-right duration-200">
+                  <span className="material-symbols-outlined text-slate-400 text-sm leading-none">search</span>
+                  <input
+                    type="text"
+                    value={serviceSearch}
+                    onChange={e => setServiceSearch(e.target.value)}
+                    placeholder="Buscar..."
+                    autoFocus
+                    className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-[11px] font-bold py-0.5 leading-none outline-none placeholder-slate-400 dark:placeholder-slate-500"
+                  />
+                  <button 
+                    onClick={() => {
+                      setServiceSearch('');
+                      setIsSearchExpanded(false);
+                    }} 
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-white flex items-center"
+                  >
+                    <span className="material-symbols-outlined text-xs leading-none">close</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsSearchExpanded(true)}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all ml-auto"
+                  title="Buscar"
+                >
+                  <span className="material-symbols-outlined text-lg leading-none">search</span>
+                </button>
+              )}
+            </div>
+
+            {/* Separador */}
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+            {/* 3. Avatar Perfil */}
             <Link to={user ? "/profile" : "/auth/login"} className="w-8 h-8 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-all overflow-hidden relative shrink-0">
               {user ? (
                 <>

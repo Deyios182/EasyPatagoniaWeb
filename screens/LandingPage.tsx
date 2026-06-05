@@ -122,6 +122,20 @@ const LandingPage: React.FC = () => {
     }
   }, [carouselImages.length]);
 
+  // Optimize: Preload all carousel images programmatically in the background
+  useEffect(() => {
+    if (carouselImages.length > 0) {
+      // Preload first image with high priority
+      const img = new Image();
+      img.src = carouselImages[0].image_url;
+      // Preload remaining images in parallel
+      carouselImages.slice(1).forEach(item => {
+        const nextImg = new Image();
+        nextImg.src = item.image_url;
+      });
+    }
+  }, [carouselImages]);
+
   const [logoError, setLogoError] = useState(false);
 
   // Ref for horizontal scroll
@@ -241,6 +255,8 @@ const LandingPage: React.FC = () => {
                     src={img.image_url}
                     className="w-full h-full object-cover"
                     alt={img.alt_text || `Patagonia ${index + 1}`}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    {...({ fetchpriority: index === 0 ? "high" : "low" } as any)}
                   />
                 </div>
               ))
@@ -249,6 +265,8 @@ const LandingPage: React.FC = () => {
                 src={content['hero']?.image_url || "https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"}
                 className="w-full h-full object-cover opacity-60"
                 alt="Patagonia Background"
+                loading="eager"
+                {...({ fetchpriority: "high" } as any)}
               />
             )}
           </div>
