@@ -205,6 +205,14 @@ const AdminDashboardScreen: React.FC = () => {
                   color="bg-gradient-to-br from-emerald-500 to-teal-600"
                   cta="Abrir Intranet"
                />
+               <ActionCard
+                  onClick={() => navigate('/admin/gamification')}
+                  icon="military_tech"
+                  title="Gamificación"
+                  description="Gestionar XP, rangos, medallas australes y Easy Rutas. Aprobar posts y otorgar puntos de experiencia."
+                  color="bg-gradient-to-br from-purple-500 to-pink-600"
+                  cta="Administrar"
+               />
             </div>
 
             {/* Quick Links */}
