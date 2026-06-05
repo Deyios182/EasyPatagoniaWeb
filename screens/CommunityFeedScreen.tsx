@@ -61,6 +61,14 @@ const parseVideoUrl = (url: string): { platform: 'youtube' | 'tiktok' | 'instagr
     return { platform: null, id: null, original: url };
 };
 
+const optimizeSupabaseImage = (url: string, width: number, quality = 75) => {
+    if (!url) return url;
+    if (url.includes('/storage/v1/object/public/')) {
+        return url.replace('/storage/v1/object/public/', `/storage/v1/render/image/public/`) + `?width=${width}&quality=${quality}`;
+    }
+    return url;
+};
+
 const getPlatformIcon = (platform: string | null) => {
     if (platform === 'youtube') return '▶️';
     if (platform === 'tiktok') return '🎵';
@@ -600,8 +608,8 @@ const CommunityFeedScreen: React.FC = () => {
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
                                         <img
-                                            src={post.auth_users?.raw_user_meta_data?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user_id}`}
-                                            className="w-10 h-10 rounded-full bg-slate-100" alt="Avatar"
+                                            src={post.auth_users?.raw_user_meta_data?.avatar_url ? optimizeSupabaseImage(post.auth_users.raw_user_meta_data.avatar_url, 80, 70) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user_id}`}
+                                            className="w-10 h-10 rounded-full bg-slate-100 object-cover" alt="Avatar"
                                         />
                                         <div>
                                             <button
@@ -719,7 +727,7 @@ const CommunityFeedScreen: React.FC = () => {
                                 {/* Image */}
                                 {post.media_urls && post.media_urls.length > 0 && (
                                     <div className="mb-4 rounded-xl overflow-hidden bg-slate-100 dark:bg-background-dark">
-                                        <img src={post.media_urls[0]} alt="Post media" className="w-full max-h-96 object-cover" />
+                                        <img src={optimizeSupabaseImage(post.media_urls[0], 640, 75)} alt="Post media" className="w-full max-h-96 object-cover" />
                                     </div>
                                 )}
 
