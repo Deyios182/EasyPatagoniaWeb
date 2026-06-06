@@ -136,6 +136,37 @@ const TouristMapScreen: React.FC = () => {
     );
   };
 
+  const triggerSearchFocus = () => {
+    if (!serviceSearch || !mapInstance) return;
+    const searchLower = serviceSearch.toLowerCase();
+
+    // 1. Search in attractions
+    const matchingAttraction = allAttractions.find(att => 
+      (att.name || '').toLowerCase().includes(searchLower) ||
+      (att.description || '').toLowerCase().includes(searchLower)
+    );
+
+    if (matchingAttraction && matchingAttraction.latitude && matchingAttraction.longitude) {
+      mapInstance.flyTo([matchingAttraction.latitude, matchingAttraction.longitude], 15, { animate: true, duration: 1.5 });
+      setSelectedAttraction(matchingAttraction);
+      setSelectedBusiness(null);
+      return;
+    }
+
+    // 2. Search in businesses
+    const matchingBusiness = allBusinesses.find(b => 
+      (b.nombre || '').toLowerCase().includes(searchLower) ||
+      b.servicios?.some((s: any) => (s.nombre || '').toLowerCase().includes(searchLower))
+    );
+
+    if (matchingBusiness && matchingBusiness.latitud && matchingBusiness.longitud) {
+      mapInstance.flyTo([matchingBusiness.latitud, matchingBusiness.longitud], 15, { animate: true, duration: 1.5 });
+      setSelectedBusiness(matchingBusiness);
+      setSelectedAttraction(null);
+      return;
+    }
+  };
+
   // Haversine distance formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3; // Earth radius in meters
@@ -1292,11 +1323,22 @@ const TouristMapScreen: React.FC = () => {
             <div className="flex-1 flex items-center justify-end">
               {isSearchExpanded ? (
                 <div className="flex items-center gap-2 w-full bg-slate-100 dark:bg-background-dark/50 rounded-xl px-2 py-1 animate-in slide-in-from-right duration-200">
-                  <span className="material-symbols-outlined text-slate-400 text-sm leading-none">search</span>
+                  <button 
+                    onClick={triggerSearchFocus}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-white flex items-center"
+                    title="Buscar ubicación"
+                  >
+                    <span className="material-symbols-outlined text-sm leading-none">search</span>
+                  </button>
                   <input
                     type="text"
                     value={serviceSearch}
                     onChange={e => setServiceSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        triggerSearchFocus();
+                      }
+                    }}
                     placeholder="Buscar..."
                     autoFocus
                     className="bg-transparent border-none focus:ring-0 text-slate-800 dark:text-white w-full text-[11px] font-bold py-0.5 leading-none outline-none placeholder-slate-400 dark:placeholder-slate-500"
