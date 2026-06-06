@@ -324,8 +324,8 @@ const CommunityFeedScreen: React.FC = () => {
                 rating: formType === 'review' ? formRating : null,
                 media_urls: formImage ? [formImage] : [],
                 link_url: formLinkUrl.trim() || null,
-                // ⋄ Los nuevos posts van a 'pending' para moderación y asignación de XP
-                status: editingPostId ? undefined : 'pending',
+                // ⋄ Los nuevos posts se aprueban de inmediato para ser visibles para todos
+                status: editingPostId ? undefined : 'approved',
             };
 
             if (editingPostId) {
@@ -335,11 +335,38 @@ const CommunityFeedScreen: React.FC = () => {
                     .eq('user_id', supabaseUser.id);
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('community_posts').insert([payload]);
+                const { data, error } = await supabase.from('community_posts')
+                    .insert([payload])
+                    .select('id')
+                    .single();
                 if (error) throw error;
-                // Mostrar banner de confirmación pendiente
+
+                const newPostId = data?.id;
+
+                // Enviar notificación a los administradores
+                try {
+                    const { data: admins } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .or('rol.eq.SuperAdmin,rol.eq.Admin');
+                        
+                    if (admins && admins.length > 0) {
+                        const notificationInserts = admins.map(adm => ({
+                            user_id: adm.id,
+                            actor_id: supabaseUser.id,
+                            type: 'message',
+                            post_id: newPostId,
+                            message: `Ha realizado una nueva publicación: "${payload.content.substring(0, 40)}..."`
+                        }));
+                        await supabase.from('notifications').insert(notificationInserts);
+                    }
+                } catch (notifErr) {
+                    console.error('Error enviando notificación a admins:', notifErr);
+                }
+
+                // Mostrar banner de confirmación de subida
                 setPostSubmittedPending(true);
-                setTimeout(() => setPostSubmittedPending(false), 6000);
+                setTimeout(() => setPostSubmittedPending(false), 4000);
             }
 
             clearForm();
@@ -424,17 +451,17 @@ const CommunityFeedScreen: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Banner: Post pendiente enviado */}
+                {/* Banner: Post publicado exitosamente */}
                 {postSubmittedPending && (
-                  <div className="mx-4 mt-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 flex items-start gap-3">
-                    <span className="text-2xl">⏳</span>
+                  <div className="mx-4 mt-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-start gap-3">
+                    <span className="text-2xl">✅</span>
                     <div>
-                      <p className="font-black text-amber-700 dark:text-amber-300 text-sm">¡Publicación enviada!</p>
-                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-                        Tu post está pendiente de revisión. El admin asignará tu XP al aprobarlo.
+                      <p className="font-black text-emerald-800 dark:text-emerald-300 text-sm">¡Publicación subida!</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        Tu publicación ya está visible en el mural para toda la comunidad.
                       </p>
                     </div>
-                    <button onClick={() => setPostSubmittedPending(false)} className="ml-auto text-amber-400">
+                    <button onClick={() => setPostSubmittedPending(false)} className="ml-auto text-emerald-500">
                       <span className="material-symbols-outlined text-base">close</span>
                     </button>
                   </div>
@@ -665,6 +692,31 @@ const CommunityFeedScreen: React.FC = () => {
                                                     </div>
                                                 )}
                                             </div>
+                                        )}
+
+                                        {/* Block Post Button for Admin */}
+                                        {user?.rol === 'SuperAdmin' && (
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm('¿Estás seguro de que deseas bloquear esta publicación? Desaparecerá del mural.')) {
+                                                        const { error } = await supabase
+                                                            .from('community_posts')
+                                                            .update({ status: 'rejected' })
+                                                            .eq('id', post.id);
+                                                        if (error) {
+                                                            alert('Error al bloquear la publicación');
+                                                        } else {
+                                                            alert('Publicación bloqueada');
+                                                            fetchPosts();
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-10 h-10 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center border border-red-500/20 shadow-sm"
+                                                title="Bloquear Publicación"
+                                            >
+                                                <span className="material-symbols-outlined text-lg">block</span>
+                                            </button>
                                         )}
 
                                         <div className="bg-slate-50 dark:bg-background-dark w-10 h-10 rounded-full flex items-center justify-center">

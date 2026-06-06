@@ -206,8 +206,8 @@ const GamificationAdminScreen: React.FC = () => {
     const { data } = await supabase
       .from('community_posts')
       .select('id, user_id, post_type, content, media_urls, location_name, created_at')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true });
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
 
     if (!data) return;
     const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_url');
@@ -263,9 +263,7 @@ const GamificationAdminScreen: React.FC = () => {
   const handleApprovePost = async (post: PendingPost) => {
     const xp = postXpValues[post.id] || 50;
     try {
-      // 1. Approve post
-      await supabase.from('community_posts').update({ status: 'approved' }).eq('id', post.id);
-      // 2. Grant XP via function
+      // Grant XP via function
       await supabase.rpc('grant_xp_to_user', {
         p_user_id: post.user_id,
         p_amount: xp,
@@ -273,18 +271,17 @@ const GamificationAdminScreen: React.FC = () => {
         p_post_id: post.id,
         p_notes: `Post de tipo: ${post.post_type}`
       });
-      setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-      showSuccess(`✅ Post aprobado · +${xp} XP otorgados`);
+      showSuccess(`✅ +${xp} XP otorgados`);
     } catch (e) {
-      alert('Error al aprobar post');
+      alert('Error al otorgar XP');
     }
   };
 
   const handleRejectPost = async (postId: string) => {
-    if (!window.confirm('¿Rechazar esta publicación?')) return;
+    if (!window.confirm('¿Bloquear esta publicación? Desaparecerá del mural.')) return;
     await supabase.from('community_posts').update({ status: 'rejected' }).eq('id', postId);
     setPendingPosts(prev => prev.filter(p => p.id !== postId));
-    showSuccess('🚫 Post rechazado');
+    showSuccess('🚫 Post bloqueado');
   };
 
   // ─── RANK CRUD ────────────────────────────────────────────────────────────
@@ -510,15 +507,15 @@ const GamificationAdminScreen: React.FC = () => {
           <div className="space-y-4 animate-in fade-in duration-300">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-black dark:text-white uppercase italic tracking-tighter">
-                Posts Pendientes de Revisión
+                Publicaciones Activas en el Mural
               </h2>
-              <span className="text-xs font-bold text-slate-500">{pendingPosts.length} publicaciones esperando</span>
+              <span className="text-xs font-bold text-slate-500">{pendingPosts.length} publicaciones</span>
             </div>
 
             {pendingPosts.length === 0 ? (
               <div className="bg-white dark:bg-surface-dark rounded-3xl p-16 text-center border border-slate-100 dark:border-white/5 shadow-sm">
-                <span className="text-6xl">✅</span>
-                <p className="text-slate-500 font-bold mt-4">¡Todo al día! No hay posts pendientes.</p>
+                <span className="text-6xl">📝</span>
+                <p className="text-slate-500 font-bold mt-4">No hay publicaciones activas en el mural.</p>
               </div>
             ) : (
               pendingPosts.map(post => (
@@ -576,17 +573,18 @@ const GamificationAdminScreen: React.FC = () => {
 
                     <button
                       onClick={() => handleApprovePost(post)}
-                      className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition-all"
+                      className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition-all"
                     >
-                      <span className="material-symbols-outlined text-base">check_circle</span>
-                      Aprobar + Dar XP
+                      <span className="material-symbols-outlined text-base">monetization_on</span>
+                      Otorgar XP
                     </button>
 
                     <button
                       onClick={() => handleRejectPost(post.id)}
                       className="py-3 px-4 bg-red-50 dark:bg-red-900/20 text-red-500 border border-red-200 dark:border-red-900/30 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+                      title="Bloquear Publicación"
                     >
-                      <span className="material-symbols-outlined text-base">cancel</span>
+                      <span className="material-symbols-outlined text-base">block</span>
                     </button>
                   </div>
                 </div>
