@@ -403,10 +403,13 @@ const TouristMapScreen: React.FC = () => {
     console.log('🗺️ [MAP] Drawing active tracked route:', trackedRoute);
 
     const checkpoints = trackedRoute.checkpoints || [];
-    if (checkpoints.length === 0) return;
+    const pathPoints = trackedRoute.path_points || [];
+    if (checkpoints.length === 0 && pathPoints.length === 0) return;
 
     const color = getRouteColor(trackedRoute.difficulty);
-    const latlngs = checkpoints.map((cp: any) => L.latLng(cp.lat, cp.lng));
+    const latlngs = pathPoints.length > 0 
+      ? pathPoints.map((pt: any) => L.latLng(pt.lat, pt.lng))
+      : checkpoints.map((cp: any) => L.latLng(cp.lat, cp.lng));
 
     // 1. Draw Polyline
     const polyline = L.polyline(latlngs, {
@@ -1005,14 +1008,15 @@ const TouristMapScreen: React.FC = () => {
 
     mapRoutes.forEach(route => {
       const checkpoints = route.checkpoints || [];
-      if (checkpoints.length === 0) return;
+      const pathPoints = route.path_points || [];
+      if (checkpoints.length === 0 && pathPoints.length === 0) return;
 
       const color = getRouteColor(route.difficulty);
-      const latlngs = checkpoints.map((cp: any) => {
-        const latlng = L.latLng(cp.lat, cp.lng);
-        bounds.extend(latlng);
-        return latlng;
-      });
+      const latlngs = pathPoints.length > 0 
+        ? pathPoints.map((pt: any) => L.latLng(pt.lat, pt.lng))
+        : checkpoints.map((cp: any) => L.latLng(cp.lat, cp.lng));
+
+      latlngs.forEach((latlng: any) => bounds.extend(latlng));
 
       // 1. Draw Polyline
       const polyline = L.polyline(latlngs, {

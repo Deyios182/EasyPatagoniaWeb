@@ -4,7 +4,7 @@ import { useAppAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 
 // --- MAPA ---
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 // @ts-ignore
@@ -25,9 +25,23 @@ const MapRecenter = () => {
   useEffect(() => { setTimeout(() => { map.invalidateSize(); }, 200); }, [map]);
   return null;
 };
-const LocationMarker = ({ setPos, pos }: { setPos: (lat: number, lng: number) => void, pos: { lat: number, lng: number } | null }) => {
-  useMapEvents({ click(e) { setPos(e.latlng.lat, e.latlng.lng); }, });
-  return pos ? <Marker position={[pos.lat, pos.lng]} /> : null;
+const LocationMarker = ({ setPos, pos, mapMode, pathPoints, onAddPathPoint }: { 
+  setPos: (lat: number, lng: number) => void;
+  pos: { lat: number, lng: number } | null;
+  mapMode: 'checkpoint' | 'path';
+  pathPoints: { lat: number; lng: number }[];
+  onAddPathPoint: (lat: number, lng: number) => void;
+}) => {
+  useMapEvents({
+    click(e) {
+      if (mapMode === 'path') {
+        onAddPathPoint(e.latlng.lat, e.latlng.lng);
+      } else {
+        setPos(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return mapMode !== 'path' && pos ? <Marker position={[pos.lat, pos.lng]} /> : null;
 };
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -71,6 +85,7 @@ interface EasyRoute {
   checkpoints: any[];
   sort_order: number;
   is_active: boolean;
+  path_points?: { lat: number; lng: number }[];
 }
 
 interface PendingPost {
@@ -163,6 +178,8 @@ const GamificationAdminScreen: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempCoords, setTempCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [mapTargetCheckpointIndex, setMapTargetCheckpointIndex] = useState<number | null>(null);
+  const [mapMode, setMapMode] = useState<'checkpoint' | 'path'>('checkpoint');
+  const [tempPathCoords, setTempPathCoords] = useState<{ lat: number, lng: number }[]>([]);
 
   // XP manual grant
   const [manualXpUser, setManualXpUser] = useState('');
@@ -362,6 +379,7 @@ const GamificationAdminScreen: React.FC = () => {
   };
 
   const openMapForCheckpoint = (idx: number, currentLat?: any, currentLng?: any) => {
+    setMapMode('checkpoint');
     const lat = parseFloat(currentLat) || -46.6;
     const lng = parseFloat(currentLng) || -72.6;
     setTempCoords({ lat, lng });
@@ -369,13 +387,45 @@ const GamificationAdminScreen: React.FC = () => {
     setShowMapModal(true);
   };
 
+  const openMapForPath = () => {
+    setMapMode('path');
+    setTempPathCoords(editingRoute?.path_points || []);
+    // Centro del mapa basado en el primer checkpoint si existe, o valor por defecto
+    const firstCp = editingRoute?.checkpoints?.[0];
+    const lat = parseFloat(firstCp?.lat) || -46.6;
+    const lng = parseFloat(firstCp?.lng) || -72.6;
+    setTempCoords({ lat, lng });
+    setShowMapModal(true);
+  };
+
+  const addPathPoint = (lat: number, lng: number) => {
+    setTempPathCoords(prev => [...prev, { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)) }]);
+  };
+
+  const undoLastPathPoint = () => {
+    setTempPathCoords(prev => prev.slice(0, -1));
+  };
+
+  const clearPath = () => {
+    if (window.confirm('¿Limpiar todo el trazado?')) {
+      setTempPathCoords([]);
+    }
+  };
+
   const confirmLocation = () => {
-    if (tempCoords && mapTargetCheckpointIndex !== null) {
-      updateCheckpoint(mapTargetCheckpointIndex, 'lat', tempCoords.lat.toFixed(6));
-      updateCheckpoint(mapTargetCheckpointIndex, 'lng', tempCoords.lng.toFixed(6));
+    if (mapMode === 'checkpoint') {
+      if (tempCoords && mapTargetCheckpointIndex !== null) {
+        updateCheckpoint(mapTargetCheckpointIndex, 'lat', tempCoords.lat.toFixed(6));
+        updateCheckpoint(mapTargetCheckpointIndex, 'lng', tempCoords.lng.toFixed(6));
+      }
+      setMapTargetCheckpointIndex(null);
+    } else {
+      setEditingRoute(prev => ({
+        ...prev!,
+        path_points: tempPathCoords
+      }));
     }
     setShowMapModal(false);
-    setMapTargetCheckpointIndex(null);
   };
 
   // ─── MANUAL XP ────────────────────────────────────────────────────────────
@@ -1000,6 +1050,26 @@ const GamificationAdminScreen: React.FC = () => {
                         className="w-full mt-1 bg-slate-50 dark:bg-background-dark rounded-xl p-3 text-sm font-mono border-none focus:ring-2 focus:ring-green-500/20 dark:text-white" />
                     </div>
 
+                    {/* Trazado del Sendero */}
+                    <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-black dark:text-white uppercase tracking-wider">Trazado del Sendero/Camino</p>
+                          <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                            {editingRoute.path_points?.length || 0} puntos de trazado registrados
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openMapForPath}
+                          className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 shadow-md transition-all"
+                        >
+                          <span className="material-symbols-outlined text-sm">edit_road</span>
+                          Trazar Camino
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Checkpoints */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -1143,13 +1213,39 @@ const GamificationAdminScreen: React.FC = () => {
 
       </div>
 
-      {/* MODAL MAPA (COORDINATE PICKER) */}
+      {/* MODAL MAPA (COORDINATE & PATH PICKER) */}
       {showMapModal && (
         <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-xl">
           <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh] border border-white/10 shadow-2xl">
-            <div className="p-4 border-b border-white/10">
-              <h3 className="text-lg font-black text-white">Seleccionar Ubicación del Checkpoint</h3>
-              <p className="text-xs text-slate-400">Haz clic en el mapa para marcar la ubicación exacta de la parada/misión.</p>
+            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900">
+              <div>
+                <h3 className="text-lg font-black text-white">
+                  {mapMode === 'path' ? 'Trazar Sendero / Camino' : 'Seleccionar Ubicación del Checkpoint'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {mapMode === 'path' 
+                    ? 'Haz clics sucesivos en el mapa para dibujar el recorrido exacto que guiará al usuario.' 
+                    : 'Haz clic en el mapa para marcar la ubicación exacta de la parada/misión.'}
+                </p>
+              </div>
+              {mapMode === 'path' && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={undoLastPathPoint}
+                    disabled={tempPathCoords.length === 0}
+                    className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-40 text-amber-400 text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-1 border border-amber-500/30 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-xs">undo</span> Deshacer
+                  </button>
+                  <button 
+                    onClick={clearPath}
+                    disabled={tempPathCoords.length === 0}
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 disabled:opacity-40 text-red-400 text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-1 border border-red-500/30 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-xs">delete_sweep</span> Limpiar
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex-1 relative bg-slate-800">
               {/* @ts-ignore */}
@@ -1157,18 +1253,64 @@ const GamificationAdminScreen: React.FC = () => {
                 <MapRecenter />
                 {/* @ts-ignore */}
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
-                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
+                
+                {/* Location marker or path event handler */}
+                <LocationMarker 
+                  pos={tempCoords} 
+                  setPos={(lat, lng) => setTempCoords({ lat, lng })} 
+                  mapMode={mapMode}
+                  pathPoints={tempPathCoords}
+                  onAddPathPoint={addPathPoint}
+                />
+
+                {/* Draw checkpoints as REFERENCE markers */}
+                {editingRoute?.checkpoints?.map((cp: any, idx: number) => {
+                  if (!cp.lat || !cp.lng) return null;
+                  return (
+                    <Marker 
+                      key={`cp-ref-${idx}`} 
+                      position={[parseFloat(cp.lat), parseFloat(cp.lng)]}
+                    />
+                  );
+                })}
+
+                {/* Draw path points & polylines in path mode */}
+                {mapMode === 'path' && (
+                  <>
+                    {tempPathCoords.map((pt, idx) => (
+                      <Marker 
+                        key={`pt-${idx}`} 
+                        position={[pt.lat, pt.lng]}
+                      />
+                    ))}
+                    {tempPathCoords.length > 1 && (
+                      <Polyline 
+                        positions={tempPathCoords.map(p => [p.lat, p.lng])} 
+                        color="#10B981" 
+                        weight={5} 
+                        dashArray="5, 10"
+                      />
+                    )}
+                  </>
+                )}
               </MapContainer>
             </div>
             <div className="p-4 bg-slate-900/90 border-t border-white/10 flex justify-between items-center gap-4">
-              {tempCoords && (
-                <p className="text-xs text-emerald-400 font-bold">
-                  📍 {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
-                </p>
-              )}
+              <div>
+                {mapMode === 'checkpoint' && tempCoords && (
+                  <p className="text-xs text-emerald-400 font-bold">
+                    📍 Coordenada: {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
+                  </p>
+                )}
+                {mapMode === 'path' && (
+                  <p className="text-xs text-emerald-400 font-bold">
+                    🛣️ Trazado: {tempPathCoords.length} puntos marcados en el sendero.
+                  </p>
+                )}
+              </div>
               <div className="flex gap-3 ml-auto">
                 <button onClick={() => setShowMapModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition-colors border border-white/10">Cancelar</button>
-                <button onClick={confirmLocation} className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30">Confirmar</button>
+                <button onClick={confirmLocation} className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30">Confirmar Trazado</button>
               </div>
             </div>
           </div>
