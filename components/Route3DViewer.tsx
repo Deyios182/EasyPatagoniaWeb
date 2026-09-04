@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { Play, Pause, RotateCcw, Eye, Compass, Layers, Info } from 'lucide-react';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { Play, Pause, RotateCcw, Mountain, Layers, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface Checkpoint3D {
   id: string;
@@ -24,477 +25,389 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
   difficulty = 'moderado',
   onSelectCheckpoint
 }) => {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [activeCheckpointIndex, setActiveCheckpointIndex] = useState<number | null>(null);
-  const [isRotating, setIsRotating] = useState<boolean>(true);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const animationFrameRef = useRef<number | null>(null);
 
-  // References for animation and control
-  const animFrameId = useRef<number | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const curveRef = useRef<THREE.CatmullRomCurve3 | null>(null);
-  const flyProgressRef = useRef<number>(0);
-  const controlsRef = useRef<{
-    isDragging: boolean;
-    prevX: number;
-    prevY: number;
-    theta: number; // Azimuth
-    phi: number;   // Polar elevation
-    radius: number;
-    center: THREE.Vector3;
-  }>({
-    isDragging: false,
-    prevX: 0,
-    prevY: 0,
-    theta: Math.PI / 4,
-    phi: Math.PI / 3.5,
-    radius: 38,
-    center: new THREE.Vector3(0, 0, 0)
-  });
+  const [isFlying, setIsFlying] = useState<boolean>(false);
+  const [terrain3DActive, setTerrain3DActive] = useState<boolean>(true);
+  const [basemapStyle, setBasemapStyle] = useState<'satellite' | 'topo'>('satellite');
 
-  const getThemeColor = (diff: string) => {
-    const d = diff.toLowerCase();
-    if (d.includes('fácil') || d.includes('facil') || d.includes('easy')) return 0x10b981;
-    if (d.includes('moderado') || d.includes('medio')) return 0x3b82f6;
-    if (d.includes('difícil') || d.includes('dificil')) return 0xf59e0b;
-    return 0xef4444;
+  const getDifficultyHex = (diff: string) => {
+    const d = (diff || '').toLowerCase();
+    if (d.includes('fácil') || d.includes('facil') || d.includes('easy')) return '#10B981';
+    if (d.includes('moderado') || d.includes('medio')) return '#3B82F6';
+    if (d.includes('difícil') || d.includes('dificil')) return '#F59E0B';
+    return '#EF4444';
   };
 
   useEffect(() => {
-    const container = mountRef.current;
-    if (!container || !checkpoints || checkpoints.length === 0) return;
+    if (!mapContainer.current || !checkpoints || checkpoints.length === 0) return;
 
-    const width = container.clientWidth || 600;
-    const height = container.clientHeight || 340;
-
-    // 1. Scene setup
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    scene.background = new THREE.Color(0x0a0f1d);
-    scene.fog = new THREE.FogExp2(0x0a0f1d, 0.015);
-
-    // 2. Camera setup
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    cameraRef.current = camera;
-
-    // 3. Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    rendererRef.current = renderer;
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
-
-    // 4. Lighting
-    const ambientLight = new THREE.AmbientLight(0xdde8ff, 0.75);
-    scene.add(ambientLight);
-
-    const sunLight = new THREE.DirectionalLight(0xfff1cf, 1.8);
-    sunLight.position.set(30, 45, 25);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 1024;
-    sunLight.shadow.mapSize.height = 1024;
-    scene.add(sunLight);
-
-    const blueRimLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
-    blueRimLight.position.set(-30, 20, -25);
-    scene.add(blueRimLight);
-
-    // 5. Convert GPS coords into 3D Normalized Coordinates
-    const lats = checkpoints.map(c => c.lat);
+    // Center on points
     const lngs = checkpoints.map(c => c.lng);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
+    const lats = checkpoints.map(c => c.lat);
+    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
 
-    const latSpan = Math.max(maxLat - minLat, 0.005);
-    const lngSpan = Math.max(maxLng - minLng, 0.005);
-    const mapScale = 22; // Plane span
+    const mapStyle: maplibregl.StyleSpecification = {
+      version: 8,
+      sources: {
+        'satellite-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          ],
+          tileSize: 256,
+          attribution: 'Esri World Imagery',
+          maxzoom: 19
+        },
+        'topo-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+          ],
+          tileSize: 256,
+          attribution: 'OpenStreetMap',
+          maxzoom: 19
+        },
+        'terrain-dem': {
+          type: 'raster-dem',
+          tiles: [
+            'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+          ],
+          encoding: 'terrarium',
+          tileSize: 256,
+          maxzoom: 15
+        }
+      },
+      layers: [
+        {
+          id: 'satellite-layer',
+          type: 'raster',
+          source: 'satellite-tiles',
+          layout: {
+            visibility: basemapStyle === 'satellite' ? 'visible' : 'none'
+          }
+        },
+        {
+          id: 'topo-layer',
+          type: 'raster',
+          source: 'topo-tiles',
+          layout: {
+            visibility: basemapStyle === 'topo' ? 'visible' : 'none'
+          }
+        },
+        // Dramatic Patagonian sky atmosphere fog
+        {
+          id: 'sky',
+          type: 'sky',
+          paint: {
+            'sky-color': '#0f172a',
+            'sky-horizon-blend': 0.5,
+            'horizon-color': '#1e293b',
+            'horizon-fog-blend': 0.8,
+            'fog-color': '#0f172a',
+            'fog-ground-blend': 0.4
+          }
+        }
+      ],
+      terrain: terrain3DActive
+        ? {
+            source: 'terrain-dem',
+            exaggeration: 1.8 // Exaggeration factor makes Patagonian mountains and fjords pop in true 3D
+          }
+        : undefined
+    };
 
-    // 6. Realistic Patagonian Glacial Valley Terrain
-    const terrainSize = 40;
-    const terrainSegments = 70;
-    const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainSegments, terrainSegments);
-    terrainGeo.rotateX(-Math.PI / 2);
-
-    const posAttr = terrainGeo.attributes.position;
-    // Procedural organic mountainous relief
-    for (let i = 0; i < posAttr.count; i++) {
-      const x = posAttr.getX(i);
-      const z = posAttr.getZ(i);
-
-      // Distance from center to create fjord/glacier valley trough
-      const valleyTrough = Math.sin(x * 0.15) * 1.5;
-      const mountainRidge = 
-        Math.sin(x * 0.22) * Math.cos(z * 0.22) * 3.2 +
-        Math.sin(x * 0.45 + 1.2) * Math.cos(z * 0.35) * 1.6 +
-        Math.sin(x * 0.9) * 0.5;
-
-      // Higher peaks around the edges
-      const edgeFactor = Math.pow(Math.sqrt(x * x + z * z) / (terrainSize * 0.5), 2) * 3.5;
-      
-      let elevation = mountainRidge + edgeFactor + valleyTrough;
-      if (elevation < 0.2) elevation = 0.2; // Lake level floor
-
-      posAttr.setY(i, elevation);
-    }
-    terrainGeo.computeVertexNormals();
-
-    // Material: Mountain rock with subtle elevation vertex shading effect
-    const terrainMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.85,
-      metalness: 0.1,
-      flatShading: true
-    });
-    const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    terrainMesh.receiveShadow = true;
-    scene.add(terrainMesh);
-
-    // Lake / Fiord Water Plane
-    const waterGeo = new THREE.PlaneGeometry(terrainSize * 0.85, terrainSize * 0.85);
-    waterGeo.rotateX(-Math.PI / 2);
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x0284c7,
-      roughness: 0.1,
-      metalness: 0.8,
-      transparent: true,
-      opacity: 0.65
-    });
-    const waterMesh = new THREE.Mesh(waterGeo, waterMat);
-    waterMesh.position.y = 0.6;
-    scene.add(waterMesh);
-
-    // Grid wireframe subtly overlaying for high-tech topographic aesthetic
-    const grid = new THREE.GridHelper(terrainSize, 24, 0x38bdf8, 0x1e3a5f);
-    grid.position.y = 0.1;
-    (grid.material as THREE.Material).opacity = 0.25;
-    (grid.material as THREE.Material).transparent = true;
-    scene.add(grid);
-
-    // 7. Route 3D Points & Glowing Path
-    const routePoints: THREE.Vector3[] = checkpoints.map((cp, idx) => {
-      // Map lat/lng to terrain local coordinates
-      const normX = ((cp.lng - minLng) / lngSpan - 0.5) * mapScale;
-      const normZ = -((cp.lat - minLat) / latSpan - 0.5) * mapScale;
-      
-      // Calculate realistic elevation: valley floor to uphill checkpoints
-      const baseAlt = 1.4 + Math.sin(idx / Math.max(checkpoints.length - 1, 1) * Math.PI) * 2.8 + (idx * 0.4);
-      return new THREE.Vector3(normX, baseAlt, normZ);
-    });
-
-    const routeColor = getThemeColor(difficulty);
-
-    // If only 1 checkpoint, duplicate slightly to make a curve
-    let curvePts = [...routePoints];
-    if (curvePts.length === 1) {
-      curvePts.push(new THREE.Vector3(curvePts[0].x + 1, curvePts[0].y, curvePts[0].z + 1));
-    }
-    const curve = new THREE.CatmullRomCurve3(curvePts, false, 'catmullrom', 0.2);
-    curveRef.current = curve;
-
-    // Glowing 3D Tube for the Route Path
-    const tubeGeo = new THREE.TubeGeometry(curve, 100, 0.22, 10, false);
-    const tubeMat = new THREE.MeshStandardMaterial({
-      color: routeColor,
-      emissive: routeColor,
-      emissiveIntensity: 0.85,
-      roughness: 0.2,
-      metalness: 0.3
-    });
-    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
-    scene.add(tubeMesh);
-
-    // Animated Runner / Pulse Ball on Path
-    const runnerGeo = new THREE.SphereGeometry(0.5, 16, 16);
-    const runnerMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff
-    });
-    const runnerMesh = new THREE.Mesh(runnerGeo, runnerMat);
-    scene.add(runnerMesh);
-
-    // Add Beacon Checkpoint Markers
-    checkpoints.forEach((cp, idx) => {
-      const pt = routePoints[idx];
-
-      // Vertical Laser Line
-      const lineGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(pt.x, 0.5, pt.z),
-        new THREE.Vector3(pt.x, pt.y + 2.2, pt.z)
-      ]);
-      const lineMat = new THREE.LineBasicMaterial({
-        color: routeColor,
-        transparent: true,
-        opacity: 0.5
-      });
-      const laserLine = new THREE.Line(lineGeo, lineMat);
-      scene.add(laserLine);
-
-      // Checkpoint Floating Gem/Pin
-      const pinGeo = new THREE.OctahedronGeometry(0.75, 0);
-      const pinMat = new THREE.MeshStandardMaterial({
-        color: idx === 0 ? 0x10b981 : (idx === checkpoints.length - 1 ? 0xf59e0b : routeColor),
-        emissive: routeColor,
-        emissiveIntensity: 0.6,
-        roughness: 0.1,
-        metalness: 0.9
-      });
-      const pinMesh = new THREE.Mesh(pinGeo, pinMat);
-      pinMesh.position.set(pt.x, pt.y + 2.2, pt.z);
-      pinMesh.name = `checkpoint_${idx}`;
-      scene.add(pinMesh);
-
-      // Glow Ring at ground base
-      const ringGeo = new THREE.RingGeometry(0.4, 0.7, 24);
-      ringGeo.rotateX(-Math.PI / 2);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: routeColor,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.6
-      });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-      ringMesh.position.set(pt.x, 0.7, pt.z);
-      scene.add(ringMesh);
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: mapStyle,
+      center: [centerLng, centerLat],
+      zoom: 13,
+      pitch: 62, // 3D Camera Tilt
+      bearing: -20,
+      maxPitch: 85
     });
 
-    // 8. Orbit & Camera Handling
-    const updateCameraPos = () => {
-      const ctrl = controlsRef.current;
-      const x = ctrl.center.x + ctrl.radius * Math.sin(ctrl.phi) * Math.sin(ctrl.theta);
-      const y = ctrl.center.y + ctrl.radius * Math.cos(ctrl.phi);
-      const z = ctrl.center.z + ctrl.radius * Math.sin(ctrl.phi) * Math.cos(ctrl.theta);
-      camera.position.set(x, y, z);
-      camera.lookAt(ctrl.center);
-    };
+    mapRef.current = map;
 
-    updateCameraPos();
-
-    // Mouse / Touch Drag Handlers
-    const onMouseDown = (e: MouseEvent) => {
-      controlsRef.current.isDragging = true;
-      controlsRef.current.prevX = e.clientX;
-      controlsRef.current.prevY = e.clientY;
-      setIsRotating(false);
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!controlsRef.current.isDragging) return;
-      const deltaX = e.clientX - controlsRef.current.prevX;
-      const deltaY = e.clientY - controlsRef.current.prevY;
-      controlsRef.current.prevX = e.clientX;
-      controlsRef.current.prevY = e.clientY;
-
-      controlsRef.current.theta -= deltaX * 0.008;
-      controlsRef.current.phi = Math.max(0.2, Math.min(Math.PI / 2.2, controlsRef.current.phi - deltaY * 0.008));
-      updateCameraPos();
-    };
-
-    const onMouseUp = () => {
-      controlsRef.current.isDragging = false;
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      controlsRef.current.radius = Math.max(12, Math.min(65, controlsRef.current.radius + e.deltaY * 0.04));
-      updateCameraPos();
-    };
-
-    // Touch support for Mobile
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        setIsRotating(false);
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        const deltaX = e.touches[0].clientX - touchStartX;
-        const deltaY = e.touches[0].clientY - touchStartY;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-
-        controlsRef.current.theta -= deltaX * 0.01;
-        controlsRef.current.phi = Math.max(0.2, Math.min(Math.PI / 2.2, controlsRef.current.phi - deltaY * 0.01));
-        updateCameraPos();
-      }
-    };
-
-    const dom = renderer.domElement;
-    dom.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    dom.addEventListener('wheel', onWheel, { passive: false });
-    dom.addEventListener('touchstart', onTouchStart, { passive: true });
-    dom.addEventListener('touchmove', onTouchMove, { passive: true });
-
-    // Handle Resize
-    const handleResize = () => {
-      if (!container || !renderer || !camera) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', handleResize);
-
-    // 9. Animation Loop
-    let clock = new THREE.Clock();
-    const animate = () => {
-      animFrameId.current = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
-
-      // Gentle auto-rotation when user is not manually navigating
-      if (isRotating && !controlsRef.current.isDragging && !isPlaying) {
-        controlsRef.current.theta += delta * 0.12;
-        updateCameraPos();
+    map.on('load', () => {
+      // 1. Fit to checkpoints bounds nicely
+      if (checkpoints.length > 1) {
+        const bounds = new maplibregl.LngLatBounds();
+        checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
+        map.fitBounds(bounds, {
+          padding: 60,
+          pitch: 62,
+          bearing: -25,
+          maxZoom: 15,
+          duration: 1200
+        });
       }
 
-      // Pulse and bobbing checkpoint pins
-      scene.children.forEach(child => {
-        if (child.name.startsWith('checkpoint_')) {
-          child.rotation.y += delta * 1.5;
-          child.rotation.z += delta * 0.8;
-          child.position.y += Math.sin(time * 3 + Number(child.name.split('_')[1])) * 0.004;
+      // 2. Add Route GeoJSON Line
+      const routeCoordinates = checkpoints.map(c => [c.lng, c.lat]);
+      const diffColor = getDifficultyHex(difficulty);
+
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: routeCoordinates
+          }
         }
       });
 
-      // Runner particle progress along spline
-      if (curveRef.current) {
-        const pulseT = (time * 0.25) % 1;
-        const runnerPos = curveRef.current.getPointAt(pulseT);
-        runnerMesh.position.copy(runnerPos);
-
-        // Flyover Camera Mode
-        if (isPlaying) {
-          flyProgressRef.current = (flyProgressRef.current + delta * 0.08) % 1;
-          const camPos = curveRef.current.getPointAt(flyProgressRef.current);
-          const tangent = curveRef.current.getTangentAt(flyProgressRef.current);
-
-          camera.position.set(camPos.x - tangent.x * 4, camPos.y + 3.5, camPos.z - tangent.z * 4);
-          const lookAtTarget = new THREE.Vector3().copy(camPos).add(tangent.multiplyScalar(4));
-          camera.lookAt(lookAtTarget);
-
-          // Update active checkpoint highlight
-          const currentCpIdx = Math.floor(flyProgressRef.current * checkpoints.length);
-          setActiveCheckpointIndex(currentCpIdx);
+      // Neon Glow background casing
+      map.addLayer({
+        id: 'route-glow',
+        type: 'line',
+        source: 'route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': diffColor,
+          'line-width': 10,
+          'line-opacity': 0.35,
+          'line-blur': 4
         }
-      }
+      });
 
-      renderer.render(scene, camera);
-    };
+      // Main High-visibility trail line
+      map.addLayer({
+        id: 'route-trail',
+        type: 'line',
+        source: 'route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': diffColor,
+          'line-width': 4.5,
+          'line-dasharray': [1.5, 1.5]
+        }
+      });
 
-    animate();
+      // 3. Add Custom 3D Checkpoint Markers
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+
+      checkpoints.forEach((cp, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === checkpoints.length - 1;
+        const badgeColor = isFirst ? '#10B981' : isLast ? '#F59E0B' : diffColor;
+
+        const el = document.createElement('div');
+        el.className = 'group cursor-pointer flex flex-col items-center';
+        el.innerHTML = `
+          <div style="
+            background: linear-gradient(135deg, ${badgeColor}, #0f172a);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 16px ${badgeColor}88, 0 4px 10px rgba(0,0,0,0.5);
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 13px;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+          " class="hover:scale-125">
+            ${idx + 1}
+          </div>
+          <div style="
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap;
+            margin-top: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          ">
+            ${cp.name}
+          </div>
+        `;
+
+        el.addEventListener('click', () => {
+          map.flyTo({
+            center: [cp.lng, cp.lat],
+            zoom: 15.5,
+            pitch: 70,
+            bearing: map.getBearing() + 45,
+            duration: 1500
+          });
+          if (onSelectCheckpoint) onSelectCheckpoint(cp);
+        });
+
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([cp.lng, cp.lat])
+          .addTo(map);
+
+        markersRef.current.push(marker);
+      });
+    });
 
     return () => {
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      dom.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      dom.removeEventListener('wheel', onWheel);
-      dom.removeEventListener('touchstart', onTouchStart);
-      dom.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      terrainGeo.dispose();
-      terrainMat.dispose();
-      if (container.contains(dom)) container.removeChild(dom);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      markersRef.current.forEach(m => m.remove());
+      map.remove();
+      mapRef.current = null;
     };
-  }, [checkpoints, difficulty, isPlaying, isRotating]);
+  }, [checkpoints, difficulty, basemapStyle, terrain3DActive]);
 
-  const toggleFlyover = () => {
-    setIsPlaying(prev => {
-      const nextState = !prev;
-      if (nextState) {
-        setIsRotating(false);
-      } else {
-        // Reset camera orbit to standard view
-        controlsRef.current.theta = Math.PI / 4;
-        controlsRef.current.phi = Math.PI / 3.5;
-        controlsRef.current.radius = 38;
-        if (cameraRef.current) {
-          cameraRef.current.position.set(25, 20, 25);
-          cameraRef.current.lookAt(0, 0, 0);
-        }
+  // Smooth Cinematic Flyover Mode
+  const startFlyover = () => {
+    const map = mapRef.current;
+    if (!map || checkpoints.length < 2) return;
+
+    if (isFlying) {
+      setIsFlying(false);
+      map.stop();
+      return;
+    }
+
+    setIsFlying(true);
+    let targetIndex = 0;
+
+    const flyToNext = () => {
+      if (targetIndex >= checkpoints.length) {
+        targetIndex = 0; // Loop or finish
       }
-      return nextState;
+
+      const cp = checkpoints[targetIndex];
+      const nextCp = checkpoints[(targetIndex + 1) % checkpoints.length];
+
+      // Calculate bearing angle to next checkpoint
+      const y = Math.sin((nextCp.lng - cp.lng) * Math.PI / 180) * Math.cos(nextCp.lat * Math.PI / 180);
+      const x = Math.cos(cp.lat * Math.PI / 180) * Math.sin(nextCp.lat * Math.PI / 180) -
+                Math.sin(cp.lat * Math.PI / 180) * Math.cos(nextCp.lat * Math.PI / 180) * Math.cos((nextCp.lng - cp.lng) * Math.PI / 180);
+      const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+
+      map.flyTo({
+        center: [cp.lng, cp.lat],
+        zoom: 14.8,
+        pitch: 72,
+        bearing: bearing,
+        speed: 0.4,
+        curve: 1.4,
+        essential: true
+      });
+
+      targetIndex++;
+    };
+
+    flyToNext();
+    map.on('moveend', () => {
+      if (mapRef.current && isFlying) {
+        setTimeout(flyToNext, 1200);
+      }
     });
   };
 
   const resetView = () => {
-    setIsPlaying(false);
-    setIsRotating(true);
-    controlsRef.current.theta = Math.PI / 4;
-    controlsRef.current.phi = Math.PI / 3.5;
-    controlsRef.current.radius = 38;
-    if (cameraRef.current) {
-      cameraRef.current.position.set(25, 20, 25);
-      cameraRef.current.lookAt(0, 0, 0);
-    }
+    const map = mapRef.current;
+    if (!map || checkpoints.length === 0) return;
+    setIsFlying(false);
+    map.stop();
+
+    const bounds = new maplibregl.LngLatBounds();
+    checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
+    map.fitBounds(bounds, {
+      padding: 60,
+      pitch: 62,
+      bearing: -20,
+      duration: 1500
+    });
+  };
+
+  const toggleTerrain = () => {
+    setTerrain3DActive(prev => !prev);
   };
 
   return (
-    <div className="relative w-full h-[360px] rounded-[2.5rem] overflow-hidden border border-cyan-500/20 shadow-[0_0_40px_rgba(6,182,212,0.15)] bg-slate-950 select-none">
-      {/* Three.js Canvas Container */}
-      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+    <div className="relative w-full h-[380px] rounded-[2.5rem] overflow-hidden border border-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,0.2)] bg-slate-950 select-none">
+      {/* MapLibre 3D WebGL Container */}
+      <div ref={mapContainer} className="w-full h-full" />
 
-      {/* Top Overlay Badge */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-cyan-500/30 text-xs font-bold text-cyan-300 shadow-lg">
-        <Compass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '8s' }} />
-        <span className="tracking-wider uppercase text-[10px]">Relieve 3D Patagónico</span>
+      {/* Top Left Badge */}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-cyan-500/30 text-xs font-bold text-cyan-300 shadow-xl">
+        <Mountain className="w-4 h-4 text-cyan-400 animate-pulse" />
+        <span className="tracking-wider uppercase text-[10px]">Relieve Satelital 3D Real (DEM)</span>
       </div>
 
-      {/* Top Right Checkpoint Count */}
-      <div className="absolute top-4 right-4 z-20 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[10px] font-black text-slate-300">
-        {checkpoints.length} HITOS 3D
+      {/* Top Right Map Controls */}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-white/15 shadow-xl">
+        <button
+          onClick={() => setBasemapStyle(s => s === 'satellite' ? 'topo' : 'satellite')}
+          title="Cambiar capa satélite / calles"
+          className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+            basemapStyle === 'satellite' ? 'bg-primary text-white' : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          <Layers className="w-3 h-3" />
+          <span>{basemapStyle === 'satellite' ? 'Satélite Real' : 'Topográfico'}</span>
+        </button>
+
+        <button
+          onClick={toggleTerrain}
+          title="Alternar elevación 3D de montañas"
+          className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+            terrain3DActive ? 'bg-cyan-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>3D DEM</span>
+        </button>
       </div>
 
-      {/* Bottom Floating Control Bar */}
-      <div className="absolute bottom-4 inset-x-4 z-20 flex items-center justify-between pointer-events-none">
+      {/* Bottom Floating Bar */}
+      <div className="absolute bottom-4 inset-x-4 z-10 flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-2 pointer-events-auto">
           <button
-            onClick={toggleFlyover}
-            className={`px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-xl transition-all active:scale-95 ${
-              isPlaying
+            onClick={startFlyover}
+            className={`px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-2xl transition-all active:scale-95 ${
+              isFlying
                 ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
-                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white'
+                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-cyan-500/30'
             }`}
           >
-            {isPlaying ? (
+            {isFlying ? (
               <>
                 <Pause className="w-4 h-4 fill-current" />
-                <span>Pausar Vuelo</span>
+                <span>Detener Vuelo</span>
               </>
             ) : (
               <>
                 <Play className="w-4 h-4 fill-current" />
-                <span>Sobrevolar Ruta</span>
+                <span>Sobrevolar Ruta 3D</span>
               </>
             )}
           </button>
 
           <button
             onClick={resetView}
-            title="Restablecer cámara"
-            className="w-10 h-10 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 flex items-center justify-center backdrop-blur-md transition-all active:scale-95 shadow-lg"
+            title="Restablecer vista aérea"
+            className="w-10 h-10 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-white/15 flex items-center justify-center backdrop-blur-md transition-all active:scale-95 shadow-xl"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 text-[10px] text-slate-400 flex items-center gap-1.5 pointer-events-auto">
-          <Eye className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Arrastra para rotar • Rueda para zoom</span>
+        <div className="hidden sm:flex items-center gap-1.5 bg-slate-900/85 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 text-[10px] text-slate-300 shadow-xl pointer-events-auto">
+          <span>Click derecho / 2 dedos para inclinar 3D</span>
         </div>
       </div>
     </div>
