@@ -111,6 +111,15 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           encoding: 'terrarium',
           tileSize: 256,
           maxzoom: 15
+        },
+        'hillshade-dem': {
+          type: 'raster-dem',
+          tiles: [
+            'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+          ],
+          encoding: 'terrarium',
+          tileSize: 256,
+          maxzoom: 15
         }
       },
       layers: [
@@ -118,7 +127,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           id: 'background',
           type: 'background',
           paint: {
-            'background-color': '#090d16'
+            'background-color': '#020617'
           }
         },
         {
@@ -137,11 +146,11 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
             visibility: basemapStyle === 'topo' ? 'visible' : 'none'
           }
         },
-        // Dramatic Hillshade on real mountain terrain
+        // Dramatic Hillshade on real mountain terrain with its own dedicated source
         {
           id: 'hillshade-relief',
           type: 'hillshade',
-          source: 'terrain-dem',
+          source: 'hillshade-dem',
           layout: {
             visibility: terrain3DActive ? 'visible' : 'none'
           },
@@ -149,25 +158,29 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
             'hillshade-shadow-color': '#020617',
             'hillshade-highlight-color': '#ffffff',
             'hillshade-accent-color': '#38bdf8',
-            'hillshade-exaggeration': 0.85
+            'hillshade-exaggeration': 0.8
           }
         }
       ],
-      terrain: terrain3DActive
-        ? {
-            source: 'terrain-dem',
-            exaggeration: 2.2 // Enhanced relief factor for stunning Patagonian Andes
-          }
-        : undefined
+      terrain: {
+        source: 'terrain-dem',
+        exaggeration: 2.8 // Strong elevation factor for stunning Patagonian Andes
+      },
+      sky: {
+        'sky-color': '#0f172a',
+        'horizon-color': '#38bdf8',
+        'fog-color': '#1e293b',
+        'sky-horizon-blend': 0.6
+      }
     };
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: mapStyle,
       center: [centerLng, centerLat],
-      zoom: 13.5,
-      pitch: cameraMode === 'explorer' ? 78 : 62,
-      bearing: -15,
+      zoom: 12.5,
+      pitch: cameraMode === 'explorer' ? 78 : 68,
+      bearing: -25,
       maxPitch: 85
     });
 
@@ -180,13 +193,11 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     map.on('load', () => {
       map.resize();
 
-      // Explicitly activate 3D Terrain elevation on load
-      if (terrain3DActive) {
-        map.setTerrain({
-          source: 'terrain-dem',
-          exaggeration: 2.5
-        });
-      }
+      // Ensure 3D Terrain elevation is explicitly applied
+      map.setTerrain({
+        source: 'terrain-dem',
+        exaggeration: 2.8
+      });
 
       // Add navigation control with pitch / tilt indicator
       map.addControl(new maplibregl.NavigationControl({
@@ -195,16 +206,16 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         showZoom: true
       }), 'top-right');
 
-      // Fit bounds
+      // Fit bounds if checkpoints exist
       if (checkpoints.length > 1 && cameraMode === 'drone') {
         const bounds = new maplibregl.LngLatBounds();
         checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
         map.fitBounds(bounds, {
-          padding: 60,
-          pitch: 65,
-          bearing: -20,
-          maxZoom: 15,
-          duration: 1000
+          padding: 70,
+          pitch: 68,
+          bearing: -25,
+          maxZoom: 14.5,
+          duration: 1200
         });
       }
 
@@ -451,9 +462,10 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     const bounds = new maplibregl.LngLatBounds();
     checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
     map.fitBounds(bounds, {
-      padding: 60,
-      pitch: 62,
-      bearing: -20,
+      padding: 70,
+      pitch: 68,
+      bearing: -25,
+      maxZoom: 14.5,
       duration: 1500
     });
   };
@@ -467,9 +479,10 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     const bounds = new maplibregl.LngLatBounds();
     checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
     map.fitBounds(bounds, {
-      padding: 60,
-      pitch: cameraMode === 'explorer' ? 78 : 62,
-      bearing: -20,
+      padding: 70,
+      pitch: cameraMode === 'explorer' ? 78 : 68,
+      bearing: -25,
+      maxZoom: 14.5,
       duration: 1500
     });
   };
