@@ -241,6 +241,63 @@ const EasyRoutesScreen: React.FC = () => {
     }
   };
 
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [autoTrackingEnabled, setAutoTrackingEnabled] = useState<boolean>(true);
+  const watchIdRef = useRef<number | null>(null);
+
+  // Automatic GPS Geofencing Check-in
+  useEffect(() => {
+    if (!selectedRoute || !supabaseUser || !autoTrackingEnabled) {
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setGpsError('La geolocalización no está soportada en este dispositivo.');
+      return;
+    }
+
+    const checkAutomaticProximity = async (userLat: number, userLng: number) => {
+      const progress = getProgress(selectedRoute.id);
+      const pendingCheckpoints = (selectedRoute.checkpoints || []).filter(
+        cp => !progress.checkpoints_completed.includes(cp.id)
+      );
+
+      for (const cp of pendingCheckpoints) {
+        const distance = calculateDistance(userLat, userLng, cp.lat, cp.lng);
+        // Automatic checkin when user passes within 1.0 km radius (1000m)
+        if (distance <= 1000 && checkingIn !== cp.id) {
+          console.log(`📍 [AUTO-CHECKIN] Auto-completado en: ${cp.name} (Distancia: ${Math.round(distance)}m)`);
+          await executeCheckin(selectedRoute, cp);
+          break;
+        }
+      }
+    };
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setGpsError(null);
+        checkAutomaticProximity(latitude, longitude);
+      },
+      (err) => {
+        console.warn('GPS Watcher warning:', err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [selectedRoute, progressList, autoTrackingEnabled, supabaseUser?.id, checkingIn]);
+
   const getProgress = (routeId: string): RouteProgress => {
     return progressList.find(p => p.route_id === routeId) || {
       route_id: routeId,
@@ -632,7 +689,13 @@ const EasyRoutesScreen: React.FC = () => {
 
               {/* Checkpoints list */}
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Puntos de Control (Check-ins)</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Puntos de Control (Check-ins)</p>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-black text-emerald-400 uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Auto Check-in GPS Activo</span>
+                  </div>
+                </div>
                 
                 {(selectedRoute.checkpoints || []).map((cp, idx) => {
                   const isCompleted = getProgress(selectedRoute.id).checkpoints_completed.includes(cp.id);
@@ -673,15 +736,18 @@ const EasyRoutesScreen: React.FC = () => {
                         </div>
                       </div>
 
-                      {!isCompleted && (
-                        <button
-                          onClick={() => handleCheckpointCheckin(selectedRoute, cp)}
-                          disabled={isChecking}
-                          className="px-4 py-2.5 bg-primary/20 text-primary border border-primary/30 rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-primary/30 active:scale-95 transition-all disabled:opacity-50"
-                        >
-                          {isChecking ? 'Verificando...' : 'Check-in'}
-                        </button>
-                      )}
+                      <div className="flex items-center">
+                        {isCompleted ? (
+                          <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Completado
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                            Auto-detección
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

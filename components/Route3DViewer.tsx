@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Play, Pause, RotateCcw, Mountain, Layers, ZoomIn, ZoomOut } from 'lucide-react';
+import { Play, Pause, RotateCcw, Mountain, Layers, Eye } from 'lucide-react';
 
 interface Checkpoint3D {
   id: string;
@@ -28,11 +28,11 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
-  const animationFrameRef = useRef<number | null>(null);
 
   const [isFlying, setIsFlying] = useState<boolean>(false);
   const [terrain3DActive, setTerrain3DActive] = useState<boolean>(true);
   const [basemapStyle, setBasemapStyle] = useState<'satellite' | 'topo'>('satellite');
+  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
 
   const getDifficultyHex = (diff: string) => {
     const d = (diff || '').toLowerCase();
@@ -45,7 +45,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
   useEffect(() => {
     if (!mapContainer.current || !checkpoints || checkpoints.length === 0) return;
 
-    // Center on points
+    // Center on checkpoints
     const lngs = checkpoints.map(c => c.lng);
     const lats = checkpoints.map(c => c.lat);
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
@@ -84,6 +84,13 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
       },
       layers: [
         {
+          id: 'background',
+          type: 'background',
+          paint: {
+            'background-color': '#090d16'
+          }
+        },
+        {
           id: 'satellite-layer',
           type: 'raster',
           source: 'satellite-tiles',
@@ -98,25 +105,12 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           layout: {
             visibility: basemapStyle === 'topo' ? 'visible' : 'none'
           }
-        },
-        // Dramatic Patagonian sky atmosphere fog
-        {
-          id: 'sky',
-          type: 'sky',
-          paint: {
-            'sky-color': '#0f172a',
-            'sky-horizon-blend': 0.5,
-            'horizon-color': '#1e293b',
-            'horizon-fog-blend': 0.8,
-            'fog-color': '#0f172a',
-            'fog-ground-blend': 0.4
-          }
         }
       ],
       terrain: terrain3DActive
         ? {
             source: 'terrain-dem',
-            exaggeration: 1.8 // Exaggeration factor makes Patagonian mountains and fjords pop in true 3D
+            exaggeration: 1.8
           }
         : undefined
     };
@@ -126,15 +120,23 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
       style: mapStyle,
       center: [centerLng, centerLat],
       zoom: 13,
-      pitch: 62, // 3D Camera Tilt
+      pitch: 62,
       bearing: -20,
       maxPitch: 85
     });
 
     mapRef.current = map;
 
+    // Force map to adapt to container layout dimensions
+    const resizeTimer = setTimeout(() => {
+      if (map) map.resize();
+    }, 200);
+
     map.on('load', () => {
-      // 1. Fit to checkpoints bounds nicely
+      setIsMapLoaded(true);
+      map.resize();
+
+      // Fit bounds to checkpoints
       if (checkpoints.length > 1) {
         const bounds = new maplibregl.LngLatBounds();
         checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
@@ -143,11 +145,11 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           pitch: 62,
           bearing: -25,
           maxZoom: 15,
-          duration: 1200
+          duration: 1000
         });
       }
 
-      // 2. Add Route GeoJSON Line
+      // Add Route Path
       const routeCoordinates = checkpoints.map(c => [c.lng, c.lat]);
       const diffColor = getDifficultyHex(difficulty);
 
@@ -163,7 +165,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         }
       });
 
-      // Neon Glow background casing
+      // Glowing Route outline
       map.addLayer({
         id: 'route-glow',
         type: 'line',
@@ -175,12 +177,12 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         paint: {
           'line-color': diffColor,
           'line-width': 10,
-          'line-opacity': 0.35,
-          'line-blur': 4
+          'line-opacity': 0.4,
+          'line-blur': 3
         }
       });
 
-      // Main High-visibility trail line
+      // Route Path line
       map.addLayer({
         id: 'route-trail',
         type: 'line',
@@ -190,13 +192,12 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           'line-cap': 'round'
         },
         paint: {
-          'line-color': diffColor,
-          'line-width': 4.5,
-          'line-dasharray': [1.5, 1.5]
+          'line-color': '#ffffff',
+          'line-width': 4
         }
       });
 
-      // 3. Add Custom 3D Checkpoint Markers
+      // Checkpoint markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
 
@@ -211,7 +212,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           <div style="
             background: linear-gradient(135deg, ${badgeColor}, #0f172a);
             border: 2px solid #ffffff;
-            box-shadow: 0 0 16px ${badgeColor}88, 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 0 16px ${badgeColor}aa, 0 4px 10px rgba(0,0,0,0.5);
             width: 32px;
             height: 32px;
             border-radius: 9999px;
@@ -227,7 +228,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
           </div>
           <div style="
             background: rgba(15, 23, 42, 0.88);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(8px);
             padding: 2px 8px;
             border-radius: 9999px;
@@ -262,7 +263,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     });
 
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      clearTimeout(resizeTimer);
       markersRef.current.forEach(m => m.remove());
       map.remove();
       mapRef.current = null;
@@ -285,13 +286,12 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
 
     const flyToNext = () => {
       if (targetIndex >= checkpoints.length) {
-        targetIndex = 0; // Loop or finish
+        targetIndex = 0;
       }
 
       const cp = checkpoints[targetIndex];
       const nextCp = checkpoints[(targetIndex + 1) % checkpoints.length];
 
-      // Calculate bearing angle to next checkpoint
       const y = Math.sin((nextCp.lng - cp.lng) * Math.PI / 180) * Math.cos(nextCp.lat * Math.PI / 180);
       const x = Math.cos(cp.lat * Math.PI / 180) * Math.sin(nextCp.lat * Math.PI / 180) -
                 Math.sin(cp.lat * Math.PI / 180) * Math.cos(nextCp.lat * Math.PI / 180) * Math.cos((nextCp.lng - cp.lng) * Math.PI / 180);
@@ -302,7 +302,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         zoom: 14.8,
         pitch: 72,
         bearing: bearing,
-        speed: 0.4,
+        speed: 0.35,
         curve: 1.4,
         essential: true
       });
@@ -340,8 +340,11 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
 
   return (
     <div className="relative w-full h-[380px] rounded-[2.5rem] overflow-hidden border border-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,0.2)] bg-slate-950 select-none">
-      {/* MapLibre 3D WebGL Container */}
-      <div ref={mapContainer} className="w-full h-full" />
+      {/* MapLibre 3D WebGL Canvas Container with explicit dimensions */}
+      <div 
+        ref={mapContainer} 
+        style={{ width: '100%', height: '100%', minHeight: '380px', position: 'relative' }} 
+      />
 
       {/* Top Left Badge */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-cyan-500/30 text-xs font-bold text-cyan-300 shadow-xl">
@@ -407,7 +410,8 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         </div>
 
         <div className="hidden sm:flex items-center gap-1.5 bg-slate-900/85 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 text-[10px] text-slate-300 shadow-xl pointer-events-auto">
-          <span>Click derecho / 2 dedos para inclinar 3D</span>
+          <Eye className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Click derecho o 2 dedos para inclinar 3D</span>
         </div>
       </div>
     </div>
