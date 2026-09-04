@@ -4,7 +4,9 @@ import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
 import { MapPin, Compass, Navigation, Award, CheckCircle2, ChevronRight, Lock, Map, RefreshCw, AlertCircle, Info } from 'lucide-react';
 import BottomNavigationBar from '../components/BottomNavigationBar';
+import { Route3DViewer } from '../components/Route3DViewer';
 import L from 'leaflet';
+import { Box, Sparkles } from 'lucide-react';
 
 // ─── TYPES & INTERFACES ──────────────────────────────────────────────────────
 
@@ -92,11 +94,15 @@ const EasyRoutesScreen: React.FC = () => {
     medal?: MedalInfo | null;
   } | null>(null);
 
+  // 2D vs 3D route viewer toggle
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('3d');
+  const [mapLayerType, setMapLayerType] = useState<'dark' | 'satellite'>('satellite');
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const routeMapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!selectedRoute) {
+    if (!selectedRoute || viewMode !== '2d') {
       if (routeMapRef.current) {
         routeMapRef.current.remove();
         routeMapRef.current = null;
@@ -115,9 +121,13 @@ const EasyRoutesScreen: React.FC = () => {
         zoom: 12
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20,
-        attribution: '© CartoDB'
+      const tileUrl = mapLayerType === 'satellite'
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+
+      L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        attribution: '© Esri'
       }).addTo(mapInstance);
 
       routeMapRef.current = mapInstance;
@@ -190,18 +200,16 @@ const EasyRoutesScreen: React.FC = () => {
           mapInstance.fitBounds(bounds, { padding: [40, 40] });
         }
       }
-    }, 150);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
       if (mapInstance) {
         mapInstance.remove();
-      }
-      if (routeMapRef.current) {
         routeMapRef.current = null;
       }
     };
-  }, [selectedRoute, progressList]);
+  }, [selectedRoute, viewMode, mapLayerType]);
 
   useEffect(() => {
     if (!supabaseUser) {
@@ -493,25 +501,93 @@ const EasyRoutesScreen: React.FC = () => {
         ) : selectedRoute ? (
           /* ── DETAIL VIEW ────────────────────────────────────────────────── */
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <button
-              onClick={() => setSelectedRoute(null)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest mb-6 transition-colors"
-            >
-              <Navigation className="w-4 h-4 rotate-270" /> Volver a las Rutas
-            </button>
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setSelectedRoute(null)}
+                className="flex items-center gap-2 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
+              >
+                <Navigation className="w-4 h-4 rotate-270" /> Volver a las Rutas
+              </button>
 
-            <div 
-              ref={mapContainerRef} 
-              style={{ height: '320px' }} 
-              className="relative w-full rounded-[2.5rem] overflow-hidden mb-6 border border-white/10 shadow-2xl z-10"
-            >
-              {getProgress(selectedRoute.id).completed_at && (
-                <div className="absolute top-4 right-4 bg-emerald-500/95 text-white px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg border border-emerald-400/20 z-[1000]">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-[9px] font-black uppercase tracking-widest">Completada</span>
-                </div>
-              )}
+              {/* View Switcher: 2D vs 3D Relieve */}
+              <div className="flex items-center bg-slate-950/80 p-1 rounded-2xl border border-white/10 shadow-lg">
+                <button
+                  onClick={() => setViewMode('3d')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                    viewMode === '3d'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Relieve 3D</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('2d')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                    viewMode === '2d'
+                      ? 'bg-white/15 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  <span>Mapa 2D</span>
+                </button>
+              </div>
             </div>
+
+            {/* ROUTE VIEWER: 3D or 2D */}
+            {viewMode === '3d' ? (
+              <div className="mb-6">
+                <Route3DViewer
+                  checkpoints={selectedRoute.checkpoints || []}
+                  routeName={selectedRoute.name}
+                  difficulty={selectedRoute.difficulty}
+                  onSelectCheckpoint={(cp) => {
+                    console.log('Selected 3D checkpoint:', cp);
+                  }}
+                />
+              </div>
+            ) : (
+              <div 
+                ref={mapContainerRef} 
+                style={{ height: '320px' }} 
+                className="relative w-full rounded-[2.5rem] overflow-hidden mb-6 border border-white/10 shadow-2xl z-10"
+              >
+                {/* 2D Layer toggle (Satélite vs Oscuro) */}
+                <div className="absolute top-4 left-4 z-[1000] flex items-center gap-1 bg-slate-900/85 backdrop-blur-md p-1 rounded-xl border border-white/15 shadow-md">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMapLayerType('satellite');
+                    }}
+                    className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${
+                      mapLayerType === 'satellite' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Satélite
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMapLayerType('dark');
+                    }}
+                    className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${
+                      mapLayerType === 'dark' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Oscuro
+                  </button>
+                </div>
+
+                {getProgress(selectedRoute.id).completed_at && (
+                  <div className="absolute top-4 right-4 bg-emerald-500/95 text-white px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg border border-emerald-400/20 z-[1000]">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Completada</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl space-y-6">
               <div>
