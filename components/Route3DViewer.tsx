@@ -180,13 +180,28 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     map.on('load', () => {
       map.resize();
 
+      // Explicitly activate 3D Terrain elevation on load
+      if (terrain3DActive) {
+        map.setTerrain({
+          source: 'terrain-dem',
+          exaggeration: 2.5
+        });
+      }
+
+      // Add navigation control with pitch / tilt indicator
+      map.addControl(new maplibregl.NavigationControl({
+        visualizePitch: true,
+        showCompass: true,
+        showZoom: true
+      }), 'top-right');
+
       // Fit bounds
       if (checkpoints.length > 1 && cameraMode === 'drone') {
         const bounds = new maplibregl.LngLatBounds();
         checkpoints.forEach(cp => bounds.extend([cp.lng, cp.lat]));
         map.fitBounds(bounds, {
           padding: 60,
-          pitch: 62,
+          pitch: 65,
           bearing: -20,
           maxZoom: 15,
           duration: 1000
