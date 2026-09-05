@@ -106,7 +106,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         'terrain-dem': {
           type: 'raster-dem',
           tiles: [
-            'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+            'https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png'
           ],
           encoding: 'terrarium',
           tileSize: 256,
@@ -115,7 +115,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
         'hillshade-dem': {
           type: 'raster-dem',
           tiles: [
-            'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+            'https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png'
           ],
           encoding: 'terrarium',
           tileSize: 256,
@@ -146,7 +146,7 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
             visibility: basemapStyle === 'topo' ? 'visible' : 'none'
           }
         },
-        // Dramatic Hillshade on real mountain terrain with its own dedicated source
+        // Dramatic Hillshade on real mountain terrain
         {
           id: 'hillshade-relief',
           type: 'hillshade',
@@ -158,13 +158,13 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
             'hillshade-shadow-color': '#020617',
             'hillshade-highlight-color': '#ffffff',
             'hillshade-accent-color': '#38bdf8',
-            'hillshade-exaggeration': 0.8
+            'hillshade-exaggeration': 0.85
           }
         }
       ],
       terrain: {
         source: 'terrain-dem',
-        exaggeration: 2.8 // Strong elevation factor for stunning Patagonian Andes
+        exaggeration: 3.5 // Pronounced elevation for dramatic Patagonian Andes
       },
       sky: {
         'sky-color': '#0f172a',
@@ -178,13 +178,17 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
       container: mapContainer.current,
       style: mapStyle,
       center: [centerLng, centerLat],
-      zoom: 12.5,
+      zoom: 12.8,
       pitch: cameraMode === 'explorer' ? 78 : 68,
-      bearing: -25,
+      bearing: -45, // Aimed towards the Patagonian Andean mountain range
       maxPitch: 85
     });
 
     mapRef.current = map;
+
+    map.on('error', (e) => {
+      console.warn('MapLibre notice:', e.error?.message || e);
+    });
 
     const resizeTimer = setTimeout(() => {
       if (map) map.resize();
@@ -193,17 +197,25 @@ export const Route3DViewer: React.FC<Route3DViewerProps> = ({
     map.on('load', () => {
       map.resize();
 
-      // Ensure 3D Terrain elevation is explicitly applied
-      map.setTerrain({
-        source: 'terrain-dem',
-        exaggeration: 2.8
-      });
+      // Ensure terrain is active
+      if (!map.getTerrain()) {
+        map.setTerrain({
+          source: 'terrain-dem',
+          exaggeration: 3.5
+        });
+      }
 
       // Add navigation control with pitch / tilt indicator
       map.addControl(new maplibregl.NavigationControl({
         visualizePitch: true,
         showCompass: true,
         showZoom: true
+      }), 'top-right');
+
+      // Add Terrain 3D toggle control native to MapLibre
+      map.addControl(new maplibregl.TerrainControl({
+        source: 'terrain-dem',
+        exaggeration: 3.5
       }), 'top-right');
 
       // Fit bounds if checkpoints exist
