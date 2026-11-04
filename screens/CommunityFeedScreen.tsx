@@ -185,7 +185,6 @@ const CommunityFeedScreen: React.FC = () => {
     const navigate = useNavigate();
     const { user, supabaseUser, allBusinesses, allAttractions } = useAppAuth();
     const [posts, setPosts] = useState<CommunityPost[]>(cachedPosts);
-    const [attractions, setAttractions] = useState<{ id: string, name: string }[]>([]);
     const [loading, setLoading] = useState(cachedPosts.length === 0);
 
     // Create form
@@ -208,13 +207,8 @@ const CommunityFeedScreen: React.FC = () => {
 
     useEffect(() => {
         fetchPosts();
-        fetchAttractions();
+        // Las atracciones vienen del contexto global — no hace falta una query extra
     }, []);
-
-    const fetchAttractions = async () => {
-        const { data } = await supabase.from('attractions').select('id, name').order('name');
-        if (data) setAttractions(data);
-    };
 
     const fetchPosts = async () => {
         // Only show loader if we have no cached posts

@@ -190,6 +190,60 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ─── MÓDULO-LEVEL CACHE (persiste entre navegaciones, se invalida tras 10 min) ───
+interface GlobalCache {
+  businesses: any[] | null;
+  attractions: any[] | null;
+  localities: any[] | null;
+  timestamp: number;
+}
+const _globalCache: GlobalCache = { businesses: null, attractions: null, localities: null, timestamp: 0 };
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const isCacheValid = () => Date.now() - _globalCache.timestamp < CACHE_TTL_MS;
+
+/** Mapea un raw company row a la estructura Business usada por la app */
+const mapCompany = (c: any, locMap: Map<any, any>): any => {
+  const parseCoord = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
+    return 0;
+  };
+  const lat = parseCoord(c.latitude);
+  const lng = parseCoord(c.longitude);
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const mapServices = (services: any[]) => (services || []).map((s: any) => ({
+    id: s.id, nombre: s.name, precio: s.price,
+    descripcion: s.description,
+    foto_url: s.image_url || c.gallery_urls?.[0] || 'https://placehold.co/400'
+  }));
+  return {
+    id: c.id, name: c.name, nombre: c.name,
+    locality_id: c.locality_id,
+    locality_name: locMap.get(c.locality_id),
+    categoria: c.category, description: c.description,
+    gps: (lat && lng) ? { lat, lng } : undefined, lat, lng,
+    contacto: { whatsapp: c.whatsapp, email: '', web: '' },
+    info: {
+      descripcion: c.description,
+      direccion: c.address,
+      horario: `${c.opening_time || '09:00'} - ${c.closing_time || '19:00'}`
+    },
+    media: {
+      logo_url: c.logo_url || 'https://placehold.co/100',
+      fotos_url: c.gallery_urls || ['https://placehold.co/600x400']
+    },
+    priority: 0,
+    isOpen: c.is_active
+      ? currentTime >= (c.opening_time || '09:00') && currentTime < (c.closing_time || '19:00')
+      : false,
+    is_active: c.is_active,
+    services: mapServices(c.services),
+    servicios: mapServices(c.services),
+    rating: 5.0, reviewCount: 0
+  };
+};
+
 export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user: supabaseUser, profile, loading } = useAuth();
   const isLoaded = !loading;
@@ -212,6 +266,18 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
   // FETCH BUSINESSES FROM SUPABASE
   useEffect(() => {
     const fetchBusinesses = async () => {
+      // ── Usar caché si es válida ──
+      if (isCacheValid() && _globalCache.businesses) {
+        console.log('⚡ [CACHE] Using cached global data (businesses, attractions, localities)');
+        const locMap = new Map((_globalCache.localities || []).map((l: any) => [l.id, l.name]));
+        const mapped: Business[] = (_globalCache.businesses || []).map((c: any) => mapCompany(c, locMap));
+        setAllBusinesses(mapped);
+        setAllServices(mapped.flatMap(b => b.services || []));
+        setAllAttractions(_globalCache.attractions || []);
+        setAllLocalities((_globalCache.localities || []).filter((l: any) => l.is_active));
+        return;
+      }
+
       // 1. Fetch Localities for mapping (avoiding JOIN issues)
       const { data: locs } = await supabase.from('localities').select('id, name');
       const locMap = new Map(locs?.map(l => [l.id, l.name]));
@@ -235,105 +301,20 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
       // Map to Business Type
       if (companies) {
         console.log('📊 [APP] Raw companies data sample:', companies.slice(0, 2).map(c => ({
-          name: c.name,
-          locality_id: c.locality_id,
+          name: c.name, locality_id: c.locality_id,
           locality_name_mapped: locMap.get(c.locality_id),
-          gallery_urls: c.gallery_urls,
-          logo_url: c.logo_url
+          gallery_urls: c.gallery_urls, logo_url: c.logo_url
         })));
-        const mapped: Business[] = companies.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          nombre: c.name, // Legacy
-          locality_id: c.locality_id, // Necesario para filtro de localidad
-          locality_name: locMap.get(c.locality_id), // Nombre para UI (Mapeado manualmente)
-          categoria: c.category,
-          description: c.description,
-
-          // Location & Contact
-          // Location & Contact
-          gps: (function () {
-            const parse = (val: any) => {
-              if (typeof val === 'number') return val;
-              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
-              return 0;
-            };
-            const lat = parse(c.latitude);
-            const lng = parse(c.longitude);
-            return (lat && lng) ? { lat, lng } : undefined;
-          })(),
-          lat: (function () {
-            const parse = (val: any) => {
-              if (typeof val === 'number') return val;
-              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
-              return 0;
-            };
-            return parse(c.latitude);
-          })(),
-          lng: (function () {
-            const parse = (val: any) => {
-              if (typeof val === 'number') return val;
-              if (typeof val === 'string') return parseFloat(val.replace(',', '.'));
-              return 0;
-            };
-            return parse(c.longitude);
-          })(),
-
-          // Contact
-          contacto: { whatsapp: c.whatsapp, email: "", web: "" },
-
-          // UI Info
-          info: {
-            descripcion: c.description,
-            direccion: c.address,
-            horario: `${c.opening_time || '09:00'} - ${c.closing_time || '19:00'}`
-          },
-
-          // Media
-          media: {
-            logo_url: c.logo_url || "https://placehold.co/100",
-            fotos_url: c.gallery_urls || ["https://placehold.co/600x400"]
-          },
-          // Important for Map
-          priority: 0,
-          isOpen: (() => {
-            if (!c.is_active) return false;
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            const open = c.opening_time || '09:00';
-            const close = c.closing_time || '19:00';
-            return currentTime >= open && currentTime < close;
-          })(),
-          is_active: c.is_active, // Fix lint error
-
-          // Services
-          services: c.services?.map((s: any) => ({
-            id: s.id,
-            nombre: s.name,
-            precio: s.price,
-            descripcion: s.description,
-            foto_url: s.image_url || c.gallery_urls?.[0] || "https://placehold.co/400"
-          })) || [],
-
-          // Legacy alias ('servicios') to prevent crash in TouristMapScreen
-          servicios: c.services?.map((s: any) => ({
-            id: s.id,
-            nombre: s.name,
-            precio: s.price,
-            descripcion: s.description,
-            foto_url: s.image_url || c.gallery_urls?.[0] || "https://placehold.co/400"
-          })) || [],
-
-          // Ratings & Metadata
-          rating: 5.0, // Default until reviews implemented
-          reviewCount: 0
-        }));
+        const mapped: Business[] = companies.map((c: any) => mapCompany(c, locMap));
         setAllBusinesses(mapped);
 
         // FLATTEN SERVICES FOR GLOBAL ACCESS
         const services = mapped.flatMap(b => b.services || []);
         setAllServices(services);
 
+        // Guardar en caché de módulo
+        _globalCache.businesses = companies;
+        _globalCache.timestamp = Date.now();
       }
     };
 
@@ -341,13 +322,22 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // FETCH LOCATIONS & ATTRACTIONS
     const fetchDiscoveryData = async () => {
+      // Si ya hay caché válida, no volver a fetchear
+      if (isCacheValid() && _globalCache.localities) return;
+
       // Localities
-      const { data: locs } = await supabase.from('localities').select('*').eq('is_active', true);
-      if (locs) setAllLocalities(locs);
+      const { data: locs } = await supabase.from('localities').select('*');
+      if (locs) {
+        _globalCache.localities = locs;
+        setAllLocalities(locs.filter(l => l.is_active));
+      }
 
       // Attractions
       const { data: attrs } = await supabase.from('attractions').select('*').eq('is_active', true);
-      if (attrs) setAllAttractions(attrs);
+      if (attrs) {
+        _globalCache.attractions = attrs;
+        setAllAttractions(attrs);
+      }
     };
 
     fetchDiscoveryData();

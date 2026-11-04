@@ -8,6 +8,10 @@ import { Route3DViewer } from '../components/Route3DViewer';
 import L from 'leaflet';
 import { Box, Sparkles } from 'lucide-react';
 
+// Caché de rutas y medallas a nivel de módulo
+let _cachedEasyRoutes: any[] | null = null;
+let _cachedMedals: any[] | null = null;
+
 // ─── TYPES & INTERFACES ──────────────────────────────────────────────────────
 
 interface EasyRoute {
@@ -222,18 +226,26 @@ const EasyRoutesScreen: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      // Fetch routes, user route progress, and medals
+
+      // Usar caché para rutas y medallas (sólo refetch el progreso del usuario)
       const [routesRes, progressRes, medalsRes] = await Promise.all([
-        supabase.from('easy_routes').select('*').eq('is_active', true).order('sort_order'),
+        _cachedEasyRoutes
+          ? Promise.resolve({ data: _cachedEasyRoutes, error: null })
+          : supabase.from('easy_routes').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('user_route_progress').select('*').eq('user_id', supabaseUser?.id),
-        supabase.from('gamification_medals').select('slug, name, icon').eq('is_active', true),
+        _cachedMedals
+          ? Promise.resolve({ data: _cachedMedals, error: null })
+          : supabase.from('gamification_medals').select('slug, name, icon').eq('is_active', true),
       ]);
 
       if (routesRes.error) throw routesRes.error;
 
-      setRoutes(routesRes.data || []);
+      if (!_cachedEasyRoutes) _cachedEasyRoutes = routesRes.data || [];
+      if (!_cachedMedals) _cachedMedals = medalsRes.data || [];
+
+      setRoutes(_cachedEasyRoutes);
       setProgressList(progressRes.data || []);
-      setMedals(medalsRes.data || []);
+      setMedals(_cachedMedals);
     } catch (err) {
       console.error('Error loading routes data:', err);
     } finally {

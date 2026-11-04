@@ -9,6 +9,9 @@ import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from 
 import SEO from '../components/SEO';
 import { supabase } from '../supabaseClient';
 
+// Caché de rutas a nivel de módulo (se comparte entre desmontajes del mapa)
+let _cachedRoutes: any[] | null = null;
+
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
   light: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -360,6 +363,11 @@ const TouristMapScreen: React.FC = () => {
 
   useEffect(() => {
     const fetchRoutes = async () => {
+      // Usar caché si está disponible
+      if (_cachedRoutes) {
+        setMapRoutes(_cachedRoutes);
+        return;
+      }
       try {
         const { data, error } = await supabase
           .from('easy_routes')
@@ -367,7 +375,8 @@ const TouristMapScreen: React.FC = () => {
           .eq('is_active', true)
           .order('sort_order');
         if (error) throw error;
-        setMapRoutes(data || []);
+        _cachedRoutes = data || [];
+        setMapRoutes(_cachedRoutes);
       } catch (err) {
         console.error('Error fetching routes for map:', err);
       }

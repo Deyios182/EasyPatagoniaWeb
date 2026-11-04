@@ -8,6 +8,16 @@ import LogoTicker from '../components/LogoTicker';
 import SEO from '../components/SEO';
 import { trackConversion, trackCustomEvent } from '../src/analytics/analytics';
 
+/** Redirige URLs de Supabase Storage al endpoint de render con transformación */
+const optimizeImg = (url: string, width: number, quality = 70) => {
+  if (!url) return url;
+  if (url.includes('/storage/v1/object/public/')) {
+    return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+      + `?width=${width}&quality=${quality}`;
+  }
+  return url;
+};
+
 interface LandingContent {
   key: string;
   title?: string;
@@ -122,19 +132,17 @@ const LandingPage: React.FC = () => {
     }
   }, [carouselImages.length]);
 
-  // Optimize: Preload all carousel images programmatically in the background
+  // Lazy preload: solo precarga la SIGUIENTE imagen del carousel (no todas de golpe)
   useEffect(() => {
-    if (carouselImages.length > 0) {
-      // Preload first image with high priority
-      const img = new Image();
-      img.src = carouselImages[0].image_url;
-      // Preload remaining images in parallel
-      carouselImages.slice(1).forEach(item => {
-        const nextImg = new Image();
-        nextImg.src = item.image_url;
-      });
+    if (carouselImages.length > 1) {
+      const nextIndex = (currentCarouselIndex + 1) % carouselImages.length;
+      const nextUrl = carouselImages[nextIndex]?.image_url;
+      if (nextUrl) {
+        const img = new Image();
+        img.src = optimizeImg(nextUrl, 1200, 70);
+      }
     }
-  }, [carouselImages]);
+  }, [currentCarouselIndex, carouselImages]);
 
   const [logoError, setLogoError] = useState(false);
 
@@ -252,7 +260,7 @@ const LandingPage: React.FC = () => {
                     }`}
                 >
                   <img
-                    src={img.image_url}
+                    src={optimizeImg(img.image_url, 1400, 70)}
                     className="w-full h-full object-cover"
                     alt={img.alt_text || `Patagonia ${index + 1}`}
                     loading={index === 0 ? "eager" : "lazy"}

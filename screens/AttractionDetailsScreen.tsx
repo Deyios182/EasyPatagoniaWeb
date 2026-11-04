@@ -49,33 +49,40 @@ const AttractionDetailsScreen: React.FC = () => {
 
             if (contributions) {
                 setCommunityPhotos(contributions);
-                const authorsData: Record<string, { name: string; rank: any; likes: number; id: string }> = {};
 
-                for (const contrib of contributions) {
-                    if (!contrib.photo_url) continue;
+                // FIX N+1: Una sola query batch para todos los autores involucrados
+                const uniqueUserIds = [...new Set(contributions.map(c => c.user_id).filter(Boolean))];
+                let approvedCountByUser: Record<string, number> = {};
 
-                    // Get user's approved photos count for rank
-                    const { data: userPhotos } = await supabase
+                if (uniqueUserIds.length > 0) {
+                    const { data: allUserPhotos } = await supabase
                         .from('user_photo_contributions')
-                        .select('id')
-                        .eq('user_id', contrib.user_id)
+                        .select('user_id')
+                        .in('user_id', uniqueUserIds)
                         .eq('status', 'approved');
 
-                    const approvedCount = userPhotos?.length || 1;
+                    // Agrupar conteos en memoria (sin más queries al DB)
+                    approvedCountByUser = (allUserPhotos || []).reduce((acc, p) => {
+                        acc[p.user_id] = (acc[p.user_id] || 0) + 1;
+                        return acc;
+                    }, {} as Record<string, number>);
+                }
+
+                const authorsData: Record<string, { name: string; rank: any; likes: number; id: string | null }> = {};
+                for (const contrib of contributions) {
+                    if (!contrib.photo_url) continue;
+                    const approvedCount = approvedCountByUser[contrib.user_id] || 1;
                     const rankInfo = getUserRank(approvedCount);
                     const userName = contrib.user_name || contrib.user_email?.split('@')[0] || 'Viajero Anónimo';
-
                     authorsData[contrib.photo_url] = {
-                        name: userName,
-                        rank: rankInfo,
-                        likes: contrib.likes_count || 0,
-                        id: contrib.id
+                        name: userName, rank: rankInfo,
+                        likes: contrib.likes_count || 0, id: contrib.id
                     };
                 }
                 setPhotoAuthors(authorsData);
             }
 
-            // Fetch current user's likes
+            // Fetch current user's likes (una sola query)
             if (user && contributions) {
                 const contribIds = contributions.map(c => c.id);
                 if (contribIds.length > 0) {
