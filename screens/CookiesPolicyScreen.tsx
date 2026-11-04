@@ -202,7 +202,7 @@ const CookiesPolicyScreen: React.FC = () => {
 
         {/* Enlace complementario */}
         <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
-          <span>Contacto de privacidad: <a href="mailto:privacidad@easypatagonia.cl" className="text-primary underline">privacidad@easypatagonia.cl</a></span>
+          <span>Contacto de privacidad: <a href="mailto:contacto@easypatagonia.com" className="text-primary underline">contacto@easypatagonia.com</a></span>
           <Link to="/privacidad" className="text-primary font-bold hover:underline uppercase">
             Ver Política de Privacidad →
           </Link>

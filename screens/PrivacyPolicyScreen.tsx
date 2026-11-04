@@ -51,7 +51,7 @@ const PrivacyPolicyScreen: React.FC = () => {
             <p><strong>Domicilio Legal / Tributario:</strong> Calle Monjitas N° 527, Oficina 1207, Edificio Galaxy Center, Comuna de Santiago, Región Metropolitana, Chile (Rol SII: 177-129)</p>
             <p><strong>Zona de Operación Turística:</strong> Región de Aysén del General Carlos Ibáñez del Campo y Patagonia</p>
             <p><strong>Actividad Oficial SII:</strong> Desarrollo y operación de plataforma digital turística (Actividades de operadores turísticos, portales web, edición y consultoría informática)</p>
-            <p><strong>Correo electrónico de privacidad:</strong> <a href="mailto:privacidad@easypatagonia.cl" className="text-primary underline font-bold">privacidad@easypatagonia.cl</a></p>
+            <p><strong>Correo electrónico de contacto y privacidad:</strong> <a href="mailto:contacto@easypatagonia.com" className="text-primary underline font-bold">contacto@easypatagonia.com</a></p>
             <p><strong>Teléfono de contacto / WhatsApp:</strong> +56 9 8456 1234</p>
           </div>
         </section>
@@ -134,7 +134,7 @@ const PrivacyPolicyScreen: React.FC = () => {
             </div>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 pt-2">
-            Para ejercer cualquiera de estos derechos sin costo alguno, escribe directamente a nuestro canal oficial: <a href="mailto:privacidad@easypatagonia.cl" className="text-primary underline font-bold">privacidad@easypatagonia.cl</a> acompañando antecedentes que acrediten tu identidad. Daremos respuesta en los plazos fijados por la Ley 21.719.
+            Para ejercer cualquiera de estos derechos sin costo alguno, escribe directamente a nuestro canal oficial: <a href="mailto:contacto@easypatagonia.com" className="text-primary underline font-bold">contacto@easypatagonia.com</a> acompañando antecedentes que acrediten tu identidad. Daremos respuesta en los plazos fijados por la Ley 21.719.
           </p>
         </section>
 
@@ -176,7 +176,7 @@ const PrivacyPolicyScreen: React.FC = () => {
         {/* Canal permanente */}
         <div className="pt-6 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-500">
-            Canal de Privacidad: <a href="mailto:privacidad@easypatagonia.cl" className="text-primary underline">privacidad@easypatagonia.cl</a>
+            Canal de Privacidad: <a href="mailto:contacto@easypatagonia.com" className="text-primary underline">contacto@easypatagonia.com</a>
           </p>
           <Link
             to="/cookies"

@@ -848,8 +848,8 @@ const LandingPage: React.FC = () => {
           </div>
           <p className="text-[11px] text-slate-600 mb-2">
             Canal de atención y ejercicio de derechos ARSOP (Ley 21.719):{' '}
-            <a href="mailto:privacidad@easypatagonia.cl" className="text-primary hover:underline font-bold">
-              privacidad@easypatagonia.cl
+            <a href="mailto:contacto@easypatagonia.com" className="text-primary hover:underline font-bold">
+              contacto@easypatagonia.com
             </a>
           </p>
           <p>{t('dev_with_love')}</p>
