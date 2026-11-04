@@ -1,28 +1,70 @@
+import { getStoredPreferences } from '../utils/cookieConsent';
+
 // Google Analytics 4 Configuration
 export const GA_MEASUREMENT_ID = 'G-Z6MSCD1DZ1';
 
 // Meta Pixel Configuration
 export const META_PIXEL_ID = '1613240233378766';
 
-// Initialize Google Analytics
+let gaScriptLoaded = false;
+let metaPixelLoaded = false;
+
+// Initialize Google Analytics SOLO con consentimiento explícito
 export const initGA = () => {
     if (typeof window === 'undefined') return;
 
-    console.log('🔄 Verificando Google Analytics 4...');
-
-    // GA4 is now loaded in index.html for better reliability
-    if ((window as any).gtag) {
-        console.log('✅ Google Analytics 4 detectado (cargado desde index.html)');
-    } else {
-        console.warn('⚠️ Google Analytics 4 no detectado - Posible bloqueador de anuncios');
+    const prefs = getStoredPreferences();
+    if (!prefs || !prefs.analytics) {
+        console.log('🔒 GA4 bloqueado previo al consentimiento explícito (Ley 21.719)');
+        return;
     }
+
+    if (gaScriptLoaded) {
+        console.log('✅ GA4 ya inicializado');
+        return;
+    }
+
+    console.log('🔄 Inicializando Google Analytics 4 con consentimiento...');
+
+    // Inyectar script de GA4 de forma dinámica
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    script.onload = () => {
+        gaScriptLoaded = true;
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        function gtag(...args: any[]) {
+            (window as any).dataLayer.push(args);
+        }
+        (window as any).gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', GA_MEASUREMENT_ID, {
+            anonymize_ip: true,
+        });
+        console.log('✅ Google Analytics 4 cargado tras consentimiento explícito');
+    };
+    script.onerror = () => {
+        console.error('❌ Error al cargar GA4');
+    };
+    document.head.appendChild(script);
 };
 
-// Initialize Meta Pixel
+// Initialize Meta Pixel SOLO con consentimiento explícito
 export const initMetaPixel = () => {
     if (typeof window === 'undefined') return;
 
-    console.log('🔄 Inicializando Meta Pixel...');
+    const prefs = getStoredPreferences();
+    if (!prefs || !prefs.marketing) {
+        console.log('🔒 Meta Pixel bloqueado previo al consentimiento explícito (Ley 21.719)');
+        return;
+    }
+
+    if (metaPixelLoaded) {
+        console.log('✅ Meta Pixel ya inicializado');
+        return;
+    }
+
+    console.log('🔄 Inicializando Meta Pixel con consentimiento...');
 
     // Meta Pixel Base Code
     !(function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
@@ -39,10 +81,11 @@ export const initMetaPixel = () => {
         t.async = !0;
         t.src = v;
         t.onload = () => {
-            console.log('✅ Meta Pixel cargado exitosamente');
+            metaPixelLoaded = true;
+            console.log('✅ Meta Pixel cargado exitosamente tras consentimiento');
         };
         t.onerror = () => {
-            console.error('❌ Error cargando Meta Pixel - Posible bloqueador de ads');
+            console.error('❌ Error cargando Meta Pixel');
         };
         s = b.getElementsByTagName(e)[0];
         s.parentNode.insertBefore(t, s);
@@ -50,21 +93,25 @@ export const initMetaPixel = () => {
 
     (window as any).fbq('init', META_PIXEL_ID);
     (window as any).fbq('track', 'PageView');
-
-    console.log(`✅ Meta Pixel configurado con ID: ${META_PIXEL_ID}`);
 };
 
 // Track custom events in GA4
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
     if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', eventName, eventParams);
+        const prefs = getStoredPreferences();
+        if (prefs?.analytics) {
+            (window as any).gtag('event', eventName, eventParams);
+        }
     }
 };
 
 // Track custom events in Meta Pixel
 export const trackMetaEvent = (eventName: string, eventParams?: Record<string, any>) => {
     if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', eventName, eventParams);
+        const prefs = getStoredPreferences();
+        if (prefs?.marketing) {
+            (window as any).fbq('track', eventName, eventParams);
+        }
     }
 };
 
@@ -76,25 +123,19 @@ export const trackCustomEvent = (eventName: string, eventParams?: Record<string,
 
 // Page view tracking
 export const trackPageView = (url: string) => {
-    console.log(`📊 Tracking PageView: ${url}`);
-
     if (typeof window !== 'undefined') {
+        const prefs = getStoredPreferences();
+
         // GA4
-        if ((window as any).gtag) {
+        if (prefs?.analytics && (window as any).gtag) {
             (window as any).gtag('config', GA_MEASUREMENT_ID, {
                 page_path: url,
             });
-            console.log('✅ GA4 PageView enviado');
-        } else {
-            console.warn('⚠️ GA4 no disponible (bloqueado o no cargado)');
         }
 
         // Meta Pixel
-        if ((window as any).fbq) {
+        if (prefs?.marketing && (window as any).fbq) {
             (window as any).fbq('track', 'PageView');
-            console.log('✅ Meta Pixel PageView enviado');
-        } else {
-            console.warn('⚠️ Meta Pixel no disponible (bloqueado o no cargado)');
         }
     }
 };
@@ -163,3 +204,4 @@ declare global {
         _fbq: any;
     }
 }
+

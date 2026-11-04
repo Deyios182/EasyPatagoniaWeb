@@ -12,15 +12,20 @@ const RegisterScreen: React.FC = () => {
         email: '',
         username: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        acceptTerms: false,
+        acceptPrivacy: false,
+        acceptMarketing: false,
+        isAdult: false
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [e.target.name]: e.target.value
+            [name]: type === 'checkbox' ? checked : value
         }));
     };
 
@@ -28,7 +33,22 @@ const RegisterScreen: React.FC = () => {
         e.preventDefault();
         setError('');
 
-        // Validations
+        // Validaciones Ley 21.719
+        if (!formData.acceptPrivacy) {
+            setError('Debes aceptar expresamente la Política de Privacidad para crear tu cuenta.');
+            return;
+        }
+
+        if (!formData.acceptTerms) {
+            setError('Debes aceptar los Términos y Condiciones del servicio.');
+            return;
+        }
+
+        if (!formData.isAdult) {
+            setError('Debes declarar que eres mayor de 18 años o cuentas con la autorización legal correspondiente.');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError('Las contraseñas no coinciden');
             return;
@@ -219,6 +239,75 @@ const RegisterScreen: React.FC = () => {
                                 placeholder="••••••••"
                                 disabled={isLoading}
                             />
+                        </div>
+
+                        {/* Consentimientos independientes (Ley 21.719 - Opt-in explícito y checkboxes desmarcados) */}
+                        <div className="space-y-3 pt-2 text-xs text-slate-700 border-t border-slate-100">
+                            {/* Mayoría de edad / Protección menores */}
+                            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    name="isAdult"
+                                    checked={formData.isAdult}
+                                    onChange={handleChange}
+                                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
+                                    required
+                                />
+                                <span>
+                                    Declaro bajo juramento que <strong>soy mayor de 18 años</strong> (o cuento con autorización de padres/tutores legales si tengo entre 14 y 17 años).
+                                </span>
+                            </label>
+
+                            {/* Política de Privacidad separada */}
+                            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    name="acceptPrivacy"
+                                    checked={formData.acceptPrivacy}
+                                    onChange={handleChange}
+                                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
+                                    required
+                                />
+                                <span>
+                                    He leído y autorizo de forma expresa el tratamiento de mis datos personales según la{' '}
+                                    <Link to="/privacidad" target="_blank" className="text-primary underline font-bold">
+                                        Política de Privacidad (Ley 21.719)
+                                    </Link>.
+                                </span>
+                            </label>
+
+                            {/* Términos y Condiciones separados */}
+                            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    name="acceptTerms"
+                                    checked={formData.acceptTerms}
+                                    onChange={handleChange}
+                                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
+                                    required
+                                />
+                                <span>
+                                    Acepto los{' '}
+                                    <Link to="/terminos" target="_blank" className="text-primary underline font-bold">
+                                        Términos y Condiciones
+                                    </Link>{' '}
+                                    de la plataforma EasyPatagonia.
+                                </span>
+                            </label>
+
+                            {/* Consentimiento de Marketing independiente y opcional */}
+                            <label className="flex items-start gap-2.5 cursor-pointer select-none bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                <input
+                                    type="checkbox"
+                                    name="acceptMarketing"
+                                    checked={formData.acceptMarketing}
+                                    onChange={handleChange}
+                                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary border-slate-300"
+                                />
+                                <span className="text-slate-600">
+                                    <em>(Opcional)</em> Deseo recibir correos con rutas recomendadas, novedades y promociones de la Patagonia. Puedo darme de baja en cualquier momento.
+                                </span>
+                            </label>
                         </div>
 
                         <button

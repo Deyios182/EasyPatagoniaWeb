@@ -37,6 +37,10 @@ import IntranetScreen from './screens/intranet/IntranetScreen';
 import GamificationAdminScreen from './screens/GamificationAdminScreen';
 import PassportScreen from './screens/PassportScreen';
 import EasyRoutesScreen from './screens/EasyRoutesScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import CookiesPolicyScreen from './screens/CookiesPolicyScreen';
+import TermsScreen from './screens/TermsScreen';
+import CookieBanner from './components/CookieBanner';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
@@ -648,7 +652,7 @@ const AuthenticatedApp: React.FC = () => {
   // and the sidebar/profile will update when the data arrives.
 
   // Sidebar visible on main app pages (Map, Directory, etc) even for guests
-  const isAuthPage = location.pathname === '/' || location.pathname === '/auth/callback';
+  const isAuthPage = location.pathname === '/' || location.pathname === '/auth/callback' || location.pathname === '/privacidad' || location.pathname === '/cookies' || location.pathname === '/terminos';
   const shouldShowSidebar = !isAuthPage;
   const isLoginModalOpen = location.pathname === '/auth/login';
   const isRegisterModalOpen = location.pathname === '/auth/register';
@@ -667,6 +671,11 @@ const AuthenticatedApp: React.FC = () => {
           {/* Las rutas de login/register muestran el mapa de fondo */}
           <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/map" /> : <TouristMapScreen />} />
           <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/map" /> : <TouristMapScreen />} />
+
+          {/* Rutas Públicas de Políticas y Cumplimiento Ley 21.719 */}
+          <Route path="/privacidad" element={<PrivacyPolicyScreen />} />
+          <Route path="/cookies" element={<CookiesPolicyScreen />} />
+          <Route path="/terminos" element={<TermsScreen />} />
 
           {/* Rutas Públicas (Modo Invitado) */}
           <Route path="/map" element={<TouristMapScreen />} />
@@ -704,6 +713,9 @@ const AuthenticatedApp: React.FC = () => {
         {/* Modales de autenticación (renderizados FUERA de Routes, sobre el contenido) */}
         {isLoginModalOpen && !isAuthenticated && <LoginScreen />}
         {isRegisterModalOpen && !isAuthenticated && <RegisterScreen />}
+
+        {/* Banner de Cookies con Opt-In Explícito Ley 21.719 */}
+        <CookieBanner />
       </main>
     </div>
   );

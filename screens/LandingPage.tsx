@@ -824,6 +824,34 @@ const LandingPage: React.FC = () => {
         <footer className="relative z-40 bg-[#152024] py-12 text-center text-slate-500 text-xs">
           <img src="/logo_easy.png" className="h-10 w-auto mx-auto mb-6 opacity-50 grayscale hover:grayscale-0 transition-all" alt="Logo Footer" onError={(e) => e.currentTarget.style.display = 'none'} />
           <p className="uppercase tracking-widest font-black mb-4">{t('copyright_text')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-bold text-slate-400">
+            <button
+              onClick={() => navigate('/privacidad')}
+              className="hover:text-primary transition-colors uppercase tracking-wider text-[11px]"
+            >
+              Política de Privacidad
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => navigate('/cookies')}
+              className="hover:text-primary transition-colors uppercase tracking-wider text-[11px]"
+            >
+              Política de Cookies
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => navigate('/terminos')}
+              className="hover:text-primary transition-colors uppercase tracking-wider text-[11px]"
+            >
+              Términos y Condiciones
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-600 mb-2">
+            Canal de atención y ejercicio de derechos ARSOP (Ley 21.719):{' '}
+            <a href="mailto:privacidad@easypatagonia.cl" className="text-primary hover:underline font-bold">
+              privacidad@easypatagonia.cl
+            </a>
+          </p>
           <p>{t('dev_with_love')}</p>
         </footer>
       </div >
