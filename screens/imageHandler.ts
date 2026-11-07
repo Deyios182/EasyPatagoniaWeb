@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { compressImage } from '../src/utils/imageCompressor';
 
 // --- 1. SUBIR IMAGEN ---
 export const uploadImage = async (file: File, folder: string = ''): Promise<string | null> => {
@@ -12,14 +13,6 @@ export const uploadImage = async (file: File, folder: string = ''): Promise<stri
       folder: folder
     });
 
-    // Validar tamaño (max 5MB)
-    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-    if (file.size > MAX_SIZE) {
-      alert('La imagen es demasiado grande. Máximo 5MB.');
-      console.error('❌ [UPLOAD] Archivo muy grande:', file.size);
-      return null;
-    }
-
     // Validar tipo de archivo
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
@@ -28,20 +21,28 @@ export const uploadImage = async (file: File, folder: string = ''): Promise<stri
       return null;
     }
 
-    // Generar nombre único
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // ⚡ COMPRESIÓN AUTOMÁTICA EN EL NAVEGADOR ANTES DE SUBIR
+    // Convierte a WebP optimizado (max 1280px, 75% calidad), reduciendo ~95% el tamaño
+    let fileToUpload: File = file;
+    try {
+      fileToUpload = await compressImage(file, { maxWidth: 1280, maxHeight: 1280, quality: 0.75, format: 'image/webp' });
+    } catch (compressErr) {
+      console.warn('⚠️ [UPLOAD] No se pudo comprimir la imagen, subiendo original:', compressErr);
+    }
+
+    // Generar nombre único con extensión .webp
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
 
     // Construir ruta con folder opcional
     const filePath = folder ? `${folder}/${fileName}` : fileName;
 
-    console.log('🔵 [UPLOAD] Intentando subir a bucket:', bucketName, 'con ruta:', filePath);
+    console.log('🔵 [UPLOAD] Subiendo archivo optimizado a bucket:', bucketName, 'con ruta:', filePath, `(${Math.round(fileToUpload.size / 1024)} KB)`);
 
-    // Subir archivo
+    // Subir archivo con caché de 1 año (inmutable)
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
-      .upload(filePath, file, {
-        cacheControl: '3600',
+      .upload(filePath, fileToUpload, {
+        cacheControl: '31536000', // 1 año de caché
         upsert: false
       });
 

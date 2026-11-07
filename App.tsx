@@ -44,6 +44,7 @@ import CookieBanner from './components/CookieBanner';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
+import { persistentCache } from './src/utils/persistentCache';
 // import { getLocalizedBusinesses } from './constants'; // Deleted
 
 
@@ -194,16 +195,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ─── MÓDULO-LEVEL CACHE (persiste entre navegaciones, se invalida tras 10 min) ───
-interface GlobalCache {
-  businesses: any[] | null;
-  attractions: any[] | null;
-  localities: any[] | null;
-  timestamp: number;
-}
-const _globalCache: GlobalCache = { businesses: null, attractions: null, localities: null, timestamp: 0 };
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
-const isCacheValid = () => Date.now() - _globalCache.timestamp < CACHE_TTL_MS;
+// ─── CACHÉ PERSISTENTE (persiste entre F5 y nuevas pestañas por 6 horas) ───
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
 
 /** Mapea un raw company row a la estructura Business usada por la app */
 const mapCompany = (c: any, locMap: Map<any, any>): any => {
@@ -267,85 +260,64 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [allServices, setAllServices] = useState<any[]>([]); // New state for all services
   const [usersRegistry, setUsersRegistry] = useState<User[]>([]);
 
-  // FETCH BUSINESSES FROM SUPABASE
+  // FETCH BUSINESSES FROM SUPABASE CON CACHÉ PERSISTENTE
   useEffect(() => {
-    const fetchBusinesses = async () => {
-      // ── Usar caché si es válida ──
-      if (isCacheValid() && _globalCache.businesses) {
-        console.log('⚡ [CACHE] Using cached global data (businesses, attractions, localities)');
-        const locMap = new Map((_globalCache.localities || []).map((l: any) => [l.id, l.name]));
-        const mapped: Business[] = (_globalCache.businesses || []).map((c: any) => mapCompany(c, locMap));
+    const fetchAllData = async () => {
+      // 1. Revisar caché persistente en localStorage
+      const cachedCompanies = persistentCache.get<any[]>('companies', CACHE_TTL_MS);
+      const cachedLocs = persistentCache.get<any[]>('localities', CACHE_TTL_MS);
+      const cachedAttrs = persistentCache.get<any[]>('attractions', CACHE_TTL_MS);
+
+      if (cachedCompanies && cachedLocs && cachedAttrs) {
+        console.log('⚡ [CACHE PERSISTENTE] Cargando datos desde localStorage (0 peticiones a Supabase)');
+        const locMap = new Map(cachedLocs.map((l: any) => [l.id, l.name]));
+        const mapped: Business[] = cachedCompanies.map((c: any) => mapCompany(c, locMap));
         setAllBusinesses(mapped);
         setAllServices(mapped.flatMap(b => b.services || []));
-        setAllAttractions(_globalCache.attractions || []);
-        setAllLocalities((_globalCache.localities || []).filter((l: any) => l.is_active));
+        setAllAttractions(cachedAttrs);
+        setAllLocalities(cachedLocs.filter((l: any) => l.is_active));
         return;
       }
 
-      // 1. Fetch Localities for mapping (avoiding JOIN issues)
-      const { data: locs } = await supabase.from('localities').select('id, name');
-      const locMap = new Map(locs?.map(l => [l.id, l.name]));
-
-      // 2. Query Companies with Services
-      const { data: companies, error } = await supabase
-        .from('companies')
-        .select(`
+      try {
+        // Fetch en paralelo solo si no hay caché
+        const [locsRes, companiesRes, attrsRes] = await Promise.all([
+          supabase.from('localities').select('id, name, is_active'),
+          supabase
+            .from('companies')
+            .select(`
                 id, name, description, logo_url, category, address, whatsapp, 
                 latitude, longitude, gallery_urls, locality_id, owner_id, is_active, created_at,
                 opening_time, closing_time,
                 services (*)
             `)
-        .eq('is_active', true);
+            .eq('is_active', true),
+          supabase.from('attractions').select('*').eq('is_active', true)
+        ]);
 
-      if (error) {
-        console.error("Error loading businesses:", error);
-        return;
-      }
+        if (locsRes.data) {
+          persistentCache.set('localities', locsRes.data);
+          setAllLocalities(locsRes.data.filter((l: any) => l.is_active));
+        }
 
-      // Map to Business Type
-      if (companies) {
-        console.log('📊 [APP] Raw companies data sample:', companies.slice(0, 2).map(c => ({
-          name: c.name, locality_id: c.locality_id,
-          locality_name_mapped: locMap.get(c.locality_id),
-          gallery_urls: c.gallery_urls, logo_url: c.logo_url
-        })));
-        const mapped: Business[] = companies.map((c: any) => mapCompany(c, locMap));
-        setAllBusinesses(mapped);
+        if (attrsRes.data) {
+          persistentCache.set('attractions', attrsRes.data);
+          setAllAttractions(attrsRes.data);
+        }
 
-        // FLATTEN SERVICES FOR GLOBAL ACCESS
-        const services = mapped.flatMap(b => b.services || []);
-        setAllServices(services);
-
-        // Guardar en caché de módulo
-        _globalCache.businesses = companies;
-        _globalCache.timestamp = Date.now();
-      }
-    };
-
-    fetchBusinesses();
-
-    // FETCH LOCATIONS & ATTRACTIONS
-    const fetchDiscoveryData = async () => {
-      // Si ya hay caché válida, no volver a fetchear
-      if (isCacheValid() && _globalCache.localities) return;
-
-      // Localities
-      const { data: locs } = await supabase.from('localities').select('*');
-      if (locs) {
-        _globalCache.localities = locs;
-        setAllLocalities(locs.filter(l => l.is_active));
-      }
-
-      // Attractions
-      const { data: attrs } = await supabase.from('attractions').select('*').eq('is_active', true);
-      if (attrs) {
-        _globalCache.attractions = attrs;
-        setAllAttractions(attrs);
+        if (companiesRes.data && locsRes.data) {
+          const locMap = new Map(locsRes.data.map((l: any) => [l.id, l.name]));
+          const mapped: Business[] = companiesRes.data.map((c: any) => mapCompany(c, locMap));
+          setAllBusinesses(mapped);
+          setAllServices(mapped.flatMap(b => b.services || []));
+          persistentCache.set('companies', companiesRes.data);
+        }
+      } catch (err) {
+        console.error('Error fetching global data:', err);
       }
     };
 
-    fetchDiscoveryData();
-
+    fetchAllData();
   }, []); // Run once on mount
 
   // EFECTO PARA MODO CLARO/OSCURO

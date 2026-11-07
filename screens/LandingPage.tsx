@@ -7,16 +7,9 @@ import { supabase } from '../supabaseClient';
 import LogoTicker from '../components/LogoTicker';
 import SEO from '../components/SEO';
 import { trackConversion, trackCustomEvent } from '../src/analytics/analytics';
+import { persistentCache } from '../src/utils/persistentCache';
 
-/** Redirige URLs de Supabase Storage al endpoint de render con transformación */
-const optimizeImg = (url: string, width: number, quality = 70) => {
-  if (!url) return url;
-  if (url.includes('/storage/v1/object/public/')) {
-    return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
-      + `?width=${width}&quality=${quality}`;
-  }
-  return url;
-};
+const LANDING_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas
 
 interface LandingContent {
   key: string;
@@ -79,70 +72,71 @@ const LandingPage: React.FC = () => {
     }
   }, [allLocalities]);
 
-  // FETCH LANDING DATA FROM SUPABASE
+  // FETCH LANDING DATA CON CACHÉ PERSISTENTE
   useEffect(() => {
     const fetchLandingData = async () => {
+      const cachedLanding = persistentCache.get<{
+        content: Record<string, LandingContent>;
+        settings: Record<string, string>;
+        carousel: any[];
+      }>('landing_data', LANDING_CACHE_TTL);
+
+      if (cachedLanding) {
+        setContent(cachedLanding.content);
+        setSettings(cachedLanding.settings);
+        setCarouselImages(cachedLanding.carousel);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
+      try {
+        const [contentRes, settingsRes, carouselRes] = await Promise.all([
+          supabase.from('landing_content').select('*'),
+          supabase.from('landing_settings').select('*'),
+          supabase.from('landing_carousel').select('*').eq('is_active', true).order('order_position')
+        ]);
 
-      // Fetch content
-      const { data: contentData } = await supabase
-        .from('landing_content')
-        .select('*');
+        const contentObj: Record<string, LandingContent> = {};
+        contentRes.data?.forEach(item => {
+          contentObj[item.key] = item;
+        });
 
-      // Fetch settings
-      const { data: settingsData } = await supabase
-        .from('landing_settings')
-        .select('*');
+        const settingsObj: Record<string, string> = {};
+        settingsRes.data?.forEach(item => {
+          settingsObj[item.key] = item.value;
+        });
 
-      // Fetch carousel images
-      const { data: carouselData } = await supabase
-        .from('landing_carousel')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_position');
+        const carouselList = carouselRes.data || [];
 
-      // Transform content to object with key as index
-      const contentObj: Record<string, LandingContent> = {};
-      contentData?.forEach(item => {
-        contentObj[item.key] = item;
-      });
+        setContent(contentObj);
+        setSettings(settingsObj);
+        setCarouselImages(carouselList);
 
-      // Transform settings to object with key as index
-      const settingsObj: Record<string, string> = {};
-      settingsData?.forEach(item => {
-        settingsObj[item.key] = item.value;
-      });
-
-      setContent(contentObj);
-      setSettings(settingsObj);
-      setCarouselImages(carouselData || []);
-      setLoading(false);
+        persistentCache.set('landing_data', {
+          content: contentObj,
+          settings: settingsObj,
+          carousel: carouselList
+        });
+      } catch (err) {
+        console.error('Error fetching landing data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchLandingData();
   }, []);
 
-  // Auto-rotate carousel every 5 seconds
+  // Auto-rotate carousel every 6 seconds
   useEffect(() => {
     if (carouselImages.length > 1) {
       const interval = setInterval(() => {
         setCurrentCarouselIndex((prev) => (prev + 1) % carouselImages.length);
-      }, 5000);
+      }, 6000);
       return () => clearInterval(interval);
     }
   }, [carouselImages.length]);
-
-  // Lazy preload: solo precarga la SIGUIENTE imagen del carousel (no todas de golpe)
-  useEffect(() => {
-    if (carouselImages.length > 1) {
-      const nextIndex = (currentCarouselIndex + 1) % carouselImages.length;
-      const nextUrl = carouselImages[nextIndex]?.image_url;
-      if (nextUrl) {
-        const img = new Image();
-        img.src = optimizeImg(nextUrl, 1200, 70);
-      }
-    }
-  }, [currentCarouselIndex, carouselImages]);
 
   const [logoError, setLogoError] = useState(false);
 
@@ -260,7 +254,7 @@ const LandingPage: React.FC = () => {
                     }`}
                 >
                   <img
-                    src={optimizeImg(img.image_url, 1400, 70)}
+                    src={img.image_url}
                     className="w-full h-full object-cover"
                     alt={img.alt_text || `Patagonia ${index + 1}`}
                     loading={index === 0 ? "eager" : "lazy"}

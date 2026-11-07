@@ -7,10 +7,9 @@ import BottomNavigationBar from '../components/BottomNavigationBar';
 import { Route3DViewer } from '../components/Route3DViewer';
 import L from 'leaflet';
 import { Box, Sparkles } from 'lucide-react';
+import { persistentCache } from '../src/utils/persistentCache';
 
-// Caché de rutas y medallas a nivel de módulo
-let _cachedEasyRoutes: any[] | null = null;
-let _cachedMedals: any[] | null = null;
+const ROUTES_CACHE_TTL = 12 * 60 * 60 * 1000;
 
 // ─── TYPES & INTERFACES ──────────────────────────────────────────────────────
 
@@ -227,25 +226,28 @@ const EasyRoutesScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Usar caché para rutas y medallas (sólo refetch el progreso del usuario)
+      const cachedRoutes = persistentCache.get<any[]>('easy_routes', ROUTES_CACHE_TTL);
+      const cachedMedals = persistentCache.get<any[]>('medals', ROUTES_CACHE_TTL);
+
+      // Usar caché persistente para rutas y medallas; solo refetch el progreso del usuario
       const [routesRes, progressRes, medalsRes] = await Promise.all([
-        _cachedEasyRoutes
-          ? Promise.resolve({ data: _cachedEasyRoutes, error: null })
+        cachedRoutes
+          ? Promise.resolve({ data: cachedRoutes, error: null })
           : supabase.from('easy_routes').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('user_route_progress').select('*').eq('user_id', supabaseUser?.id),
-        _cachedMedals
-          ? Promise.resolve({ data: _cachedMedals, error: null })
+        cachedMedals
+          ? Promise.resolve({ data: cachedMedals, error: null })
           : supabase.from('gamification_medals').select('slug, name, icon').eq('is_active', true),
       ]);
 
       if (routesRes.error) throw routesRes.error;
 
-      if (!_cachedEasyRoutes) _cachedEasyRoutes = routesRes.data || [];
-      if (!_cachedMedals) _cachedMedals = medalsRes.data || [];
+      if (!cachedRoutes && routesRes.data) persistentCache.set('easy_routes', routesRes.data);
+      if (!cachedMedals && medalsRes.data) persistentCache.set('medals', medalsRes.data);
 
-      setRoutes(_cachedEasyRoutes);
+      setRoutes(routesRes.data || cachedRoutes || []);
       setProgressList(progressRes.data || []);
-      setMedals(_cachedMedals);
+      setMedals(medalsRes.data || cachedMedals || []);
     } catch (err) {
       console.error('Error loading routes data:', err);
     } finally {

@@ -8,9 +8,9 @@ import BottomNavigationBar from '../components/BottomNavigationBar';
 import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from '../components/MapMarkers';
 import SEO from '../components/SEO';
 import { supabase } from '../supabaseClient';
+import { persistentCache } from '../src/utils/persistentCache';
 
-// Caché de rutas a nivel de módulo (se comparte entre desmontajes del mapa)
-let _cachedRoutes: any[] | null = null;
+const ROUTES_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas
 
 const MAP_TILES: Record<MapTheme, string> = {
   dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
@@ -363,9 +363,10 @@ const TouristMapScreen: React.FC = () => {
 
   useEffect(() => {
     const fetchRoutes = async () => {
-      // Usar caché si está disponible
-      if (_cachedRoutes) {
-        setMapRoutes(_cachedRoutes);
+      // 1. Intentar leer de caché persistente
+      const cached = persistentCache.get<any[]>('easy_routes', ROUTES_CACHE_TTL);
+      if (cached) {
+        setMapRoutes(cached);
         return;
       }
       try {
@@ -375,8 +376,9 @@ const TouristMapScreen: React.FC = () => {
           .eq('is_active', true)
           .order('sort_order');
         if (error) throw error;
-        _cachedRoutes = data || [];
-        setMapRoutes(_cachedRoutes);
+        const routesData = data || [];
+        persistentCache.set('easy_routes', routesData);
+        setMapRoutes(routesData);
       } catch (err) {
         console.error('Error fetching routes for map:', err);
       }

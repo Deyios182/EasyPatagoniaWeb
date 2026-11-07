@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, X, Upload, Check } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { compressImage } from '../src/utils/imageCompressor';
 
 interface PhotoUploadModalProps {
     isOpen: boolean;
@@ -52,16 +53,23 @@ const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
         setError(null);
 
         try {
+            // ⚡ Comprimir imagen antes de subir (reduce ~95% el egress)
+            let fileToUpload: File = selectedImage;
+            try {
+                fileToUpload = await compressImage(selectedImage, { maxWidth: 1280, quality: 0.75, format: 'image/webp' });
+            } catch (cErr) {
+                console.warn('Fallo compresión, subiendo original:', cErr);
+            }
+
             // 1. Upload image to Supabase Storage
-            const fileExt = selectedImage.name.split('.').pop();
-            const fileName = `${attractionId}-${Date.now()}.${fileExt}`;
+            const fileName = `${attractionId}-${Date.now()}.webp`;
             const filePath = `contributions/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('attraction-photos')
-                .upload(filePath, selectedImage, {
-                    contentType: selectedImage.type,
-                    cacheControl: '3600',
+                .upload(filePath, fileToUpload, {
+                    contentType: 'image/webp',
+                    cacheControl: '31536000', // 1 año de caché
                 });
 
             if (uploadError) throw uploadError;

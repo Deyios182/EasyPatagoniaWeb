@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { compressImage } from '../src/utils/imageCompressor';
+import { persistentCache } from '../src/utils/persistentCache';
 
 interface LandingContent {
   id: string;
@@ -408,9 +410,18 @@ const LandingAdminScreen: React.FC = () => {
                                                   setUploadingPositions(prev => ({ ...prev, [position]: true }));
 
                                                   try {
-                                                    const fileExt = file.name.split('.').pop();
-                                                    const fileName = `carousel/${Date.now()}.${fileExt}`;
-                                                    const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                                    let fileToUpload: File = file;
+                                                    try {
+                                                      fileToUpload = await compressImage(file, { maxWidth: 1600, quality: 0.75, format: 'image/webp' });
+                                                    } catch (cErr) {
+                                                      console.warn('Fallo compresión carousel:', cErr);
+                                                    }
+
+                                                    const fileName = `carousel/${Date.now()}.webp`;
+                                                    const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, fileToUpload, {
+                                                      contentType: 'image/webp',
+                                                      cacheControl: '31536000'
+                                                    });
                                                     if (uploadError) throw uploadError;
 
                                                     const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
@@ -425,6 +436,9 @@ const LandingAdminScreen: React.FC = () => {
                                                     }, { onConflict: 'order_position' });
 
                                                     if (dbError) throw dbError;
+
+                                                    // Invalidar caché de landing para que se refresque
+                                                    persistentCache.invalidate('landing_data');
 
                                                     // Update local state immediately (no global fetch)
                                                     setCarousel(prev => {
@@ -485,9 +499,18 @@ const LandingAdminScreen: React.FC = () => {
                                             setUploadingPositions(prev => ({ ...prev, [position]: true }));
 
                                             try {
-                                              const fileExt = file.name.split('.').pop();
-                                              const fileName = `carousel/${Date.now()}.${fileExt}`;
-                                              const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                              let fileToUpload: File = file;
+                                              try {
+                                                fileToUpload = await compressImage(file, { maxWidth: 1600, quality: 0.75, format: 'image/webp' });
+                                              } catch (cErr) {
+                                                console.warn('Fallo compresión carousel:', cErr);
+                                              }
+
+                                              const fileName = `carousel/${Date.now()}.webp`;
+                                              const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, fileToUpload, {
+                                                contentType: 'image/webp',
+                                                cacheControl: '31536000'
+                                              });
                                               if (uploadError) throw uploadError;
 
                                               const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
@@ -501,6 +524,8 @@ const LandingAdminScreen: React.FC = () => {
                                               }, { onConflict: 'order_position' });
 
                                               if (dbError) throw dbError;
+
+                                              persistentCache.invalidate('landing_data');
 
                                               setCarousel(prev => {
                                                 const filtered = prev.filter(c => c.order_position != position);
@@ -551,10 +576,19 @@ const LandingAdminScreen: React.FC = () => {
                                         setUploadingKeys(prev => ({ ...prev, [item.key]: true }));
 
                                         try {
-                                          const fileExt = file.name.split('.').pop();
-                                          const fileName = `content/${item.key}-${Date.now()}.${fileExt}`;
+                                          let fileToUpload: File = file;
+                                          try {
+                                            fileToUpload = await compressImage(file, { maxWidth: 1400, quality: 0.75, format: 'image/webp' });
+                                          } catch (cErr) {
+                                            console.warn('Fallo compresión contenido:', cErr);
+                                          }
 
-                                          const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                          const fileName = `content/${item.key}-${Date.now()}.webp`;
+
+                                          const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, fileToUpload, {
+                                            contentType: 'image/webp',
+                                            cacheControl: '31536000'
+                                          });
                                           if (uploadError) throw uploadError;
 
                                           const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
@@ -563,6 +597,8 @@ const LandingAdminScreen: React.FC = () => {
                                           // Update DB
                                           const { error: dbError } = await supabase.from('landing_content').update({ image_url: newUrl }).eq('key', item.key);
                                           if (dbError) throw dbError;
+
+                                          persistentCache.invalidate('landing_data');
 
                                           // Update local state
                                           setContent(prev => prev.map(c => c.key === item.key ? { ...c, image_url: newUrl } : c));
@@ -595,10 +631,19 @@ const LandingAdminScreen: React.FC = () => {
                                     setUploadingKeys(prev => ({ ...prev, [item.key]: true }));
 
                                     try {
-                                      const fileExt = file.name.split('.').pop();
-                                      const fileName = `content/${item.key}-${Date.now()}.${fileExt}`;
+                                      let fileToUpload: File = file;
+                                      try {
+                                        fileToUpload = await compressImage(file, { maxWidth: 1400, quality: 0.75, format: 'image/webp' });
+                                      } catch (cErr) {
+                                        console.warn('Fallo compresión contenido:', cErr);
+                                      }
 
-                                      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
+                                      const fileName = `content/${item.key}-${Date.now()}.webp`;
+
+                                      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, fileToUpload, {
+                                        contentType: 'image/webp',
+                                        cacheControl: '31536000'
+                                      });
                                       if (uploadError) throw uploadError;
 
                                       const { data } = supabase.storage.from('uploads').getPublicUrl(fileName);
@@ -607,6 +652,8 @@ const LandingAdminScreen: React.FC = () => {
                                       // Update DB
                                       const { error: dbError } = await supabase.from('landing_content').update({ image_url: newUrl }).eq('key', item.key);
                                       if (dbError) throw dbError;
+
+                                      persistentCache.invalidate('landing_data');
 
                                       // Update local state
                                       setContent(prev => prev.map(c => c.key === item.key ? { ...c, image_url: newUrl } : c));
