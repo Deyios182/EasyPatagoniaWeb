@@ -8,6 +8,7 @@ import LogoTicker from '../components/LogoTicker';
 import SEO from '../components/SEO';
 import { trackConversion, trackCustomEvent } from '../src/analytics/analytics';
 import { persistentCache } from '../src/utils/persistentCache';
+import { getOptimizedImageUrl } from '../src/utils/cdnProxy';
 
 const LANDING_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas
 
@@ -99,7 +100,10 @@ const LandingPage: React.FC = () => {
 
         const contentObj: Record<string, LandingContent> = {};
         contentRes.data?.forEach(item => {
-          contentObj[item.key] = item;
+          contentObj[item.key] = {
+            ...item,
+            image_url: item.image_url ? getOptimizedImageUrl(item.image_url, { width: 1200, quality: 75 }) : undefined
+          };
         });
 
         const settingsObj: Record<string, string> = {};
@@ -107,7 +111,10 @@ const LandingPage: React.FC = () => {
           settingsObj[item.key] = item.value;
         });
 
-        const carouselList = carouselRes.data || [];
+        const carouselList = (carouselRes.data || []).map(item => ({
+          ...item,
+          image_url: getOptimizedImageUrl(item.image_url, { width: 1400, quality: 75 })
+        }));
 
         setContent(contentObj);
         setSettings(settingsObj);
@@ -264,7 +271,7 @@ const LandingPage: React.FC = () => {
               ))
             ) : (
               <img
-                src={content['hero']?.image_url || "https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"}
+                src={getOptimizedImageUrl(content['hero']?.image_url, { width: 1400, quality: 75 }) || "https://images.unsplash.com/photo-1534234828563-0aa7c6d1b7e5?q=80&w=2070"}
                 className="w-full h-full object-cover opacity-60"
                 alt="Patagonia Background"
                 loading="eager"

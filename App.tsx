@@ -45,6 +45,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider as SupabaseAuthProvider, useAuth } from './contexts/AuthContext';
 import { Role, User, Business, MapTheme, Currency, SavedItinerary, Attraction, Locality } from './types';
 import { persistentCache } from './src/utils/persistentCache';
+import { getOptimizedImageUrl, getOptimizedImageUrls } from './src/utils/cdnProxy';
 // import { getLocalizedBusinesses } from './constants'; // Deleted
 
 
@@ -212,7 +213,7 @@ const mapCompany = (c: any, locMap: Map<any, any>): any => {
   const mapServices = (services: any[]) => (services || []).map((s: any) => ({
     id: s.id, nombre: s.name, precio: s.price,
     descripcion: s.description,
-    foto_url: s.image_url || c.gallery_urls?.[0] || 'https://placehold.co/400'
+    foto_url: getOptimizedImageUrl(s.image_url || c.gallery_urls?.[0] || 'https://placehold.co/400', { width: 600, quality: 75 })
   }));
   return {
     id: c.id, name: c.name, nombre: c.name,
@@ -227,8 +228,8 @@ const mapCompany = (c: any, locMap: Map<any, any>): any => {
       horario: `${c.opening_time || '09:00'} - ${c.closing_time || '19:00'}`
     },
     media: {
-      logo_url: c.logo_url || 'https://placehold.co/100',
-      fotos_url: c.gallery_urls || ['https://placehold.co/600x400']
+      logo_url: getOptimizedImageUrl(c.logo_url, { width: 250, quality: 80 }),
+      fotos_url: getOptimizedImageUrls(c.gallery_urls, { width: 1000, quality: 75 })
     },
     priority: 0,
     isOpen: c.is_active
@@ -301,8 +302,12 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
 
         if (attrsRes.data) {
-          persistentCache.set('attractions', attrsRes.data);
-          setAllAttractions(attrsRes.data);
+          const optimizedAttrs = attrsRes.data.map((a: any) => ({
+            ...a,
+            image_url: getOptimizedImageUrl(a.image_url, { width: 1000, quality: 75 })
+          }));
+          persistentCache.set('attractions', optimizedAttrs);
+          setAllAttractions(optimizedAttrs);
         }
 
         if (companiesRes.data && locsRes.data) {

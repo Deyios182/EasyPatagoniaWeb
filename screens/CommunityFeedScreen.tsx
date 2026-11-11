@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { useAppAuth } from '../App';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import NotificationBell from '../components/NotificationBell';
+import { getOptimizedImageUrl, getOptimizedImageUrls } from '../src/utils/cdnProxy';
 
 interface CommunityPost {
     id: string;
@@ -255,10 +256,11 @@ const CommunityFeedScreen: React.FC = () => {
                 
                 return {
                     ...post,
+                    media_urls: getOptimizedImageUrls(post.media_urls, { width: 1000, quality: 75 }),
                     auth_users: {
                         raw_user_meta_data: {
                             full_name: prof?.full_name || 'Turista Patagónico',
-                            avatar_url: prof?.avatar_url
+                            avatar_url: getOptimizedImageUrl(prof?.avatar_url, { width: 150, quality: 80 })
                         }
                     },
                     attractions: attr ? { name: attr.name } : undefined,

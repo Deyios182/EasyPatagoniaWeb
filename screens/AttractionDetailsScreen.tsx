@@ -6,6 +6,7 @@ import PhotoUploadModal from '../components/PhotoUploadModal';
 import { supabase } from '../supabaseClient';
 import { getUserRank } from '../utils/rankingSystem';
 import SEO from '../components/SEO';
+import { getOptimizedImageUrl } from '../src/utils/cdnProxy';
 
 const AttractionDetailsScreen: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -48,7 +49,11 @@ const AttractionDetailsScreen: React.FC = () => {
                 .order('likes_count', { ascending: false });
 
             if (contributions) {
-                setCommunityPhotos(contributions);
+                const optimizedContribs = contributions.map(c => ({
+                    ...c,
+                    photo_url: getOptimizedImageUrl(c.photo_url, { width: 1000, quality: 75 })
+                }));
+                setCommunityPhotos(optimizedContribs);
 
                 // FIX N+1: Una sola query batch para todos los autores involucrados
                 const uniqueUserIds = [...new Set(contributions.map(c => c.user_id).filter(Boolean))];
