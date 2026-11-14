@@ -730,8 +730,8 @@ const TouristMapScreen: React.FC = () => {
       })
       : [];
 
-    // Localities (Visible always except when in 'Rutas' mode, adapted for low/high zoom)
-    const localityMarkers = (activeFilter !== 'Rutas')
+    // Localities (Visible ONLY when businesses are hidden: zoom < SHOW_BUSINESS_ZOOM_THRESHOLD)
+    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD && activeFilter !== 'Rutas')
       ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
         id: l.id,
         lat: l.latitude!,
