@@ -629,6 +629,7 @@ const TouristMapScreen: React.FC = () => {
     });
 
     map.on('zoomend', () => setZoom(map.getZoom()));
+    map.on('zoom', () => setZoom(map.getZoom()));
 
     tileLayerRef.current = L.tileLayer(tileUrl, {
       maxZoom: 20,
@@ -732,16 +733,18 @@ const TouristMapScreen: React.FC = () => {
 
     // Localities (Visible ONLY when businesses are hidden: zoom < SHOW_BUSINESS_ZOOM_THRESHOLD)
     const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD && activeFilter !== 'Rutas')
-      ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
-        id: l.id,
-        lat: l.latitude!,
-        lng: l.longitude!,
-        title: l.name,
-        type: 'locality',
-        color: '#dd6e42', // Orange (EasyPatagonia)
-        icon: l.image_url,
-        data: l
-      }))
+      ? allLocalities
+        .filter(l => l.latitude != null && l.longitude != null && !isNaN(Number(l.latitude)) && !isNaN(Number(l.longitude)))
+        .map(l => ({
+          id: l.id,
+          lat: Number(l.latitude),
+          lng: Number(l.longitude),
+          title: l.name,
+          type: 'locality',
+          color: '#dd6e42', // Orange (EasyPatagonia)
+          icon: l.image_url,
+          data: l
+        }))
       : [];
 
     // Attractions (Visible only at Medium Zoom >= 12)
