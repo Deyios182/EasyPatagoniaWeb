@@ -264,12 +264,14 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
   // FETCH BUSINESSES FROM SUPABASE CON CACHÉ PERSISTENTE
   useEffect(() => {
     const fetchAllData = async () => {
-      // 1. Revisar caché persistente en localStorage
+      // 1. Revisar caché persistente en localStorage (invalidar si las localidades no tienen coordenadas)
       const cachedCompanies = persistentCache.get<any[]>('companies', CACHE_TTL_MS);
       const cachedLocs = persistentCache.get<any[]>('localities', CACHE_TTL_MS);
       const cachedAttrs = persistentCache.get<any[]>('attractions', CACHE_TTL_MS);
 
-      if (cachedCompanies && cachedLocs && cachedAttrs) {
+      const hasValidLocCoords = cachedLocs && cachedLocs.length > 0 && cachedLocs.some((l: any) => l.latitude && l.longitude);
+
+      if (cachedCompanies && cachedLocs && cachedAttrs && hasValidLocCoords) {
         console.log('⚡ [CACHE PERSISTENTE] Cargando datos desde localStorage (0 peticiones a Supabase)');
         const locMap = new Map(cachedLocs.map((l: any) => [l.id, l.name]));
         const mapped: Business[] = cachedCompanies.map((c: any) => mapCompany(c, locMap));
@@ -283,7 +285,7 @@ export const AppAuthProvider: React.FC<{ children: ReactNode }> = ({ children })
       try {
         // Fetch en paralelo solo si no hay caché
         const [locsRes, companiesRes, attrsRes] = await Promise.all([
-          supabase.from('localities').select('id, name, is_active'),
+          supabase.from('localities').select('id, name, latitude, longitude, image_url, is_active'),
           supabase
             .from('companies')
             .select(`
