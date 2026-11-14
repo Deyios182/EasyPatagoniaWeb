@@ -730,8 +730,8 @@ const TouristMapScreen: React.FC = () => {
       })
       : [];
 
-    // Localities (Visible only at LOW zoom, hide when businesses appear)
-    const localityMarkers = (zoom < SHOW_BUSINESS_ZOOM_THRESHOLD && activeFilter !== 'Rutas')
+    // Localities (Visible always except when in 'Rutas' mode, adapted for low/high zoom)
+    const localityMarkers = (activeFilter !== 'Rutas')
       ? allLocalities.filter(l => l.latitude && l.longitude).map(l => ({
         id: l.id,
         lat: l.latitude!,
@@ -809,7 +809,12 @@ const TouristMapScreen: React.FC = () => {
       let customIcon;
 
       if (item.type === 'locality') {
-        // LOCALIDADES: Mostrar como LABEL compacto
+        // LOCALIDADES: Mostrar como etiqueta atractiva adaptable al nivel de zoom
+        const isFarZoom = zoom < 10;
+        const fontSize = isFarZoom ? '9px' : '11px';
+        const padding = isFarZoom ? '2px 8px' : '4px 10px';
+        const pinSize = isFarZoom ? '4px' : '6px';
+        
         customIcon = L.divIcon({
           className: "",
           html: `
@@ -820,28 +825,30 @@ const TouristMapScreen: React.FC = () => {
               align-items: center;
               gap: 2px;
               transform: translateX(-50%);
+              cursor: pointer;
             ">
               <div style="
                 background: linear-gradient(135deg, #dd6e42, #ff8c61);
                 color: white;
-                font-size: 10px;
+                font-size: ${fontSize};
                 font-weight: 800;
-                padding: 4px 10px;
+                padding: ${padding};
                 border-radius: 12px;
                 white-space: nowrap;
-                box-shadow: 0 2px 10px rgba(221, 110, 66, 0.4);
-                border: 1px solid rgba(255,255,255,0.2);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255,255,255,0.4);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
               ">
                 ${item.title}
               </div>
               <div style="
                 width: 0;
                 height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid #dd6e42;
+                border-left: ${pinSize} solid transparent;
+                border-right: ${pinSize} solid transparent;
+                border-top: ${pinSize} solid #dd6e42;
               "></div>
             </div>
           `,
@@ -966,7 +973,9 @@ const TouristMapScreen: React.FC = () => {
           .addTo(mapInstance)
           .on('click', () => {
             // Handle different marker types
-            if (item.type === 'business' || item.type === 'market') {
+            if (item.type === 'locality') {
+              mapInstance.flyTo([item.lat, item.lng], 14, { animate: true, duration: 1.2 });
+            } else if (item.type === 'business' || item.type === 'market') {
               setSelectedBusiness(item.data as Business);
               setSelectedAttraction(null);
             } else if (item.type === 'attraction') {
