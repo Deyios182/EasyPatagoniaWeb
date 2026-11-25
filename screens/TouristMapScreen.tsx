@@ -54,7 +54,14 @@ const TouristMapScreen: React.FC = () => {
   // ── Estado de Rutas / Cortes en Carretera ────────────────────────────────
   const [roadCuts, setRoadCuts] = useState<RoadCut[]>([]);
   const [showRoadCutsPanel, setShowRoadCutsPanel] = useState(false);
+  const [roadCutsWhatsapp, setRoadCutsWhatsapp] = useState('56993059789');
   const roadCutMarkersRef = useRef<L.Marker[]>([]);
+
+  const openRoadCutsWhatsApp = () => {
+    const cleanPhone = roadCutsWhatsapp.replace(/\D/g, '');
+    const msg = '¡Hola! Vi el estado de rutas en EasyPatagonia y tengo una consulta sobre rutas, tours u horarios.';
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
 
   const [medals, setMedals] = useState<any[]>([]);
   const [progressList, setProgressList] = useState<any[]>([]);
@@ -231,12 +238,22 @@ const TouristMapScreen: React.FC = () => {
   useEffect(() => {
     const fetchRoadCuts = async () => {
       try {
-        const { data } = await supabase
-          .from('road_cuts')
-          .select('*')
-          .eq('is_active', true)
-          .order('severity', { ascending: true });
+        const [{ data }, { data: settingsData }] = await Promise.all([
+          supabase
+            .from('road_cuts')
+            .select('*')
+            .eq('is_active', true)
+            .order('severity', { ascending: true }),
+          supabase
+            .from('landing_settings')
+            .select('key, value')
+            .in('key', ['road_cuts_whatsapp', 'contact_whatsapp']),
+        ]);
         setRoadCuts(data || []);
+        const cutsWa = settingsData?.find(s => s.key === 'road_cuts_whatsapp')?.value;
+        const contactWa = settingsData?.find(s => s.key === 'contact_whatsapp')?.value;
+        if (cutsWa) setRoadCutsWhatsapp(cutsWa);
+        else if (contactWa) setRoadCutsWhatsapp(contactWa);
       } catch (err) {
         console.error('Error cargando cortes:', err);
       }
@@ -1561,6 +1578,17 @@ const TouristMapScreen: React.FC = () => {
                 </span>
               </button>
             )}
+
+            {/* ── BOTÓN WHATSAPP CONSULTAS RUTA / TOURS ───────────────── */}
+            <button
+              onClick={openRoadCutsWhatsApp}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-emerald-400/30 bg-[#25D366] hover:bg-[#20bd5a] text-white active:scale-95"
+              title="Consultas de ruta, tours y horarios por WhatsApp"
+            >
+              <svg viewBox="0 0 32 32" className="w-6 h-6 fill-current" aria-hidden="true">
+                <path d="M16.004 3.2c-7.07 0-12.8 5.73-12.8 12.8 0 2.256.592 4.46 1.716 6.404L3.12 28.8l6.544-1.716a12.74 12.74 0 0 0 6.34 1.688h.004c7.068 0 12.796-5.732 12.796-12.8 0-3.42-1.332-6.634-3.752-9.052A12.716 12.716 0 0 0 16.004 3.2zm7.46 18.212c-.312.876-1.824 1.676-2.536 1.784-.648.096-1.468.136-2.368-.148-.548-.172-1.252-.404-2.156-.792-3.796-1.64-6.276-5.468-6.464-5.72-.188-.252-1.544-2.052-1.544-3.916 0-1.864.976-2.78 1.324-3.16.348-.38.756-.476 1.008-.476.252 0 .504.004.724.012.232.012.544-.088.852.652.312.756 1.064 2.604 1.156 2.792.092.188.156.408.032.66-.124.252-.188.408-.376.628-.188.22-.396.492-.564.66-.188.188-.384.392-.164.768.22.38.98 1.616 2.104 2.616 1.448 1.292 2.668 1.692 3.048 1.88.38.188.6.156.82-.096.22-.252.948-1.104 1.2-1.484.252-.38.504-.316.848-.188.348.124 2.2 1.036 2.576 1.224.38.188.632.284.724.44.092.156.092.904-.22 1.78z" />
+              </svg>
+            </button>
             {trackedRoute && (
               <div className="mt-2 bg-slate-900/95 border border-amber-500/30 p-4 rounded-2xl shadow-xl flex flex-col gap-2 max-w-[200px] text-left pointer-events-auto">
                 <div>
@@ -1925,8 +1953,20 @@ const TouristMapScreen: React.FC = () => {
 
               </div>
 
-              {/* Footer con fuente */}
-              <div className="shrink-0 px-6 pb-6 pt-3 border-t border-white/5">
+              {/* Footer con WhatsApp y fuente */}
+              <div className="shrink-0 px-6 pb-6 pt-3 border-t border-white/5 space-y-3">
+                <button
+                  onClick={openRoadCutsWhatsApp}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-3 shadow-lg shadow-[#25D366]/20 transition-all active:scale-[0.99]"
+                >
+                  <svg viewBox="0 0 32 32" className="w-5 h-5 fill-current shrink-0" aria-hidden="true">
+                    <path d="M16.004 3.2c-7.07 0-12.8 5.73-12.8 12.8 0 2.256.592 4.46 1.716 6.404L3.12 28.8l6.544-1.716a12.74 12.74 0 0 0 6.34 1.688h.004c7.068 0 12.796-5.732 12.796-12.8 0-3.42-1.332-6.634-3.752-9.052A12.716 12.716 0 0 0 16.004 3.2zm7.46 18.212c-.312.876-1.824 1.676-2.536 1.784-.648.096-1.468.136-2.368-.148-.548-.172-1.252-.404-2.156-.792-3.796-1.64-6.276-5.468-6.464-5.72-.188-.252-1.544-2.052-1.544-3.916 0-1.864.976-2.78 1.324-3.16.348-.38.756-.476 1.008-.476.252 0 .504.004.724.012.232.012.544-.088.852.652.312.756 1.064 2.604 1.156 2.792.092.188.156.408.032.66-.124.252-.188.408-.376.628-.188.22-.396.492-.564.66-.188.188-.384.392-.164.768.22.38.98 1.616 2.104 2.616 1.448 1.292 2.668 1.692 3.048 1.88.38.188.6.156.82-.096.22-.252.948-1.104 1.2-1.484.252-.38.504-.316.848-.188.348.124 2.2 1.036 2.576 1.224.38.188.632.284.724.44.092.156.092.904-.22 1.78z" />
+                  </svg>
+                  <div className="text-left leading-tight">
+                    <span className="block text-[11px] font-black">¿Dudas de ruta, tours u horarios?</span>
+                    <span className="block text-[10px] font-bold opacity-90">WhatsApp +{roadCutsWhatsapp.replace(/\D/g, '')}</span>
+                  </div>
+                </button>
                 <p className="text-[9px] text-slate-600 text-center leading-relaxed">
                   Fuente: Carabineros de Chile, MOP Aysén, Dirección de Vialidad<br />y Delegación Presidencial Regional de Aysén.
                 </p>

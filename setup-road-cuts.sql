@@ -58,6 +58,21 @@ CREATE TRIGGER trg_road_cuts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_road_cuts_updated_at();
 
 -- ── RLS ──────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.is_road_cuts_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND lower(role) IN ('super_admin', 'superadmin', 'admin')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 ALTER TABLE road_cuts ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública (todos pueden ver los cortes activos)
@@ -67,24 +82,12 @@ CREATE POLICY "road_cuts_public_read"
   USING (true);
 
 -- Solo SuperAdmin puede insertar/modificar/borrar
--- (Supabase custom claim 'app_role' o usamos la tabla profiles)
 DROP POLICY IF EXISTS "road_cuts_superadmin_all" ON road_cuts;
 CREATE POLICY "road_cuts_superadmin_all"
   ON road_cuts FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.role IN ('super_admin', 'SuperAdmin')
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.role IN ('super_admin', 'SuperAdmin')
-    )
-  );
+  TO authenticated
+  USING ( public.is_road_cuts_admin() )
+  WITH CHECK ( public.is_road_cuts_admin() );
 
 -- ── DATOS DE EJEMPLO (los del user) ──────────────────────────
 INSERT INTO road_cuts (severity, route_name, sector, description, schedule, validity, latitude, longitude, valid_from, valid_until, is_active)

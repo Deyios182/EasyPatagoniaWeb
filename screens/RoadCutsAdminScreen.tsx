@@ -80,6 +80,9 @@ const RoadCutsAdminScreen: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempCoords, setTempCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState('56993059789');
+  const [savingWa, setSavingWa] = useState(false);
+  const [waSavedMsg, setWaSavedMsg] = useState(false);
 
   const openMap = () => {
     setTempCoords({
@@ -102,14 +105,47 @@ const RoadCutsAdminScreen: React.FC = () => {
   // ── Carga de datos ───────────────────────────────────────────────────────
   const fetchCuts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('road_cuts')
-      .select('*')
-      .order('severity', { ascending: true })
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: waData }] = await Promise.all([
+      supabase
+        .from('road_cuts')
+        .select('*')
+        .order('severity', { ascending: true })
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('landing_settings')
+        .select('key, value')
+        .in('key', ['road_cuts_whatsapp', 'contact_whatsapp']),
+    ]);
 
     if (!error) setCuts(data || []);
+    const cutsWa = waData?.find(s => s.key === 'road_cuts_whatsapp')?.value;
+    const contactWa = waData?.find(s => s.key === 'contact_whatsapp')?.value;
+    if (cutsWa) setWhatsappNumber(cutsWa);
+    else if (contactWa) setWhatsappNumber(contactWa);
     setLoading(false);
+  };
+
+  const handleSaveWhatsapp = async () => {
+    const clean = whatsappNumber.replace(/\D/g, '');
+    if (!clean) {
+      alert('Ingresa un número de WhatsApp válido (ej: 56912345678).');
+      return;
+    }
+    setSavingWa(true);
+    const { error } = await supabase
+      .from('landing_settings')
+      .upsert(
+        { key: 'road_cuts_whatsapp', value: clean, updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+    setSavingWa(false);
+    if (error) {
+      alert('Error al guardar WhatsApp: ' + error.message);
+      return;
+    }
+    setWhatsappNumber(clean);
+    setWaSavedMsg(true);
+    setTimeout(() => setWaSavedMsg(false), 2500);
   };
 
   useEffect(() => { fetchCuts(); }, []);
@@ -245,6 +281,35 @@ const RoadCutsAdminScreen: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+
+          {/* ── WHATSAPP DE CONSULTAS (Rutas / Tours / Horarios) ───────── */}
+          <div className="mt-6 max-w-2xl bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                WhatsApp Consultas (Mapa y Panel de Rutas)
+              </p>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Número visible en el botón de WhatsApp para consultas de rutas, tours y horarios.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="text"
+                value={whatsappNumber}
+                onChange={e => setWhatsappNumber(e.target.value)}
+                placeholder="56912345678"
+                className="w-40 bg-slate-900/80 border border-white/15 rounded-xl px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="button"
+                onClick={handleSaveWhatsapp}
+                disabled={savingWa}
+                className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider transition-all"
+              >
+                {savingWa ? 'Guardando…' : waSavedMsg ? '✓ Guardado' : 'Guardar'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
