@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { RoadCut, RoadCutSeverity } from '../types';
+import LocationPickerMap from '../components/LocationPickerMap';
 
 // ─── Helpers de UI ─────────────────────────────────────────────────────────
 
@@ -442,16 +443,23 @@ const RoadCutsAdminScreen: React.FC = () => {
               {/* Coordenadas */}
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                  📍 Coordenadas GPS (para mostrar en el mapa)
+                  📍 Ubicación en el Mapa (opcional)
                 </label>
-                <div className="grid grid-cols-2 gap-4">
+
+                <LocationPickerMap
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onChange={(lat, lng) => setForm(f => ({ ...f, latitude: lat, longitude: lng }))}
+                />
+
+                <div className="grid grid-cols-2 gap-4 mt-3">
                   <input
                     type="number"
                     step="0.0001"
                     value={form.latitude ?? ''}
                     onChange={e => setForm(f => ({ ...f, latitude: e.target.value ? parseFloat(e.target.value) : undefined }))}
                     placeholder="Latitud (Ej: -45.5720)"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
                   />
                   <input
                     type="number"
@@ -459,7 +467,7 @@ const RoadCutsAdminScreen: React.FC = () => {
                     value={form.longitude ?? ''}
                     onChange={e => setForm(f => ({ ...f, longitude: e.target.value ? parseFloat(e.target.value) : undefined }))}
                     placeholder="Longitud (Ej: -72.0620)"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2">
