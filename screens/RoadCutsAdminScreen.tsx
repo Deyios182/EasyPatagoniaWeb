@@ -2,7 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { RoadCut, RoadCutSeverity } from '../types';
-import LocationPickerMap from '../components/LocationPickerMap';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+// @ts-ignore
+import icon from 'leaflet/dist/images/marker-icon.png';
+// @ts-ignore
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+const DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const MapRecenter = () => {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+  }, [map]);
+  return null;
+};
+
+const LocationMarker = ({
+  setPos,
+  pos,
+}: {
+  setPos: (lat: number, lng: number) => void;
+  pos: { lat: number; lng: number } | null;
+}) => {
+  useMapEvents({
+    click(e) {
+      setPos(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return pos ? <Marker position={[pos.lat, pos.lng]} /> : null;
+};
 
 // ─── Helpers de UI ─────────────────────────────────────────────────────────
 
@@ -39,6 +78,26 @@ const RoadCutsAdminScreen: React.FC = () => {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [filterSeverity, setFilterSeverity] = useState<RoadCutSeverity | 'all'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [tempCoords, setTempCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const openMap = () => {
+    setTempCoords({
+      lat: form.latitude || -46.6225,
+      lng: form.longitude || -72.6744,
+    });
+    setShowMapModal(true);
+  };
+
+  const confirmLocation = () => {
+    if (!tempCoords) return;
+    setForm(f => ({
+      ...f,
+      latitude: Number(tempCoords.lat.toFixed(6)),
+      longitude: Number(tempCoords.lng.toFixed(6)),
+    }));
+    setShowMapModal(false);
+  };
 
   // ── Carga de datos ───────────────────────────────────────────────────────
   const fetchCuts = async () => {
@@ -442,33 +501,36 @@ const RoadCutsAdminScreen: React.FC = () => {
 
               {/* Coordenadas */}
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                  📍 Ubicación en el Mapa (opcional)
-                </label>
-
-                <LocationPickerMap
-                  latitude={form.latitude}
-                  longitude={form.longitude}
-                  onChange={(lat, lng) => setForm(f => ({ ...f, latitude: lat, longitude: lng }))}
-                />
-
-                <div className="grid grid-cols-2 gap-4 mt-3">
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={form.latitude ?? ''}
-                    onChange={e => setForm(f => ({ ...f, latitude: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                    placeholder="Latitud (Ej: -45.5720)"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
-                  />
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={form.longitude ?? ''}
-                    onChange={e => setForm(f => ({ ...f, longitude: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                    placeholder="Longitud (Ej: -72.0620)"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
-                  />
+                <div className="p-4 border border-white/10 rounded-2xl bg-white/5 flex items-center justify-between gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Ubicación GPS</label>
+                    {form.latitude != null && form.longitude != null ? (
+                      <p className="text-sm font-bold text-emerald-400">
+                        {form.latitude.toFixed(4)}, {form.longitude.toFixed(4)}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-red-400 font-bold">No definida</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {form.latitude != null && form.longitude != null && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, latitude: undefined, longitude: undefined }))}
+                        className="bg-red-500/10 text-red-400 px-3 py-2 rounded-xl font-bold text-xs hover:bg-red-500/20 border border-red-500/20 transition-all"
+                        title="Quitar ubicación"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={openMap}
+                      className="bg-white/10 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-white/20 border border-white/10 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">map</span> Seleccionar Mapa
+                    </button>
+                  </div>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2">
                   💡 Sin coordenadas: el corte aparece en la lista del mapa pero sin marcador.
@@ -539,6 +601,50 @@ const RoadCutsAdminScreen: React.FC = () => {
               <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 hover:bg-red-600 rounded-2xl font-black text-white text-sm uppercase tracking-widest transition-all">
                 Eliminar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL MAPA (Igual que registro de empresas) ───────────────────── */}
+      {showMapModal && (
+        <div className="fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-xl">
+          <div className="bg-slate-900/95 backdrop-blur-2xl w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col h-[80vh] border border-white/10 shadow-2xl">
+            <div className="p-4 border-b border-white/10">
+              <h3 className="text-lg font-black text-white">Seleccionar Ubicación</h3>
+              <p className="text-xs text-slate-400">Haz clic en el mapa para marcar la ubicación exacta.</p>
+            </div>
+            <div className="flex-1 relative bg-slate-800">
+              {/* @ts-ignore */}
+              <MapContainer center={[tempCoords?.lat || -46.6, tempCoords?.lng || -72.6]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                <MapRecenter />
+                {/* @ts-ignore */}
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OSM' />
+                <LocationMarker pos={tempCoords} setPos={(lat, lng) => setTempCoords({ lat, lng })} />
+              </MapContainer>
+            </div>
+            <div className="p-4 bg-slate-900/90 border-t border-white/10 flex justify-between items-center gap-4">
+              {tempCoords && (
+                <p className="text-xs text-emerald-400 font-bold">
+                  📍 {tempCoords.lat.toFixed(6)}, {tempCoords.lng.toFixed(6)}
+                </p>
+              )}
+              <div className="flex gap-3 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowMapModal(false)}
+                  className="px-6 py-3 rounded-xl font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmLocation}
+                  className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/30"
+                >
+                  Confirmar
+                </button>
+              </div>
             </div>
           </div>
         </div>
