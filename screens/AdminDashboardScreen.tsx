@@ -213,6 +213,14 @@ const AdminDashboardScreen: React.FC = () => {
                   color="bg-gradient-to-br from-purple-500 to-pink-600"
                   cta="Administrar"
                />
+               <ActionCard
+                  onClick={() => navigate('/admin/road-cuts')}
+                  icon="add_road"
+                  title="Estado de Rutas"
+                  description="Administra cortes totales, interrupciones parciales y alertas de precaución en la Carretera Austral. Visibles en el mapa interactivo."
+                  color="bg-gradient-to-br from-red-500 to-orange-500"
+                  cta="Gestionar Cortes"
+               />
             </div>
 
             {/* Quick Links */}

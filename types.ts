@@ -120,6 +120,28 @@ export interface SavedItinerary {
   plan: ItineraryDay[];
 }
 
+// ── Estado de Rutas / Cortes en Carretera ──────────────────────────────────
+export type RoadCutSeverity = 'total' | 'partial' | 'caution';
+
+export interface RoadCut {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  severity: RoadCutSeverity;
+  route_name: string;
+  sector?: string;
+  description: string;
+  schedule?: string;
+  validity?: string;
+  source?: string;
+  valid_from?: string;
+  valid_until?: string;
+  latitude?: number;
+  longitude?: number;
+  is_active: boolean;
+  created_by?: string;
+}
+
 // Galería personal de usuario
 export interface UserImage {
   id: string;

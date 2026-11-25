@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import ReactDOMServer from 'react-dom/server';
 import { useAppAuth } from '../App';
-import { Category, Business, MapTheme } from '../types';
+import { Category, Business, MapTheme, RoadCut } from '../types';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import { AttractionMarker, GasStationMarker, CampingMarker, MarketMarker } from '../components/MapMarkers';
 import SEO from '../components/SEO';
@@ -50,6 +50,11 @@ const TouristMapScreen: React.FC = () => {
   const [trackedRoute, setTrackedRoute] = useState<any | null>(null);
   const trackedPolylineRef = useRef<L.Polyline | null>(null);
   const trackedMarkersRef = useRef<L.Marker[]>([]);
+
+  // ── Estado de Rutas / Cortes en Carretera ────────────────────────────────
+  const [roadCuts, setRoadCuts] = useState<RoadCut[]>([]);
+  const [showRoadCutsPanel, setShowRoadCutsPanel] = useState(false);
+  const roadCutMarkersRef = useRef<L.Marker[]>([]);
 
   const [medals, setMedals] = useState<any[]>([]);
   const [progressList, setProgressList] = useState<any[]>([]);
@@ -220,6 +225,23 @@ const TouristMapScreen: React.FC = () => {
       }
     };
     fetchMedals();
+  }, []);
+
+  // ── Cargar cortes de carretera ────────────────────────────────────────────
+  useEffect(() => {
+    const fetchRoadCuts = async () => {
+      try {
+        const { data } = await supabase
+          .from('road_cuts')
+          .select('*')
+          .eq('is_active', true)
+          .order('severity', { ascending: true });
+        setRoadCuts(data || []);
+      } catch (err) {
+        console.error('Error cargando cortes:', err);
+      }
+    };
+    fetchRoadCuts();
   }, []);
 
   useEffect(() => {
@@ -1003,6 +1025,94 @@ const TouristMapScreen: React.FC = () => {
     }
   }, [selectedBusiness?.id, selectedAttraction?.id, mapInstance]);
 
+  // ── Dibujar marcadores de cortes en carretera ─────────────────────────────
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    // Limpiar marcadores anteriores
+    roadCutMarkersRef.current.forEach(m => m.remove());
+    roadCutMarkersRef.current = [];
+
+    const SEVERITY_COLORS: Record<string, string> = {
+      total:   '#EF4444',
+      partial: '#F59E0B',
+      caution: '#F97316',
+    };
+    const SEVERITY_ICONS: Record<string, string> = {
+      total:   '⛔',
+      partial: '⚠️',
+      caution: '🛑',
+    };
+
+    roadCuts.forEach(cut => {
+      if (!cut.latitude || !cut.longitude) return;
+
+      const color = SEVERITY_COLORS[cut.severity] || '#EF4444';
+      const icon = SEVERITY_ICONS[cut.severity] || '⚠️';
+
+      const divIcon = L.divIcon({
+        className: '',
+        html: `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+          ">
+            <div style="
+              background: ${color};
+              color: white;
+              border-radius: 12px;
+              padding: 6px 10px;
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              font-size: 10px;
+              font-weight: 900;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              white-space: nowrap;
+              border: 2px solid rgba(255,255,255,0.4);
+              box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+              max-width: 160px;
+            ">
+              <span style="font-size:14px">${icon}</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cut.route_name}</span>
+            </div>
+            <div style="
+              width: 0; height: 0;
+              border-left: 6px solid transparent;
+              border-right: 6px solid transparent;
+              border-top: 8px solid ${color};
+              margin-top: -1px;
+            "></div>
+          </div>
+        `,
+        iconSize: [170, 42],
+        iconAnchor: [85, 42],
+        popupAnchor: [0, -44],
+      });
+
+      const marker = L.marker([cut.latitude, cut.longitude], { icon: divIcon, zIndexOffset: 2000 })
+        .addTo(mapInstance)
+        .bindPopup(`
+          <div style="font-family:sans-serif; min-width:220px; padding:4px;">
+            <div style="font-size:11px;font-weight:900;text-transform:uppercase;color:${color};margin-bottom:6px;">
+              ${icon} ${cut.severity === 'total' ? 'CORTE TOTAL' : cut.severity === 'partial' ? 'INTERRUPCIÓN PARCIAL' : 'PRECAUCIÓN'}
+            </div>
+            <div style="font-weight:800;font-size:14px;margin-bottom:4px;color:#1a1a1a">${cut.route_name}</div>
+            ${cut.sector ? `<div style="font-size:11px;color:#555;margin-bottom:6px;">${cut.sector}</div>` : ''}
+            <div style="font-size:12px;color:#333;line-height:1.4;margin-bottom:8px;">${cut.description}</div>
+            ${cut.schedule ? `<div style="font-size:11px;color:#666;margin-bottom:3px;">🕐 ${cut.schedule}</div>` : ''}
+            ${cut.validity ? `<div style="font-size:11px;color:#666;">📅 ${cut.validity}</div>` : ''}
+          </div>
+        `, { maxWidth: 280 });
+
+      roadCutMarkersRef.current.push(marker);
+    });
+  }, [mapInstance, roadCuts]);
+
   const getRouteColor = (difficulty: string) => {
     const diff = (difficulty || '').toLowerCase();
     if (diff.includes('fácil') || diff.includes('facil') || diff.includes('easy')) return '#10B981';
@@ -1435,6 +1545,22 @@ const TouristMapScreen: React.FC = () => {
             >
               <span className="material-symbols-outlined text-2xl">my_location</span>
             </button>
+
+            {/* ── BOTÓN ESTADO DE RUTAS ──────────────────────────────── */}
+            {roadCuts.length > 0 && (
+              <button
+                onClick={() => setShowRoadCutsPanel(true)}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all border border-red-500/30 bg-red-500/90 text-white active:scale-95 relative"
+                title="Ver cortes en ruta"
+              >
+                <span className="material-symbols-outlined text-2xl">add_road</span>
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-red-600 rounded-full text-[9px] font-black flex items-center justify-center border-2 border-red-500/50">
+                  {roadCuts.filter(c => c.severity === 'total').length > 0
+                    ? roadCuts.filter(c => c.severity === 'total').length
+                    : roadCuts.length}
+                </span>
+              </button>
+            )}
             {trackedRoute && (
               <div className="mt-2 bg-slate-900/95 border border-amber-500/30 p-4 rounded-2xl shadow-xl flex flex-col gap-2 max-w-[200px] text-left pointer-events-auto">
                 <div>
@@ -1658,6 +1784,156 @@ const TouristMapScreen: React.FC = () => {
 
         {/* MENÚ MÓVIL */}
         <BottomNavigationBar />
+
+        {/* ── PANEL ESTADO DE RUTAS ─────────────────────────────────────────── */}
+        {showRoadCutsPanel && (
+          <div className="fixed inset-0 z-[400] flex items-end md:items-center justify-center md:justify-end p-0 md:p-8">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              onClick={() => setShowRoadCutsPanel(false)}
+            />
+
+            {/* Panel */}
+            <div className="relative w-full md:w-[420px] max-h-[85vh] md:max-h-[80vh] bg-slate-900 border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:slide-in-from-right duration-300">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-red-600/20 to-orange-600/20 border-b border-white/10 px-6 py-5 flex items-center justify-between shrink-0">
+                <div>
+                  <p className="text-[9px] font-black text-red-400 uppercase tracking-[0.3em]">
+                    {new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+                  </p>
+                  <h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-tight">
+                    Estado de Rutas
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowRoadCutsPanel(false)}
+                  className="w-9 h-9 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-all"
+                >
+                  <span className="material-symbols-outlined text-slate-400">close</span>
+                </button>
+              </div>
+
+              {/* Chips resumen */}
+              <div className="flex gap-2 px-6 pt-4 shrink-0">
+                {(['total', 'partial', 'caution'] as const).map(s => {
+                  const counts: Record<string, number> = {
+                    total:   roadCuts.filter(c => c.severity === 'total').length,
+                    partial: roadCuts.filter(c => c.severity === 'partial').length,
+                    caution: roadCuts.filter(c => c.severity === 'caution').length,
+                  };
+                  const icons = { total: '⛔', partial: '⚠️', caution: '🛑' };
+                  const colors = { total: 'text-red-400 bg-red-500/10 border-red-500/30', partial: 'text-amber-400 bg-amber-500/10 border-amber-500/30', caution: 'text-orange-400 bg-orange-500/10 border-orange-500/30' };
+                  if (!counts[s]) return null;
+                  return (
+                    <span key={s} className={`flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-widest ${colors[s]}`}>
+                      {icons[s]} {counts[s]}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Lista de cortes */}
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
+
+                {/* ⛔ Cortes totales */}
+                {roadCuts.filter(c => c.severity === 'total').length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs font-black text-red-400 uppercase tracking-widest">⛔ Cortes e interrupciones totales</span>
+                    </div>
+                    {roadCuts.filter(c => c.severity === 'total').map(cut => (
+                      <div
+                        key={cut.id}
+                        onClick={() => {
+                          if (cut.latitude && cut.longitude && mapInstance) {
+                            mapInstance.flyTo([cut.latitude, cut.longitude], 13, { animate: true, duration: 1.5 });
+                            setShowRoadCutsPanel(false);
+                          }
+                        }}
+                        className={`bg-red-500/5 border border-red-500/20 rounded-2xl p-4 ${cut.latitude ? 'cursor-pointer hover:bg-red-500/10 transition-all' : ''}`}
+                      >
+                        <p className="text-xs font-black text-white leading-snug mb-1">
+                          📌 {cut.route_name}{cut.sector ? `, ${cut.sector}` : ''}
+                        </p>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">{cut.description}</p>
+                        {cut.schedule && <p className="text-[10px] text-slate-500 mt-1.5">🕐 Horario: {cut.schedule}</p>}
+                        {cut.validity && <p className="text-[10px] text-slate-500">📅 Vigencia: {cut.validity}</p>}
+                        {cut.latitude && <p className="text-[9px] text-teal-500 mt-1.5">📍 Toca para ver en el mapa</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* ⚠️ Interrupciones parciales */}
+                {roadCuts.filter(c => c.severity === 'partial').length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 mt-4">
+                      <span className="text-xs font-black text-amber-400 uppercase tracking-widest">⚠️ Interrupciones parciales y otras incidencias</span>
+                    </div>
+                    {roadCuts.filter(c => c.severity === 'partial').map(cut => (
+                      <div
+                        key={cut.id}
+                        onClick={() => {
+                          if (cut.latitude && cut.longitude && mapInstance) {
+                            mapInstance.flyTo([cut.latitude, cut.longitude], 13, { animate: true, duration: 1.5 });
+                            setShowRoadCutsPanel(false);
+                          }
+                        }}
+                        className={`bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 ${cut.latitude ? 'cursor-pointer hover:bg-amber-500/10 transition-all' : ''}`}
+                      >
+                        <p className="text-xs font-black text-white leading-snug mb-1">
+                          ▪️ {cut.route_name}{cut.sector ? `, ${cut.sector}` : ''}
+                        </p>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">{cut.description}</p>
+                        {cut.schedule && <p className="text-[10px] text-slate-500 mt-1.5">🕐 Horario: {cut.schedule}</p>}
+                        {cut.validity && <p className="text-[10px] text-slate-500">📅 Vigencia: {cut.validity}</p>}
+                        {cut.latitude && <p className="text-[9px] text-teal-500 mt-1.5">📍 Toca para ver en el mapa</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* 🛑 Precaución */}
+                {roadCuts.filter(c => c.severity === 'caution').length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 mt-4">
+                      <span className="text-xs font-black text-orange-400 uppercase tracking-widest">🛑 Precaución</span>
+                    </div>
+                    {roadCuts.filter(c => c.severity === 'caution').map(cut => (
+                      <div
+                        key={cut.id}
+                        onClick={() => {
+                          if (cut.latitude && cut.longitude && mapInstance) {
+                            mapInstance.flyTo([cut.latitude, cut.longitude], 13, { animate: true, duration: 1.5 });
+                            setShowRoadCutsPanel(false);
+                          }
+                        }}
+                        className={`bg-orange-500/5 border border-orange-500/20 rounded-2xl p-4 ${cut.latitude ? 'cursor-pointer hover:bg-orange-500/10 transition-all' : ''}`}
+                      >
+                        <p className="text-xs font-black text-white leading-snug mb-1">
+                          ▪️ {cut.route_name}{cut.sector ? `, ${cut.sector}` : ''}
+                        </p>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">{cut.description}</p>
+                        {cut.schedule && <p className="text-[10px] text-slate-500 mt-1.5">🕐 Horario: {cut.schedule}</p>}
+                        {cut.validity && <p className="text-[10px] text-slate-500">📅 Vigencia: {cut.validity}</p>}
+                        {cut.latitude && <p className="text-[9px] text-teal-500 mt-1.5">📍 Toca para ver en el mapa</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
+
+              </div>
+
+              {/* Footer con fuente */}
+              <div className="shrink-0 px-6 pb-6 pt-3 border-t border-white/5">
+                <p className="text-[9px] text-slate-600 text-center leading-relaxed">
+                  Fuente: Carabineros de Chile, MOP Aysén, Dirección de Vialidad<br />y Delegación Presidencial Regional de Aysén.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

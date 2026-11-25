@@ -37,6 +37,7 @@ import IntranetScreen from './screens/intranet/IntranetScreen';
 import GamificationAdminScreen from './screens/GamificationAdminScreen';
 import PassportScreen from './screens/PassportScreen';
 import EasyRoutesScreen from './screens/EasyRoutesScreen';
+import RoadCutsAdminScreen from './screens/RoadCutsAdminScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import CookiesPolicyScreen from './screens/CookiesPolicyScreen';
 import TermsScreen from './screens/TermsScreen';
@@ -686,6 +687,7 @@ const AuthenticatedApp: React.FC = () => {
           <Route path="/admin/users" element={user && user.rol === 'SuperAdmin' ? <UserAdminScreen /> : <Navigate to="/" />} />
           <Route path="/admin/landing" element={user && user.rol === 'SuperAdmin' ? <LandingAdminScreen /> : <Navigate to="/" />} />
           <Route path="/admin/intranet" element={user && user.rol === 'SuperAdmin' ? <IntranetScreen /> : <Navigate to="/" />} />
+          <Route path="/admin/road-cuts" element={user && user.rol === 'SuperAdmin' ? <RoadCutsAdminScreen /> : <Navigate to="/" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
