@@ -142,6 +142,25 @@ export interface RoadCut {
   created_by?: string;
 }
 
+// ── Videos de Redes Sociales (Landing + Colaboradores) ─────────────────────
+export type SocialPlatform = 'instagram' | 'tiktok' | 'youtube';
+
+export interface SocialVideo {
+  id: string;
+  created_at: string;
+  company_id?: string | null;
+  title: string;
+  platform: SocialPlatform;
+  video_url: string;
+  thumbnail_url?: string;
+  handle?: string;
+  is_featured_landing: boolean;
+  is_active: boolean;
+  order_position: number;
+  created_by?: string;
+  company_name?: string;
+}
+
 // Galería personal de usuario
 export interface UserImage {
   id: string;

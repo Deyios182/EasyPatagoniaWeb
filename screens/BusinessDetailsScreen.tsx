@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppAuth } from '../App';
-import { Service } from '../types';
+import { Service, SocialVideo } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import BottomNavigationBar from '../components/BottomNavigationBar';
 import SEO from '../components/SEO';
 import { supabase } from '../supabaseClient';
+import SocialVideoCard from '../components/SocialVideoCard';
 
 const variants = {
   enter: (direction: number) => {
@@ -43,6 +44,20 @@ const BusinessDetailsScreen: React.FC = () => {
 
   const [realRating, setRealRating] = useState<number | string>(business.rating);
   const [realReviewCount, setRealReviewCount] = useState<number>(business.reviewCount);
+  const [socialVideos, setSocialVideos] = useState<SocialVideo[]>([]);
+
+  React.useEffect(() => {
+    if (!business?.id) return;
+    supabase
+      .from('social_videos')
+      .select('*')
+      .eq('company_id', business.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setSocialVideos(data || []);
+      });
+  }, [business?.id]);
 
   React.useEffect(() => {
     const fetchReviews = async () => {
@@ -278,6 +293,20 @@ const BusinessDetailsScreen: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {socialVideos.length > 0 && (
+            <div className="space-y-8">
+              <div className="flex items-center gap-6">
+                <div className="w-14 h-1.5 bg-primary rounded-full"></div>
+                <h2 className="text-3xl font-black dark:text-white uppercase tracking-tighter italic">Videos & Redes</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {socialVideos.map(video => (
+                  <SocialVideoCard key={video.id} video={video} />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-12">
             <div className="flex items-center gap-6">

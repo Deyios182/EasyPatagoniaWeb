@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { compressImage } from '../src/utils/imageCompressor';
 import { persistentCache } from '../src/utils/persistentCache';
+import { SocialVideo } from '../types';
+import { detectSocialPlatform } from '../components/SocialVideoCard';
 
 interface LandingContent {
   id: string;
@@ -81,7 +83,75 @@ const THEME_PRESETS: ThemePreset[] = [
 ];
 
 const LandingAdminScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'content' | 'carousel' | 'theme' | 'contact' | 'navigation'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'carousel' | 'theme' | 'contact' | 'navigation' | 'social'>('content');
+  const [socialVideos, setSocialVideos] = useState<SocialVideo[]>([]);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoThumb, setNewVideoThumb] = useState('');
+  const [newVideoHandle, setNewVideoHandle] = useState('@easy.patagonia');
+  const [savingVideo, setSavingVideo] = useState(false);
+
+  const fetchSocialVideos = async () => {
+    const { data } = await supabase
+      .from('social_videos')
+      .select('*, companies(name)')
+      .order('company_id', { ascending: true, nullsFirst: true })
+      .order('order_position', { ascending: true })
+      .order('created_at', { ascending: false });
+    if (data) {
+      setSocialVideos(
+        data.map((v: any) => ({
+          ...v,
+          company_name: v.companies?.name || undefined,
+        }))
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchSocialVideos();
+  }, []);
+
+  const handleAddOfficialVideo = async () => {
+    if (!newVideoTitle.trim() || !newVideoUrl.trim()) {
+      alert('Ingresa un título y el enlace del video.');
+      return;
+    }
+    setSavingVideo(true);
+    const platform = detectSocialPlatform(newVideoUrl);
+    const { error } = await supabase.from('social_videos').insert({
+      company_id: null,
+      title: newVideoTitle.trim(),
+      video_url: newVideoUrl.trim(),
+      thumbnail_url: newVideoThumb.trim() || null,
+      handle: newVideoHandle.trim() || '@easy.patagonia',
+      platform,
+      is_featured_landing: true,
+      is_active: true,
+    });
+    setSavingVideo(false);
+    if (error) {
+      alert('Error al guardar video: ' + error.message);
+      return;
+    }
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setNewVideoThumb('');
+    fetchSocialVideos();
+  };
+
+  const handleToggleVideoLanding = async (v: SocialVideo) => {
+    await supabase
+      .from('social_videos')
+      .update({ is_featured_landing: !v.is_featured_landing })
+      .eq('id', v.id);
+    fetchSocialVideos();
+  };
+
+  const handleDeleteSocialVideo = async (id: string) => {
+    await supabase.from('social_videos').delete().eq('id', id);
+    fetchSocialVideos();
+  };
   const [content, setContent] = useState<LandingContent[]>([]);
   const [settings, setSettings] = useState<LandingSetting[]>([]);
   const [carousel, setCarousel] = useState<any[]>([]);
@@ -276,6 +346,7 @@ const LandingAdminScreen: React.FC = () => {
           <div className="flex gap-1">
             {[
               { id: 'content', label: 'Contenido', icon: 'article' },
+              { id: 'social', label: 'Redes / Videos', icon: 'smart_display' },
               { id: 'theme', label: 'Tema', icon: 'palette' },
               { id: 'contact', label: 'Contacto', icon: 'contact_mail' },
               { id: 'navigation', label: 'Navegación', icon: 'menu' }
@@ -1030,6 +1101,122 @@ const LandingAdminScreen: React.FC = () => {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* SOCIAL VIDEOS TAB */}
+        {activeTab === 'social' && (
+          <div className="space-y-8">
+            <div className="bg-surface-dark border border-white/10 rounded-2xl p-6">
+              <h2 className="text-xl font-black text-white mb-2">Agregar Video Oficial a la Landing</h2>
+              <p className="text-xs text-slate-400 mb-5">
+                Pega el enlace de un Reel de Instagram, TikTok o YouTube Short para mostrarlo en la sección "Inspírate en Nuestras Redes".
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <input
+                  type="text"
+                  value={newVideoTitle}
+                  onChange={e => setNewVideoTitle(e.target.value)}
+                  placeholder="Título (ej: Ruta 7 en vivo)"
+                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                />
+                <input
+                  type="url"
+                  value={newVideoUrl}
+                  onChange={e => setNewVideoUrl(e.target.value)}
+                  placeholder="Link Reel / TikTok / YouTube"
+                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                />
+                <input
+                  type="url"
+                  value={newVideoThumb}
+                  onChange={e => setNewVideoThumb(e.target.value)}
+                  placeholder="URL Imagen portada (opcional)"
+                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newVideoHandle}
+                    onChange={e => setNewVideoHandle(e.target.value)}
+                    placeholder="@easy.patagonia"
+                    className="w-36 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddOfficialVideo}
+                    disabled={savingVideo}
+                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-xl px-4 py-3 transition-all"
+                  >
+                    {savingVideo ? '…' : '+ Agregar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 space-y-4">
+              <h3 className="text-lg font-black text-white">Videos Oficiales y de Colaboradores</h3>
+              {socialVideos.length === 0 ? (
+                <p className="text-sm text-slate-500">Aún no hay videos registrados.</p>
+              ) : (
+                <div className="space-y-3">
+                  {socialVideos.map(v => (
+                    <div
+                      key={v.id}
+                      className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-primary/20 text-primary">
+                            {v.platform}
+                          </span>
+                          <span className="text-sm font-bold text-white truncate">{v.title}</span>
+                          {v.company_name ? (
+                            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                              Colaborador: {v.company_name}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                              Oficial EasyPatagonia
+                            </span>
+                          )}
+                        </div>
+                        <a
+                          href={v.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-slate-400 hover:text-white truncate block mt-1"
+                        >
+                          {v.video_url}
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {v.company_id && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleVideoLanding(v)}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold border transition-all ${
+                              v.is_featured_landing
+                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {v.is_featured_landing ? '★ En Landing' : 'Destacar en Landing'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSocialVideo(v.id)}
+                          className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-bold"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

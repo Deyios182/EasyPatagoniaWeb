@@ -9,6 +9,8 @@ import SEO from '../components/SEO';
 import { trackConversion, trackCustomEvent } from '../src/analytics/analytics';
 import { persistentCache } from '../src/utils/persistentCache';
 import { getOptimizedImageUrl } from '../src/utils/cdnProxy';
+import { SocialVideo } from '../types';
+import SocialVideoCard from '../components/SocialVideoCard';
 
 const LANDING_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 horas
 
@@ -49,6 +51,33 @@ const LandingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [socialVideos, setSocialVideos] = useState<SocialVideo[]>([]);
+
+  useEffect(() => {
+    const fetchSocialVideos = async () => {
+      try {
+        const { data } = await supabase
+          .from('social_videos')
+          .select('*, companies(name)')
+          .eq('is_active', true)
+          .or('company_id.is.null,is_featured_landing.eq.true')
+          .order('order_position', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(8);
+        if (data) {
+          setSocialVideos(
+            data.map((v: any) => ({
+              ...v,
+              company_name: v.companies?.name || undefined,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Error loading social videos:', err);
+      }
+    };
+    fetchSocialVideos();
+  }, []);
 
   // Handle scroll for sticky nav
   useEffect(() => {
@@ -677,6 +706,57 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* CONTACTO */}
+        {/* INSPÍRATE EN NUESTRAS REDES */}
+        <section id="redes" className="relative py-24 bg-[#121e22] overflow-hidden z-20 -mt-10 rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.45)]">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+              <div>
+                <p className="text-[#dd6e42] text-xs font-black uppercase tracking-[0.4em] mb-3">
+                  @easy.patagonia
+                </p>
+                <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter">
+                  Inspírate en <span className="text-[#dd6e42]">Nuestras Redes</span>
+                </h2>
+                <p className="text-slate-400 text-base md:text-lg font-light mt-2 max-w-2xl">
+                  Reels, rutas en vivo y experiencias reales de nuestra comunidad y colaboradores en Aysén.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => openLink("https://www.instagram.com/easy.patagonia")}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-tr from-[#833ab4] to-[#E1306C] text-white font-black text-xs uppercase tracking-wider hover:scale-105 transition-transform shadow-lg"
+                >
+                  Instagram
+                </button>
+                <button
+                  onClick={() => openLink("https://www.tiktok.com/@easy.patagonia?_t=ZM-8srRmTRFV1q&_r=1")}
+                  className="px-5 py-3 rounded-2xl bg-black border border-white/20 text-white font-black text-xs uppercase tracking-wider hover:scale-105 transition-transform shadow-lg"
+                >
+                  TikTok
+                </button>
+              </div>
+            </div>
+
+            {socialVideos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {socialVideos.map((video) => (
+                  <SocialVideoCard
+                    key={video.id}
+                    video={video}
+                    onCompanyClick={(companyId) => navigate(`/details/${companyId}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-10 text-center">
+                <span className="material-symbols-outlined text-4xl text-[#dd6e42] mb-2">smart_display</span>
+                <p className="text-white font-bold text-base">Próximamente verás nuestros mejores Reels y TikToks aquí</p>
+                <p className="text-slate-400 text-xs mt-1">Síguenos en @easy.patagonia mientras cargamos los primeros videos.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* CONTACTO REDESÑADO - WIDER & PREMIUM */}
         {/* CONTACTO */}
         <section id="contacto" className="relative py-24 bg-[#1a2a30] overflow-hidden z-20 -mt-10 rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.5)]">

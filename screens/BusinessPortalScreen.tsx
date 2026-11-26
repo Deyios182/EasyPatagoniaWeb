@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
-import { Company, Service, UserImage } from '../types';
+import { Company, Service, UserImage, SocialVideo } from '../types';
 import { uploadImage } from './imageHandler';
 import ImageSelectorModal from '../components/ImageSelectorModal';
+import SocialVideoCard, { detectSocialPlatform } from '../components/SocialVideoCard';
 
 const BusinessPortalScreen: React.FC = () => {
   const { user } = useAppAuth();
@@ -20,8 +21,67 @@ const BusinessPortalScreen: React.FC = () => {
   const [isEditingService, setIsEditingService] = useState<Partial<Service> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'servicios' | 'galeria'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'servicios' | 'galeria' | 'videos'>('info');
   const [showImageSelector, setShowImageSelector] = useState<'logo' | 'gallery' | 'service' | null>(null);
+  const [companyVideos, setCompanyVideos] = useState<SocialVideo[]>([]);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoThumb, setNewVideoThumb] = useState('');
+  const [newVideoHandle, setNewVideoHandle] = useState('');
+  const [savingVideo, setSavingVideo] = useState(false);
+
+  const fetchCompanyVideos = async (companyId: string) => {
+    const { data } = await supabase
+      .from('social_videos')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
+    setCompanyVideos(data || []);
+  };
+
+  useEffect(() => {
+    if (selectedCompany?.id) {
+      fetchCompanyVideos(selectedCompany.id);
+    } else {
+      setCompanyVideos([]);
+    }
+  }, [selectedCompany?.id]);
+
+  const handleAddCompanyVideo = async () => {
+    if (!selectedCompany?.id) return;
+    if (!newVideoTitle.trim() || !newVideoUrl.trim()) {
+      alert('Ingresa un título y el enlace de tu video (Instagram, TikTok o YouTube).');
+      return;
+    }
+    setSavingVideo(true);
+    const platform = detectSocialPlatform(newVideoUrl);
+    const { error } = await supabase.from('social_videos').insert({
+      company_id: selectedCompany.id,
+      title: newVideoTitle.trim(),
+      video_url: newVideoUrl.trim(),
+      thumbnail_url: newVideoThumb.trim() || selectedCompany.gallery_urls?.[0] || selectedCompany.logo_url || null,
+      handle: newVideoHandle.trim() || `@${selectedCompany.name.toLowerCase().replace(/\s+/g, '.')}`,
+      platform,
+      is_featured_landing: false,
+      is_active: true,
+    });
+    setSavingVideo(false);
+    if (error) {
+      alert('Error al guardar el video: ' + error.message);
+      return;
+    }
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setNewVideoThumb('');
+    setNewVideoHandle('');
+    fetchCompanyVideos(selectedCompany.id);
+  };
+
+  const handleDeleteCompanyVideo = async (videoId: string) => {
+    if (!selectedCompany?.id) return;
+    await supabase.from('social_videos').delete().eq('id', videoId);
+    fetchCompanyVideos(selectedCompany.id);
+  };
 
   // 1. Cargar Empresas del Dueño y Galería Personal
   useEffect(() => {
@@ -345,6 +405,7 @@ const BusinessPortalScreen: React.FC = () => {
               <button onClick={() => setActiveTab('info')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'info' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Información</button>
               <button onClick={() => setActiveTab('servicios')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'servicios' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Servicios ({services.length})</button>
               <button onClick={() => setActiveTab('galeria')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'galeria' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Galería</button>
+              <button onClick={() => setActiveTab('videos')} className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'videos' ? 'bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>Videos / Redes ({companyVideos.length})</button>
             </div>
 
             {/* TAB: INFORMACIÓN */}
@@ -602,6 +663,82 @@ const BusinessPortalScreen: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* TAB: VIDEOS / REDES */}
+            {activeTab === 'videos' && (
+              <div className="space-y-8">
+                <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10">
+                  <h2 className="text-xl font-bold text-white mb-1">Videos de tus Redes Sociales</h2>
+                  <p className="text-xs text-slate-400 mb-5">
+                    Pega el enlace de tu Reel de Instagram, TikTok o YouTube Short. Aparecerán en la ficha de tu negocio y podrán ser destacados en la portada de EasyPatagonia.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <input
+                      type="text"
+                      value={newVideoTitle}
+                      onChange={e => setNewVideoTitle(e.target.value)}
+                      placeholder="Título (ej: Tour Capillas de Mármol)"
+                      className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                    />
+                    <input
+                      type="url"
+                      value={newVideoUrl}
+                      onChange={e => setNewVideoUrl(e.target.value)}
+                      placeholder="Link Reel / TikTok / YouTube"
+                      className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                    />
+                    <input
+                      type="url"
+                      value={newVideoThumb}
+                      onChange={e => setNewVideoThumb(e.target.value)}
+                      placeholder="URL portada (opcional)"
+                      className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newVideoHandle}
+                        onChange={e => setNewVideoHandle(e.target.value)}
+                        placeholder="@tu_cuenta"
+                        className="w-32 bg-white/5 border border-white/10 rounded-2xl px-3 py-3 text-white text-sm focus:outline-none focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCompanyVideo}
+                        disabled={savingVideo}
+                        className="flex-1 bg-gradient-to-r from-primary to-orange-600 text-white px-4 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-xl transition-all disabled:opacity-50"
+                      >
+                        {savingVideo ? '…' : '+ Agregar'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {companyVideos.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {companyVideos.map(v => (
+                      <div key={v.id} className="relative group">
+                        <SocialVideoCard video={v} />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCompanyVideo(v.id)}
+                          className="absolute top-14 right-3 z-20 bg-red-500 hover:bg-red-600 text-white p-2 rounded-xl shadow-lg opacity-90 hover:opacity-100 transition-all"
+                          title="Eliminar video"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 border-2 border-dashed border-white/10 rounded-3xl">
+                    <span className="material-symbols-outlined text-4xl text-slate-500 mb-2">smart_display</span>
+                    <p className="text-slate-500 font-bold">Aún no has agregado videos de tus redes.</p>
+                    <p className="text-sm text-slate-600 mt-1">Pega un enlace de Instagram Reel, TikTok o YouTube arriba para mostrarlo a los viajeros.</p>
+                  </div>
+                )}
               </div>
             )}
           </>
