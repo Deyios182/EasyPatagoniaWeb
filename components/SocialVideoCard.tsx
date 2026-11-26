@@ -28,14 +28,9 @@ export function getEmbedUrl(url: string, platform?: SocialPlatform): string | nu
   const p = platform || detectSocialPlatform(url);
   const trimmed = url.trim();
 
-  if (p === 'instagram') {
-    const match = trimmed.match(/instagram\.com\/(?:reel|p|tv)\/([A-Za-z0-9_-]+)/i);
-    if (match?.[1]) {
-      return `https://www.instagram.com/reel/${match[1]}/embed/captioned/`;
-    }
-    return null;
-  }
-
+  // Instagram bloquea la reproducción dentro de iframes de terceros ("Ver en Instagram"),
+  // por lo que para Instagram abrimos el enlace directo y reservamos el reproductor inline
+  // para videos subidos (.mp4/.mov/.webm), YouTube/Shorts y TikTok.
   if (p === 'tiktok') {
     const match = trimmed.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/i) || trimmed.match(/\/video\/(\d+)/i);
     if (match?.[1]) {
@@ -132,16 +127,18 @@ const SocialVideoCard: React.FC<SocialVideoCardProps> = ({ video, onCompanyClick
             >
               <span className="material-symbols-outlined text-base">close</span>
             </button>
-            <a
-              href={video.video_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pointer-events-auto px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white border border-white/20 text-[10px] font-bold flex items-center gap-1 shadow-lg"
-              title={`Abrir en ${style.label}`}
-            >
-              <span>Abrir</span>
-              <span className="material-symbols-outlined text-xs">open_in_new</span>
-            </a>
+            {!directVideo && (
+              <a
+                href={video.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pointer-events-auto px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white border border-white/20 text-[10px] font-bold flex items-center gap-1 shadow-lg"
+                title={`Abrir en ${style.label}`}
+              >
+                <span>Abrir</span>
+                <span className="material-symbols-outlined text-xs">open_in_new</span>
+              </a>
+            )}
           </div>
         </div>
       ) : (
@@ -152,12 +149,20 @@ const SocialVideoCard: React.FC<SocialVideoCardProps> = ({ video, onCompanyClick
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCardClick(); }}
           className="relative w-full h-full cursor-pointer"
         >
-          {/* Imagen de portada o fondo degradado */}
+          {/* Imagen de portada, primer frame del video o fondo degradado */}
           {coverImage ? (
             <img
               src={coverImage}
               alt={video.title}
               loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+          ) : directVideo ? (
+            <video
+              src={`${video.video_url}#t=0.1`}
+              preload="metadata"
+              muted
+              playsInline
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
           ) : (
@@ -174,9 +179,11 @@ const SocialVideoCard: React.FC<SocialVideoCardProps> = ({ video, onCompanyClick
           {/* Iconos superiores derechos (Play + Plataforma) */}
           <div className="absolute top-3.5 right-3.5 flex items-center gap-2 z-10">
             <span className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow group-hover:scale-110 group-hover:bg-[#dd6e42] transition-all">
-              <span className="material-symbols-outlined text-lg">play_arrow</span>
+              <span className="material-symbols-outlined text-lg">
+                {canPlayInline ? 'play_arrow' : 'open_in_new'}
+              </span>
             </span>
-            <span className={`px-2.5 py-1 rounded-full bg-gradient-to-r ${style.gradient} text-white text-[10px] font-black uppercase tracking-wider shadow`}>
+            <span className={`px-2.5 py-1 rounded-full ${directVideo ? 'bg-[#dd6e42]' : `bg-gradient-to-r ${style.gradient}`} text-white text-[10px] font-black uppercase tracking-wider shadow`}>
               {directVideo ? 'Video' : style.label}
             </span>
           </div>

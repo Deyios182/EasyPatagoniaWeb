@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppAuth } from '../App';
 import { supabase } from '../supabaseClient';
 import { Company, Service, UserImage, SocialVideo } from '../types';
-import { uploadImage } from './imageHandler';
+import { uploadImage, uploadVideo } from './imageHandler';
 import ImageSelectorModal from '../components/ImageSelectorModal';
 import SocialVideoCard, { detectSocialPlatform } from '../components/SocialVideoCard';
 
@@ -29,6 +29,16 @@ const BusinessPortalScreen: React.FC = () => {
   const [newVideoThumb, setNewVideoThumb] = useState('');
   const [newVideoHandle, setNewVideoHandle] = useState('');
   const [savingVideo, setSavingVideo] = useState(false);
+  const [uploadingVideoFile, setUploadingVideoFile] = useState(false);
+
+  const handleUploadCompanyVideoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedCompany?.id) return;
+    setUploadingVideoFile(true);
+    const url = await uploadVideo(file, `social-videos/${selectedCompany.id}`);
+    setUploadingVideoFile(false);
+    if (url) setNewVideoUrl(url);
+  };
 
   const fetchCompanyVideos = async (companyId: string) => {
     const { data } = await supabase
@@ -672,8 +682,22 @@ const BusinessPortalScreen: React.FC = () => {
                 <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10">
                   <h2 className="text-xl font-bold text-white mb-1">Videos de tus Redes Sociales</h2>
                   <p className="text-xs text-slate-400 mb-5">
-                    Pega el enlace de tu Reel de Instagram, TikTok o YouTube Short. Aparecerán en la ficha de tu negocio y podrán ser destacados en la portada de EasyPatagonia.
+                    Sube un video (.mp4 / .mov) para reproducción directa en la web, o pega un enlace de YouTube, TikTok o Instagram.
                   </p>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-black uppercase tracking-wider text-white transition-all">
+                      <span className="material-symbols-outlined text-base">upload_file</span>
+                      {uploadingVideoFile ? 'Subiendo video…' : 'Subir Video (.mp4 / .mov)'}
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        className="hidden"
+                        disabled={uploadingVideoFile}
+                        onChange={handleUploadCompanyVideoFile}
+                      />
+                    </label>
+                    <span className="text-[11px] text-slate-400">Máximo 50 MB. Si subes el archivo, se reproduce directo sin salir de EasyPatagonia.</span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <input
                       type="text"

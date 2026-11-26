@@ -102,3 +102,43 @@ export const downloadImage = async (imageUrl: string, fileName: string = 'imagen
     console.error('Error al descargar:', error);
   }
 };
+
+// --- 3. SUBIR VIDEO (.mp4 / .webm / .mov) ---
+export const uploadVideo = async (file: File, folder: string = 'social-videos'): Promise<string | null> => {
+  try {
+    const bucketName = 'uploads';
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'];
+    if (!validTypes.includes(file.type)) {
+      alert('Formato de video no válido. Usa MP4, WEBM o MOV.');
+      return null;
+    }
+
+    const maxBytes = 50 * 1024 * 1024; // 50 MB
+    if (file.size > maxBytes) {
+      alert('El video es muy pesado (máximo 50 MB).');
+      return null;
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const filePath = folder ? `${folder}/${fileName}` : fileName;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: '31536000',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      alert('Error al subir el video: ' + uploadError.message);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+    return urlData.publicUrl;
+  } catch (err: any) {
+    alert('Error inesperado al subir video: ' + (err?.message || err));
+    return null;
+  }
+};

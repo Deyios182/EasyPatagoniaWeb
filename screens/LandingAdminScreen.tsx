@@ -4,6 +4,7 @@ import { compressImage } from '../src/utils/imageCompressor';
 import { persistentCache } from '../src/utils/persistentCache';
 import { SocialVideo } from '../types';
 import { detectSocialPlatform } from '../components/SocialVideoCard';
+import { uploadVideo } from './imageHandler';
 
 interface LandingContent {
   id: string;
@@ -90,6 +91,16 @@ const LandingAdminScreen: React.FC = () => {
   const [newVideoThumb, setNewVideoThumb] = useState('');
   const [newVideoHandle, setNewVideoHandle] = useState('@easy.patagonia');
   const [savingVideo, setSavingVideo] = useState(false);
+  const [uploadingVideoFile, setUploadingVideoFile] = useState(false);
+
+  const handleUploadOfficialVideoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideoFile(true);
+    const url = await uploadVideo(file, 'social-videos/official');
+    setUploadingVideoFile(false);
+    if (url) setNewVideoUrl(url);
+  };
 
   const fetchSocialVideos = async () => {
     const { data } = await supabase
@@ -1111,8 +1122,22 @@ const LandingAdminScreen: React.FC = () => {
             <div className="bg-surface-dark border border-white/10 rounded-2xl p-6">
               <h2 className="text-xl font-black text-white mb-2">Agregar Video Oficial a la Landing</h2>
               <p className="text-xs text-slate-400 mb-5">
-                Pega el enlace de un Reel de Instagram, TikTok o YouTube Short para mostrarlo en la sección "Inspírate en Nuestras Redes".
+                Sube un video (.mp4 / .mov) para que se reproduzca directo en la web sin salir, o pega un enlace de YouTube Shorts, TikTok o Instagram.
               </p>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-black uppercase tracking-wider text-white transition-all">
+                  <span className="material-symbols-outlined text-base">upload_file</span>
+                  {uploadingVideoFile ? 'Subiendo video…' : 'Subir Video (.mp4 / .mov)'}
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime"
+                    className="hidden"
+                    disabled={uploadingVideoFile}
+                    onChange={handleUploadOfficialVideoFile}
+                  />
+                </label>
+                <span className="text-[11px] text-slate-400">Recomendado para reproducción directa 100% en el navegador (máx. 50 MB).</span>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <input
                   type="text"
